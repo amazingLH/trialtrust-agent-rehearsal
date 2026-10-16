@@ -20,10 +20,31 @@
     "guide_and_help": "four steps, expert mode, restart and Escape-to-close help checked",
     "mobile_390x844": "Gradio outer padding fixed; document scroll width375 <= viewport390"
   },
-  "public_cloud_browser": "pending_deployment",
+  "public_cloud_browser": {
+    "method": "CUA actual public ModelScope portal iframe, no owner API key",
+    "entry": "https://l666h666better-trialtrust.ms.show/api/workbench",
+    "mobile_viewport": [
+      390,
+      844
+    ],
+    "responsive": "actual screenshot fits narrow screen after trusted pageInfo adapter; earlier clipped image retained separately",
+    "consent": "check then uncheck; run blocked with notice; later confirmed run consumes check",
+    "suite": "buffet 2 dine_in 190; original 170 draft; price change no draft",
+    "skills": "mandate-review/evidence-retrieval/plan-verification/pair-audit visible actual events",
+    "review": "automated reject saved; UI shows reviewed and not accepted",
+    "native_download": "clicked, no completed file receipt captured; do not claim success",
+    "export_preview": "Final deployed CUA readonly preview contains 23329 characters; parsed buffet report thread b9f41569-b22d-4865-b3de-54d0cb37d1f4, awaiting_human_review false. Saved from visible textarea, not native file download.",
+    "real_user_feedback": false,
+    "record": "cloud-browser-export-v0.5.json"
+  },
   "screenshots": [
     "assets/v0.5/home-local.jpg",
     "assets/v0.5/mobile-local.jpg",
-    "assets/v0.5/consent-local.jpg"
-  ]
+    "assets/v0.5/consent-local.jpg",
+    "assets/v0.5/home-cloud.jpg",
+    "assets/v0.5/mobile-cloud.jpg",
+    "assets/v0.5/export-cloud.jpg"
+  ],
+  "updated_utc": "2026-10-16T11:25:55.153004+00:00",
+  "retained_failure": "assets/v0.5/portal-mobile-observation.jpg"
 }

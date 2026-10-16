@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml/badge.svg)](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml)
 
-[在线体验](https://l666h666better-trialtrust.ms.show) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
+[在线体验](https://l666h666better-trialtrust.ms.show/api/workbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![v0.5 本地 Gradio 首页实际截图](assets/v0.5/home-local.jpg)
+![v0.5 公开门户首页实际截图](assets/v0.5/home-cloud.jpg)
 
-当前版本 **v0.5**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自本地托管适配器；云端与真实模型证据分别记录。
+当前版本 **v0.5**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
 ## 产品解决的问题
 
@@ -87,10 +87,11 @@ python tools/verify_evidence.py
 - v0.5 Windows开发环境：113项测试通过（新增70项，含12领域×5条件矩阵、技能权限、未知需求与确认拒绝）。
 - v0.5 干净Linux核心Docker：112项通过、1项Gradio托管测试跳过。
 - v0.5真实博物馆对照、真实Embedding、五项技能路由与未知需求分析已有[新版验证记录](docs/validation-v0.5.md)。
-- 无账号登录的云端API检查完成配置、离线对照、审阅接口和导出；真实模型在两台清洗、220元预算下生成210元草稿。
+- v0.5云端无账号API完成目录、Skills、确认拒绝、未知需求、成对运行、审阅与导出；真实模型/Embedding的自助餐170元对照证据缺失无草稿有原始记录。公开门户桌面与390×844手机、取消确认、对照、实际技能和审阅保存已实操。
+- 3项Node回归验证可信父窗口、消息边界及仅限布局的用途；CI在核心与托管两个矩阵均运行。
 - 40条方案探针、24条检索问题及检索消融结果保存在[evals](evals/)。这些是AI编写的开发回归，尚无独立人工金标或真实用户研究。
 
-[评测方法与反例](docs/evaluation.md)解释指标口径和失败案例；[云端验收清单](evals/results/deployment-v0.4.json)区分自动接口验收和待完成的人工页面体验。自动测试写入的审阅标记不是实际用户评价。
+[评测方法与反例](docs/evaluation.md)解释指标口径和失败案例；[v0.5验收清单](evals/results/deployment-v0.5.json)区分接口、实际浏览器和模型证据；v0.4原始记录保留作历史。云端原生下载尚未取得完成回执，页面提供同会话鉴权的只读JSON查看/复制入口（最终云端已实际展开完整报告）。自动测试写入的审阅标记不是实际用户评价。
 
 ## 当前边界
 

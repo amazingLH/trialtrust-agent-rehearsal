@@ -1,0 +1,21 @@
+{
+  "observed_utc": "2026-10-16T11:37:12.349542+00:00",
+  "public_url": "https://l666h666better-trialtrust.ms.show/api/workbench",
+  "owner_credentials_used": false,
+  "login_cookie_used": false,
+  "final_export_preview_present": true,
+  "assets": {
+    "app.js": {
+      "sha256": "5ed486fecc0c1341479852815e2e1d0d62e7ea90b94670df6647c0757d1b011d",
+      "matches_source": true
+    },
+    "style.css": {
+      "sha256": "ec719cdb5733be3eac8d9c230a06ad6a6334643b99e009764a5781bd00602b4e",
+      "matches_source": true
+    },
+    "portal_viewport.js": {
+      "sha256": "1047b48283e26e8ab554045e153211dd3680aa55ccda0c5a8d7467d5e7a4aecc",
+      "matches_source": true
+    }
+  }
+}

@@ -1,18 +1,43 @@
 {
   "version": "v0.5",
-  "status": "local_verified_cloud_pending",
+  "status": "public_application_verified_native_download_receipt_unverified",
+  "updated_utc": "2026-10-16T11:39:41.126064+00:00",
+  "application_source_commit": "5846b38b0cf2e24f3d73fc3b0df21fa142ef3d00",
+  "studio_application_commit": "c2cb9d10b006079cd0b701fb78a09cc52b06c12f",
   "evidence": {
     "local-live-v0.5.json": "89f50d5a4b2e2bed6df41e4428464450f44b935ca2b7fa4964d14389a60e40bd",
-    "browser-v0.5.json": "090dde4f2b66d96ff30ffe39fd0e535b4564e26f83a6ad186449ad153892daca"
+    "browser-v0.5.json": "4b6baf62bffa15fc3bb600a4814e960c8029c1830ccad330a4397ff813412a93",
+    "ci-v0.5.json": "eb9627230f4671b36810d264565a3312cb40c6ff688ac34df510bb032bc0a07b",
+    "cloud-live-v0.5.json": "11796f44c1f4be4f92cfd3bd20c3618e77f22657710c7361c11ad86973a1d878",
+    "cloud-live-portal-v0.5.json": "c2099046ec36fe94ec8dc8a40b861138df402dd291beb3fe4b6655e6edb9a8bd",
+    "cloud-offline-v0.5.json": "29a90b6efdc2729623a2a73c8cce8d8df4ca1d8ded79a89da677496f3269b238",
+    "cloud-offline-portal-v0.5.json": "40b746821627640e96032ffcd4e288d2f8236f820f6f5b12fa1cd63f3fe848bd",
+    "owner-offline-v0.5.json": "ba84895b6c69a09acfdf6b68a99c0eaac7de5f3bbe721935a8df22aef8e05105",
+    "owner-offline-portal-v0.5.json": "ba84895b6c69a09acfdf6b68a99c0eaac7de5f3bbe721935a8df22aef8e05105",
+    "cloud-assets-v0.5.json": "74250b6cdfb98a47dbad6c5546635d6d229689e8b91b1b63a4be9a5dc9ca2bf9",
+    "cloud-browser-export-v0.5.json": "0e8c3e6edc60d817193efc27769ffe842fed3d6257506b621a584a6bc1eaca99"
   },
   "tests": {
     "windows_passed": 113,
     "linux_core_passed": 112,
-    "linux_core_skipped": 1
+    "linux_core_skipped": 1,
+    "node_passed": 3
   },
+  "public_entry": "https://l666h666better-trialtrust.ms.show/api/workbench",
   "limits": [
     "Development regressions written with AI assistance, no independent gold labels.",
-    "Automated review markers are not actual human feedback.",
-    "Public cloud check must be updated after deployment."
-  ]
+    "Automated review markers and browser clicks are not actual human feedback.",
+    "Public API access uses no owner credentials; owner records explicitly identify owner_gateway.",
+    "Live backend source fingerprints match this version; subsequent entry/frontend changes do not imply another paid model evaluation.",
+    "Native cloud browser download completion was not captured; local download and public export API succeeded; readable export fallback provided.",
+    "Real merchant data, bookings, payments, independent user research and personal contest submission are outside this release."
+  ],
+  "platform_runtime": "Running",
+  "visibility": "public",
+  "screenshots": {
+    "home-cloud.jpg": "ec35bc4b52b0b572a20973b2b338e05d98da6bcc2d45a395ee1918f099153825",
+    "mobile-cloud.jpg": "a684e5c4140a71980e3b41d6ba4c0f7ad73c104348c2456114f6a4ad6c27fcce",
+    "export-cloud.jpg": "5488d7cca82b657ff4f87b0575018c76a0b13c9758d50b3671ed638537c61f7e",
+    "portal-mobile-observation.jpg": "512903477d960ef8838822a411e1bdd87876916cda78e7c3446f4c64e946860a"
+  }
 }
