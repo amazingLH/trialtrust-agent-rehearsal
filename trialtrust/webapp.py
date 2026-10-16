@@ -127,8 +127,8 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     # blocks that response, so set the executable script MIME type explicitly.
     mimetypes.add_type("text/javascript", ".js")
     app.mount("/assets", StaticFiles(directory=assets), name="assets")
-    # A first-party entry avoids the managed portal's cross-site iframe shell.
-    # Keep these assets separate from Gradio's own /assets namespace.
+    # A lightweight HTML entry independent of Gradio's own asset namespace.
+    # ModelScope may still wrap browser navigation in its official portal.
     app.mount('/api/workbench-assets', StaticFiles(directory=assets), name='workbench_assets')
 
     @app.middleware("http")
@@ -152,13 +152,18 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         response.headers["X-Content-Type-Options"] = "nosniff"
         studio_ui = getattr(app.state, "studio_ui", False)
         direct_ui = request.url.path == '/api/workbench'
-        if not studio_ui or direct_ui:
+        if not studio_ui:
             response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
-        if studio_ui and not direct_ui:
+        if studio_ui:
             # Managed Gradio supplies its own frontend; restrict framing to the
             # actual portal, without applying standalone script rules to Gradio.
             response.headers["Content-Security-Policy"] = "frame-ancestors 'self' https://modelscope.cn https://www.modelscope.cn"
+            if direct_ui:
+                response.headers['Content-Security-Policy'] = (
+                    "default-src 'self'; script-src 'self'; style-src 'self'; "
+                    "img-src 'self' data:; connect-src 'self'; "
+                    "frame-ancestors 'self' https://modelscope.cn https://www.modelscope.cn")
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
         if request.url.path.startswith("/api/"):

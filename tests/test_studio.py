@@ -26,7 +26,8 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
         assert client.get(asset.group(1)).status_code == 200
         direct = client.get('/api/workbench')
         assert direct.status_code == 200 and 'id="confirmed"' in direct.text
-        assert direct.headers['X-Frame-Options'] == 'DENY'
+        assert 'X-Frame-Options' not in direct.headers
+        assert "frame-ancestors 'self' https://modelscope.cn https://www.modelscope.cn" in direct.headers['Content-Security-Policy']
         assert "script-src 'self'" in direct.headers['Content-Security-Policy']
         assert '/api/workbench-assets/app.js' in direct.text
         script = client.get('/api/workbench-assets/app.js')
