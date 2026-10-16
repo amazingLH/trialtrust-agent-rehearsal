@@ -1030,7 +1030,7 @@ dialog::backdrop {
     transform: scaleY(0.1);
   }
 }
-@media (max-width: 1000px) {
+@container (max-width: 1000px) {
   .hero h1 {
     font-size: 41px;
   }
@@ -1063,7 +1063,7 @@ dialog::backdrop {
     font-size: 14px;
   }
 }
-@media (max-width: 820px) {
+@container (max-width: 820px) {
   .workspace {
     grid-template-columns: 1fr;
   }
@@ -1131,7 +1131,7 @@ dialog::backdrop {
     min-height: 420px;
   }
 }
-@media (max-width: 560px) {
+@container (max-width: 560px) {
   .topbar {
     flex-wrap: wrap;
     gap: 10px;
@@ -1292,10 +1292,59 @@ dialog::backdrop {
 .viewport-notice button {
   pointer-events: auto;
 }
+@container (max-width: 560px) {
+  .viewport-notice {
+    top: 145px;
+    bottom: auto;
+    right: 16px;
+  }
+}
+
+/* The responsive shell follows its actual available width, including managed
+   portals whose child iframe keeps a desktop-sized layout viewport. Fixed
+   feedback and the dialog stay outside size containment. */
+.trialtrust-responsive {
+  container-type: inline-size;
+  width: 100%;
+  max-width: var(--portal-width, 100%);
+}
+.viewport-notice {
+  right: calc(100vw - min(100vw, var(--portal-width, 100vw)) + 24px);
+  width: min(430px, calc(var(--portal-width, 100vw) - 32px));
+}
+:is(
+    html[data-portal-viewport="true"],
+    .trialtrust-root[data-portal-viewport="true"]
+  )
+  dialog {
+  max-width: min(660px, calc(var(--portal-width) - 32px));
+  margin-left: max(16px, calc((var(--portal-width) - 660px) / 2));
+  margin-right: auto;
+  max-height: min(85vh, calc(var(--portal-height) * 0.85));
+}
+:is(html[data-portal-phone="true"], .trialtrust-root[data-portal-phone="true"])
+  .viewport-notice {
+  top: 145px;
+  bottom: auto;
+  left: 16px;
+  right: auto;
+  font-size: 14px;
+}
+:is(html[data-portal-phone="true"], .trialtrust-root[data-portal-phone="true"])
+  dialog {
+  padding: 21px;
+}
 @media (max-width: 560px) {
   .viewport-notice {
     top: 145px;
     bottom: auto;
     right: 16px;
+    font-size: 14px;
+  }
+  dialog {
+    padding: 21px;
+  }
+  .help-steps li {
+    font-size: 15px;
   }
 }

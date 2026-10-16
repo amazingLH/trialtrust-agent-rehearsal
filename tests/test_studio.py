@@ -33,6 +33,8 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
         script = client.get('/api/workbench-assets/app.js')
         assert script.status_code == 200 and 'javascript' in script.headers['content-type']
         assert client.get('/api/workbench-assets/style.css').status_code == 200
+        assert client.get('/api/workbench-assets/portal_viewport.js').status_code == 200
+        assert 'PortalViewport' in component['props']['js_on_load']
         assert client.get("/health", headers={"Host": "studio-changed-123.cn-beijing-vpc.fcapp.run"}).status_code == 200
         assert client.get("/health", headers={"Host": "studio-changed-123.cn-beijing-vpc.fcapp.run.evil.invalid"}).status_code == 400
         headers = {"X-TrialTrust-Client": "web", "Origin": "https://trial.example"}

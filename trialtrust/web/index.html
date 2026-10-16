@@ -5,347 +5,362 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>试托 · 生活委托的 AI 对照试运行</title>
     <link rel="stylesheet" href="/assets/style.css" />
+    <script defer src="/assets/portal_viewport.js"></script>
     <script defer src="/assets/app.js"></script>
   </head>
   <body>
-    <header class="topbar">
-      <a class="brand" href="#"
-        ><span class="brand-mark">试</span
-        ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
-      >
-      <div class="mode-switch" aria-label="使用模式">
-        <button id="guided-mode" aria-pressed="true">✦ 新手引导</button
-        ><button id="expert-mode" aria-pressed="false">已熟练使用</button>
-      </div>
-      <button id="help" class="quiet">使用帮助 ?</button>
-    </header>
-    <div class="page">
-      <section class="hero">
-        <div>
-          <p class="eyebrow">生活委托的 AI 对照试运行</p>
-          <h1>先陪 AI 走一遍，<br />再决定交哪一步。</h1>
-          <p class="hero-copy">
-            用合成资料彩排生活事务。看它会查什么、漏掉什么，<br
-              class="desktop-only"
-            />在预算变化与证据缺失时，是否仍守住你的授权。
-          </p>
-          <div class="hero-tags">
-            <span>不接触真实商家</span><span>不预约 · 不付款</span
-            ><span>每一步可回看</span>
-          </div>
+    <div class="trialtrust-responsive">
+      <header class="topbar">
+        <a class="brand" href="#"
+          ><span class="brand-mark">试</span
+          ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
+        >
+        <div class="mode-switch" aria-label="使用模式">
+          <button id="guided-mode" aria-pressed="true">✦ 新手引导</button
+          ><button id="expert-mode" aria-pressed="false">已熟练使用</button>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <span class="orbit one">费用 ✓</span>
-          <div class="mascot">
-            <i class="ear left"></i><i class="ear right"></i>
-            <div class="face">
-              <i class="eye left"></i><i class="eye right"></i
-              ><i class="cheek left"></i><i class="cheek right"></i
-              ><i class="mouth"></i>
+        <button id="help" class="quiet">使用帮助 ?</button>
+      </header>
+      <div class="page">
+        <section class="hero">
+          <div>
+            <p class="eyebrow">生活委托的 AI 对照试运行</p>
+            <h1>先陪 AI 走一遍，<br />再决定交哪一步。</h1>
+            <p class="hero-copy">
+              用合成资料彩排生活事务。看它会查什么、漏掉什么，<br
+                class="desktop-only"
+              />在预算变化与证据缺失时，是否仍守住你的授权。
+            </p>
+            <div class="hero-tags">
+              <span>不接触真实商家</span><span>不预约 · 不付款</span
+              ><span>每一步可回看</span>
             </div>
-            <i class="hand"></i>
           </div>
-          <span class="orbit two">证据 ↗</span>
-          <p>你的彩排搭子 · 小托</p>
-        </div>
-      </section>
-      <section id="coach" class="coach" aria-label="新手引导">
-        <span class="coach-avatar" aria-hidden="true">✦</span>
-        <div>
-          <span id="coach-counter" class="eyebrow">第 1 步 / 共 4 步</span>
-          <h2 id="coach-title">先选一件想交给 AI 的小事</h2>
-          <p id="coach-description">
-            从四类生活需求开始。没有合适选项，也可以先写下自己的需求。
-          </p>
-        </div>
-        <button id="coach-next" class="primary">去选事情 ↓</button
-        ><button id="close-guide" class="icon-button" aria-label="关闭新手引导">
-          ×
-        </button>
-      </section>
-      <nav class="stepper" aria-label="使用顺序">
-        <button data-step="1" aria-current="step"><b>01</b> 选事情</button
-        ><button data-step="2"><b>02</b> 核对并运行</button
-        ><button data-step="3"><b>03</b> 看对照与证据</button
-        ><button data-step="4"><b>04</b> 审阅与导出</button>
-      </nav>
-      <main class="workspace">
-        <div class="column config-column">
-          <section class="panel config-panel" id="step-one">
-            <div class="section-heading">
-              <span class="step-number">01</span>
-              <div>
-                <p class="eyebrow">选择需求</p>
-                <h2>这次，想先试哪类事情？</h2>
+          <div class="hero-visual" aria-hidden="true">
+            <span class="orbit one">费用 ✓</span>
+            <div class="mascot">
+              <i class="ear left"></i><i class="ear right"></i>
+              <div class="face">
+                <i class="eye left"></i><i class="eye right"></i
+                ><i class="cheek left"></i><i class="cheek right"></i
+                ><i class="mouth"></i>
               </div>
+              <i class="hand"></i>
             </div>
-            <div id="categories" class="categories" aria-label="需求类别"></div>
-            <label class="field"
-              >具体想做什么<select id="domain">
-                <option value="">请先选择一个类别</option>
-              </select></label
-            >
-            <p id="scenario-description" class="muted">
-              选择后会显示这个示例能核验的条件。
+            <span class="orbit two">证据 ↗</span>
+            <p>你的彩排搭子 · 小托</p>
+          </div>
+        </section>
+        <section id="coach" class="coach" aria-label="新手引导">
+          <span class="coach-avatar" aria-hidden="true">✦</span>
+          <div>
+            <span id="coach-counter" class="eyebrow">第 1 步 / 共 4 步</span>
+            <h2 id="coach-title">先选一件想交给 AI 的小事</h2>
+            <p id="coach-description">
+              从四类生活需求开始。没有合适选项，也可以先写下自己的需求。
             </p>
-            <p id="data-notice" class="data-note">
-              示例价格、服务和规则均为合成资料，非实时商家信息。
-            </p>
-            <details class="custom-request">
-              <summary>没有合适选项？写下自己的需求 ↗</summary>
-              <p class="muted">
-                先在本机替换明显个人资料，再由你检查。未支持的需求会变成待补充清单，不会被强行当成某个示例。
-              </p>
-              <label class="field"
-                >你的需求<textarea
-                  id="private-task"
-                  rows="3"
-                  maxlength="1200"
-                  placeholder="例如：2人到店吃自助餐，总预算200元。请勿填真实姓名、电话、地址。"
-                ></textarea></label
-              ><button id="prepare-stand-in" class="secondary">
-                ① 本地生成替身文本
-              </button>
-              <div id="stand-in-stage" hidden>
-                <label class="field"
-                  >检查并编辑替身文本<textarea
-                    id="stand-in"
-                    rows="3"
-                    maxlength="1200"
-                  ></textarea>
-                </label>
-                <p id="redaction-note" class="muted"></p>
-                <label class="check-control"
-                  ><input id="text-reviewed" type="checkbox" /><span
-                    class="checkmark"
-                    aria-hidden="true"
-                    >✓</span
-                  ><span
-                    >已检查并去除个人资料，同意发送这段替身文本进行分析。</span
-                  ></label
-                ><label class="check-control"
-                  ><input id="analyze-live" type="checkbox" /><span
-                    class="checkmark"
-                    aria-hidden="true"
-                    >✓</span
-                  ><span>同时请真实模型梳理需求（会消耗模型额度）</span></label
-                ><button id="compile" class="secondary">
-                  ② 分析需求与缺失条件
-                </button>
+          </div>
+          <button id="coach-next" class="primary">去选事情 ↓</button
+          ><button
+            id="close-guide"
+            class="icon-button"
+            aria-label="关闭新手引导"
+          >
+            ×
+          </button>
+        </section>
+        <nav class="stepper" aria-label="使用顺序">
+          <button data-step="1" aria-current="step"><b>01</b> 选事情</button
+          ><button data-step="2"><b>02</b> 核对并运行</button
+          ><button data-step="3"><b>03</b> 看对照与证据</button
+          ><button data-step="4"><b>04</b> 审阅与导出</button>
+        </nav>
+        <main class="workspace">
+          <div class="column config-column">
+            <section class="panel config-panel" id="step-one">
+              <div class="section-heading">
+                <span class="step-number">01</span>
+                <div>
+                  <p class="eyebrow">选择需求</p>
+                  <h2>这次，想先试哪类事情？</h2>
+                </div>
               </div>
               <div
-                id="compile-result"
-                class="analysis-result"
-                aria-live="polite"
+                id="categories"
+                class="categories"
+                aria-label="需求类别"
               ></div>
-            </details>
-            <button id="to-conditions" class="text-button">
-              选好了，下一步核对条件 →
-            </button>
-          </section>
-          <section class="panel conditions-panel" id="step-two">
-            <div class="section-heading">
-              <span class="step-number mint">02</span>
-              <div>
-                <p class="eyebrow">划清委托边界</p>
-                <h2>核对条件，再开始彩排</h2>
-              </div>
-            </div>
-            <div class="form-grid">
               <label class="field"
-                ><span id="quantity-label">数量</span
-                ><input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  max="8"
-                  value="2" /></label
-              ><label class="field"
-                >服务方式<select id="fulfillment">
-                  <option value="">请先选择场景</option>
+                >具体想做什么<select id="domain">
+                  <option value="">请先选择一个类别</option>
                 </select></label
-              ><label class="field wide"
-                >本次总预算（元）<input
-                  id="budget"
-                  type="number"
-                  min="0"
-                  max="1000"
-                  step="1"
-                  value="200"
-              /></label>
-            </div>
-            <p id="fee-note" class="data-note">示例费用会显示在这里。</p>
-            <div class="boundary">
-              <b>你授权的只有这三件事</b>
-              <p>查询资料 → 检查方案 → 生成候选草稿</p>
-              <small
-                >预约、下单和支付均不在授权内；越权尝试会被沙盒拦截。</small
               >
-            </div>
-            <label class="check-control confirmation" id="confirmation-label"
-              ><input id="confirmed" type="checkbox" /><span
-                class="checkmark"
-                aria-hidden="true"
-                >✓</span
-              ><span
-                >已核对场景、数量、方式和预算。其他要求尚未进入试验；真实个人资料不会随本次试运行发送。</span
-              ></label
-            >
-            <p
-              id="confirmation-status"
-              class="confirmation-status"
-              aria-live="polite"
-            >
-              尚未确认 · 修改条件后需重新勾选
-            </p>
-            <label class="field"
-              >由谁来执行彩排？<select id="agent">
-                <option value="demo_careful">
-                  离线示例 · 会核验条件的执行者
-                </option>
-                <option value="demo_rushed">
-                  离线反例 · 容易遗漏费用的执行者
-                </option>
-                <option value="live" disabled>真实模型 · 正在检查可用性</option>
-              </select></label
-            ><label class="check-control"
-              ><input id="dense" type="checkbox" disabled /><span
-                class="checkmark"
-                aria-hidden="true"
-                >✓</span
-              ><span>使用真实向量检索，与关键词混合召回</span></label
-            >
-            <p id="mode-note" class="muted"></p>
-            <button id="run-suite" class="primary run-button">
-              开始一组对照彩排 ↗
-            </button>
-            <p class="muted centered">
-              先跑原始条件，再改变一个因素，比较两次结果。
-            </p>
-            <details id="single-options" class="advanced">
-              <summary>进阶：自己指定测试条件，单次试运行</summary>
-              <label class="field"
-                >测试条件<select id="cases">
-                  <option value="baseline">原始条件</option>
-                  <option value="price_change">单价临时上涨</option>
-                  <option value="missing_evidence">现行价目缺失</option>
-                  <option value="injection">资料夹带越权要求</option>
-                  <option value="tool_timeout">首次查询超时</option>
-                </select></label
-              ><button id="run" class="secondary">运行这次试托 ↗</button>
-            </details>
-          </section>
-          <section class="panel skills-panel">
-            <div class="section-heading">
-              <span class="step-number peach">✦</span>
-              <div>
-                <p class="eyebrow">真正参与执行的能力</p>
-                <h2>小托会用哪些 Skills？</h2>
-              </div>
-            </div>
-            <p class="muted">
-              可信白名单技能按需加载；执行由宿主工具控制。下方介绍能力，右侧结果记录这次实际调用。
-            </p>
-            <div id="skills-catalog"></div>
-            <details>
-              <summary>MCP 和 Skills 有什么关系？</summary>
-              <p>
-                Skills
-                提供受控任务说明、输入输出约束和权限检查；应用内运行时调用本地宿主函数。仓库另有两个只读
-                stdio MCP
-                工具，用于外部客户端查询合成规则及检查方案。网页当前直接调用同源后端，不经过外部
-                MCP 会话；也不允许上传任意可执行技能。
+              <p id="scenario-description" class="muted">
+                选择后会显示这个示例能核验的条件。
               </p>
-            </details>
-          </section>
-        </div>
-        <div class="column result-column">
-          <section class="panel result-panel" id="step-three">
-            <div class="section-heading">
-              <span class="step-number lilac">03</span>
-              <div>
-                <p class="eyebrow">观察与对照</p>
-                <h2>它做了什么，依据在哪？</h2>
-              </div>
-              <span id="run-status" class="status-pill">尚未开始</span>
-            </div>
-            <div id="empty-state" class="empty-state">
-              <div class="empty-symbol" aria-hidden="true">◎</div>
-              <h3>给第一次委托，留一次彩排</h3>
-              <p>
-                完成左侧条件核对后，这里会出现两次结果、费用检查和工具证据。
+              <p id="data-notice" class="data-note">
+                示例价格、服务和规则均为合成资料，非实时商家信息。
               </p>
-              <p class="muted">建议先用离线示例熟悉流程，再切换真实模型。</p>
-            </div>
-            <div id="result-content" hidden>
-              <p id="run-meta" class="muted"></p>
-              <div id="progress" aria-live="polite"></div>
-              <div id="paired-comparison" hidden></div>
-              <div id="finding"></div>
-              <div id="metrics" class="metrics"></div>
-              <pre id="contract-report" class="contract-report" hidden></pre>
-              <h3>执行者的说明</h3>
-              <p id="answer" class="answer"></p>
-              <details class="evidence-details" open>
-                <summary>逐步工具证据 <span id="trace-count"></span></summary>
-                <div id="trace"></div>
-              </details>
-              <details class="skill-events" open>
-                <summary>本次实际技能调用</summary>
-                <div id="run-skills"></div>
-              </details>
-              <section id="step-four" class="review-block">
-                <div class="section-heading">
-                  <span class="step-number peach">04</span>
-                  <div>
-                    <p class="eyebrow">由你来决定</p>
-                    <h2>这份结果，你愿意保留吗？</h2>
-                  </div>
+              <details class="custom-request">
+                <summary>没有合适选项？写下自己的需求 ↗</summary>
+                <p class="muted">
+                  先在本机替换明显个人资料，再由你检查。未支持的需求会变成待补充清单，不会被强行当成某个示例。
+                </p>
+                <label class="field"
+                  >你的需求<textarea
+                    id="private-task"
+                    rows="3"
+                    maxlength="1200"
+                    placeholder="例如：2人到店吃自助餐，总预算200元。请勿填真实姓名、电话、地址。"
+                  ></textarea></label
+                ><button id="prepare-stand-in" class="secondary">
+                  ① 本地生成替身文本
+                </button>
+                <div id="stand-in-stage" hidden>
+                  <label class="field"
+                    >检查并编辑替身文本<textarea
+                      id="stand-in"
+                      rows="3"
+                      maxlength="1200"
+                    ></textarea>
+                  </label>
+                  <p id="redaction-note" class="muted"></p>
+                  <label class="check-control"
+                    ><input id="text-reviewed" type="checkbox" /><span
+                      class="checkmark"
+                      aria-hidden="true"
+                      >✓</span
+                    ><span
+                      >已检查并去除个人资料，同意发送这段替身文本进行分析。</span
+                    ></label
+                  ><label class="check-control"
+                    ><input id="analyze-live" type="checkbox" /><span
+                      class="checkmark"
+                      aria-hidden="true"
+                      >✓</span
+                    ><span
+                      >同时请真实模型梳理需求（会消耗模型额度）</span
+                    ></label
+                  ><button id="compile" class="secondary">
+                    ② 分析需求与缺失条件
+                  </button>
                 </div>
-                <p>保留的是试运行记录，不是同意真实预约或付款。</p>
-                <div id="review" class="review-actions" hidden>
-                  <button id="accept" class="primary">保留结果</button
-                  ><button id="reject" class="secondary">暂不接受</button>
+                <div
+                  id="compile-result"
+                  class="analysis-result"
+                  aria-live="polite"
+                ></div>
+              </details>
+              <button id="to-conditions" class="text-button">
+                选好了，下一步核对条件 →
+              </button>
+            </section>
+            <section class="panel conditions-panel" id="step-two">
+              <div class="section-heading">
+                <span class="step-number mint">02</span>
+                <div>
+                  <p class="eyebrow">划清委托边界</p>
+                  <h2>核对条件，再开始彩排</h2>
                 </div>
-                <p id="reviewed" class="data-note" hidden></p>
-                <a id="export" class="secondary download" href="#" hidden
-                  >下载完整记录 JSON ↓</a
+              </div>
+              <div class="form-grid">
+                <label class="field"
+                  ><span id="quantity-label">数量</span
+                  ><input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    max="8"
+                    value="2" /></label
+                ><label class="field"
+                  >服务方式<select id="fulfillment">
+                    <option value="">请先选择场景</option>
+                  </select></label
+                ><label class="field wide"
+                  >本次总预算（元）<input
+                    id="budget"
+                    type="number"
+                    min="0"
+                    max="1000"
+                    step="1"
+                    value="200"
+                /></label>
+              </div>
+              <p id="fee-note" class="data-note">示例费用会显示在这里。</p>
+              <div class="boundary">
+                <b>你授权的只有这三件事</b>
+                <p>查询资料 → 检查方案 → 生成候选草稿</p>
+                <small
+                  >预约、下单和支付均不在授权内；越权尝试会被沙盒拦截。</small
                 >
-                <div class="retry-actions">
-                  <p class="muted">想再试一次？先改条件，再重新确认。</p>
-                  <button id="try-budget" class="chip">预算改为250元</button
-                  ><button id="try-price" class="chip">试试价格上涨</button
-                  ><button id="try-missing" class="chip">试试证据缺失</button>
-                </div>
-              </section>
-            </div>
-          </section>
-          <section class="panel history-panel">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">当前浏览器会话</p>
-                <h2>
-                  我的彩排记录 <span id="history-count" class="count">0</span>
-                </h2>
               </div>
-              <button id="new-trial" class="text-button">开启新一次 +</button>
-            </div>
-            <p class="muted">
-              记录属于当前匿名会话。回放不会恢复旧的授权勾选；会话可能在24小时后过期。
-            </p>
-            <div id="history"></div>
-          </section>
-        </div>
-      </main>
-      <footer class="site-footer">
-        <span>试托 v0.5 · 合成环境中的委托彩排</span
-        ><button id="restart-guide" class="text-button">
-          重新开始新手引导 ↻
-        </button>
-        <p>
-          4类12个示例场景；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
-        </p>
-      </footer>
+              <label class="check-control confirmation" id="confirmation-label"
+                ><input id="confirmed" type="checkbox" /><span
+                  class="checkmark"
+                  aria-hidden="true"
+                  >✓</span
+                ><span
+                  >已核对场景、数量、方式和预算。其他要求尚未进入试验；真实个人资料不会随本次试运行发送。</span
+                ></label
+              >
+              <p
+                id="confirmation-status"
+                class="confirmation-status"
+                aria-live="polite"
+              >
+                尚未确认 · 修改条件后需重新勾选
+              </p>
+              <label class="field"
+                >由谁来执行彩排？<select id="agent">
+                  <option value="demo_careful">
+                    离线示例 · 会核验条件的执行者
+                  </option>
+                  <option value="demo_rushed">
+                    离线反例 · 容易遗漏费用的执行者
+                  </option>
+                  <option value="live" disabled>
+                    真实模型 · 正在检查可用性
+                  </option>
+                </select></label
+              ><label class="check-control"
+                ><input id="dense" type="checkbox" disabled /><span
+                  class="checkmark"
+                  aria-hidden="true"
+                  >✓</span
+                ><span>使用真实向量检索，与关键词混合召回</span></label
+              >
+              <p id="mode-note" class="muted"></p>
+              <button id="run-suite" class="primary run-button">
+                开始一组对照彩排 ↗
+              </button>
+              <p class="muted centered">
+                先跑原始条件，再改变一个因素，比较两次结果。
+              </p>
+              <details id="single-options" class="advanced">
+                <summary>进阶：自己指定测试条件，单次试运行</summary>
+                <label class="field"
+                  >测试条件<select id="cases">
+                    <option value="baseline">原始条件</option>
+                    <option value="price_change">单价临时上涨</option>
+                    <option value="missing_evidence">现行价目缺失</option>
+                    <option value="injection">资料夹带越权要求</option>
+                    <option value="tool_timeout">首次查询超时</option>
+                  </select></label
+                ><button id="run" class="secondary">运行这次试托 ↗</button>
+              </details>
+            </section>
+            <section class="panel skills-panel">
+              <div class="section-heading">
+                <span class="step-number peach">✦</span>
+                <div>
+                  <p class="eyebrow">真正参与执行的能力</p>
+                  <h2>小托会用哪些 Skills？</h2>
+                </div>
+              </div>
+              <p class="muted">
+                可信白名单技能按需加载；执行由宿主工具控制。下方介绍能力，右侧结果记录这次实际调用。
+              </p>
+              <div id="skills-catalog"></div>
+              <details>
+                <summary>MCP 和 Skills 有什么关系？</summary>
+                <p>
+                  Skills
+                  提供受控任务说明、输入输出约束和权限检查；应用内运行时调用本地宿主函数。仓库另有两个只读
+                  stdio MCP
+                  工具，用于外部客户端查询合成规则及检查方案。网页当前直接调用同源后端，不经过外部
+                  MCP 会话；也不允许上传任意可执行技能。
+                </p>
+              </details>
+            </section>
+          </div>
+          <div class="column result-column">
+            <section class="panel result-panel" id="step-three">
+              <div class="section-heading">
+                <span class="step-number lilac">03</span>
+                <div>
+                  <p class="eyebrow">观察与对照</p>
+                  <h2>它做了什么，依据在哪？</h2>
+                </div>
+                <span id="run-status" class="status-pill">尚未开始</span>
+              </div>
+              <div id="empty-state" class="empty-state">
+                <div class="empty-symbol" aria-hidden="true">◎</div>
+                <h3>给第一次委托，留一次彩排</h3>
+                <p>
+                  完成左侧条件核对后，这里会出现两次结果、费用检查和工具证据。
+                </p>
+                <p class="muted">建议先用离线示例熟悉流程，再切换真实模型。</p>
+              </div>
+              <div id="result-content" hidden>
+                <p id="run-meta" class="muted"></p>
+                <div id="progress" aria-live="polite"></div>
+                <div id="paired-comparison" hidden></div>
+                <div id="finding"></div>
+                <div id="metrics" class="metrics"></div>
+                <pre id="contract-report" class="contract-report" hidden></pre>
+                <h3>执行者的说明</h3>
+                <p id="answer" class="answer"></p>
+                <details class="evidence-details" open>
+                  <summary>逐步工具证据 <span id="trace-count"></span></summary>
+                  <div id="trace"></div>
+                </details>
+                <details class="skill-events" open>
+                  <summary>本次实际技能调用</summary>
+                  <div id="run-skills"></div>
+                </details>
+                <section id="step-four" class="review-block">
+                  <div class="section-heading">
+                    <span class="step-number peach">04</span>
+                    <div>
+                      <p class="eyebrow">由你来决定</p>
+                      <h2>这份结果，你愿意保留吗？</h2>
+                    </div>
+                  </div>
+                  <p>保留的是试运行记录，不是同意真实预约或付款。</p>
+                  <div id="review" class="review-actions" hidden>
+                    <button id="accept" class="primary">保留结果</button
+                    ><button id="reject" class="secondary">暂不接受</button>
+                  </div>
+                  <p id="reviewed" class="data-note" hidden></p>
+                  <a id="export" class="secondary download" href="#" hidden
+                    >下载完整记录 JSON ↓</a
+                  >
+                  <div class="retry-actions">
+                    <p class="muted">想再试一次？先改条件，再重新确认。</p>
+                    <button id="try-budget" class="chip">预算改为250元</button
+                    ><button id="try-price" class="chip">试试价格上涨</button
+                    ><button id="try-missing" class="chip">试试证据缺失</button>
+                  </div>
+                </section>
+              </div>
+            </section>
+            <section class="panel history-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">当前浏览器会话</p>
+                  <h2>
+                    我的彩排记录 <span id="history-count" class="count">0</span>
+                  </h2>
+                </div>
+                <button id="new-trial" class="text-button">开启新一次 +</button>
+              </div>
+              <p class="muted">
+                记录属于当前匿名会话。回放不会恢复旧的授权勾选；会话可能在24小时后过期。
+              </p>
+              <div id="history"></div>
+            </section>
+          </div>
+        </main>
+        <footer class="site-footer">
+          <span>试托 v0.5 · 合成环境中的委托彩排</span
+          ><button id="restart-guide" class="text-button">
+            重新开始新手引导 ↻
+          </button>
+          <p>
+            4类12个示例场景；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
+          </p>
+        </footer>
+      </div>
     </div>
     <div
       id="notice"

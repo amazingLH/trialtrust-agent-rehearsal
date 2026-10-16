@@ -1,4 +1,8 @@
 const $ = (id) => document.getElementById(id);
+PortalViewport.attach(
+  window,
+  $("notice").closest(".trialtrust-root") || document.documentElement,
+);
 const caseLabels = {
   baseline: "原始条件",
   price_change: "单价临时上涨",
