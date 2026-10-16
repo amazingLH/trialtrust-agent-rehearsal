@@ -24,6 +24,14 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
         asset = re.search(r'src="([^"]+/assets/[^"]+\.js)"', client.get("/").text)
         assert asset is not None
         assert client.get(asset.group(1)).status_code == 200
+        direct = client.get('/api/workbench')
+        assert direct.status_code == 200 and 'id="confirmed"' in direct.text
+        assert direct.headers['X-Frame-Options'] == 'DENY'
+        assert "script-src 'self'" in direct.headers['Content-Security-Policy']
+        assert '/api/workbench-assets/app.js' in direct.text
+        script = client.get('/api/workbench-assets/app.js')
+        assert script.status_code == 200 and 'javascript' in script.headers['content-type']
+        assert client.get('/api/workbench-assets/style.css').status_code == 200
         assert client.get("/health", headers={"Host": "studio-changed-123.cn-beijing-vpc.fcapp.run"}).status_code == 200
         assert client.get("/health", headers={"Host": "studio-changed-123.cn-beijing-vpc.fcapp.run.evil.invalid"}).status_code == 400
         headers = {"X-TrialTrust-Client": "web", "Origin": "https://trial.example"}

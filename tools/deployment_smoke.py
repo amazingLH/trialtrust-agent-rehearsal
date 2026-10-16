@@ -49,6 +49,10 @@ def main():
         assert 'id="run-suite"' in component["props"]["value"]
         assert 'id="guided-mode"' in component['props']['value']
         assert 'confirmedFor' in component['props']['js_on_load']
+        direct = client.get('/api/workbench')
+        direct.raise_for_status()
+        assert 'id="guided-mode"' in direct.text and '/api/workbench-assets/app.js' in direct.text
+        assert client.get('/api/workbench-assets/app.js').status_code == 200
         response = client.get("/health")
         response.raise_for_status()
         assert response.json() == {"status": "ok", "synthetic_only": True}

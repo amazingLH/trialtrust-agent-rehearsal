@@ -20,7 +20,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, StrictBool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -127,6 +127,9 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     # blocks that response, so set the executable script MIME type explicitly.
     mimetypes.add_type("text/javascript", ".js")
     app.mount("/assets", StaticFiles(directory=assets), name="assets")
+    # A first-party entry avoids the managed portal's cross-site iframe shell.
+    # Keep these assets separate from Gradio's own /assets namespace.
+    app.mount('/api/workbench-assets', StaticFiles(directory=assets), name='workbench_assets')
 
     @app.middleware("http")
     async def boundary(request, call_next):
@@ -148,10 +151,11 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
                 logging.getLogger("trialtrust.gateway").warning("Gateway host rejected: %r", hostname)
         response.headers["X-Content-Type-Options"] = "nosniff"
         studio_ui = getattr(app.state, "studio_ui", False)
-        if not studio_ui:
+        direct_ui = request.url.path == '/api/workbench'
+        if not studio_ui or direct_ui:
             response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
-        if studio_ui:
+        if studio_ui and not direct_ui:
             # Managed Gradio supplies its own frontend; restrict framing to the
             # actual portal, without applying standalone script rules to Gradio.
             response.headers["Content-Security-Policy"] = "frame-ancestors 'self' https://modelscope.cn https://www.modelscope.cn"
@@ -203,6 +207,12 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     @app.get("/")
     def index():
         return FileResponse(assets / "index.html")
+
+    @app.get('/api/workbench', response_class=HTMLResponse)
+    def direct_workbench():
+        # Single source of truth: identical UI, session ownership and budgets.
+        return HTMLResponse((assets/'index.html').read_text(encoding='utf-8')
+                            .replace('"/assets/', '"/api/workbench-assets/'))
 
     @app.get("/health")
     def health():
