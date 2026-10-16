@@ -99,7 +99,7 @@ def main():
         target = args.output or ROOT/'runtime'/('v0.5-live-smoke.json' if args.live else 'v0.5-offline-smoke.json')
         target.parent.mkdir(parents=True,exist_ok=True)
         target.write_text(
-            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
         print(json.dumps({"private_owner_api": args.owner_gateway, "live": args.live, "run_id": run_id,
                           "reviewed": report["human_reviewed"], "real_world_side_effects": report["real_world_side_effects"]}, ensure_ascii=False))
 

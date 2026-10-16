@@ -2,7 +2,7 @@
   "version": "v0.5",
   "status": "local_verified_cloud_pending",
   "evidence": {
-    "local-live-v0.5.json": "f34afd17ec4ad58a2c8c2c711df3afb021e1ef3372d015f6b3c2285830e23d79",
+    "local-live-v0.5.json": "89f50d5a4b2e2bed6df41e4428464450f44b935ca2b7fa4964d14389a60e40bd",
     "browser-v0.5.json": "090dde4f2b66d96ff30ffe39fd0e535b4564e26f83a6ad186449ad153892daca"
   },
   "tests": {
