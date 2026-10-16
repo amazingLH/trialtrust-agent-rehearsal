@@ -12,13 +12,14 @@ jobs:
   verify:
     name: Python 3.11 / ${{ matrix.profile }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         profile: [core, studio]
     env:
       TRIALTRUST_ENABLE_LIVE: '0'
-      TRIALTRUST_RUNTIME: ${{ runner.temp }}/trialtrust/web
+      TRIALTRUST_RUNTIME: runtime/ci/web
       GRADIO_ANALYTICS_ENABLED: 'False'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
