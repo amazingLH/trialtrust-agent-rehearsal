@@ -1,0 +1,29 @@
+{
+  "version": "v0.5",
+  "observed_utc": "2026-10-16T06:34:18.808866+00:00",
+  "method": "actual_local_CUA_browser_interactions",
+  "targets": [
+    "standalone FastAPI",
+    "Gradio managed adapter"
+  ],
+  "not_real_user_study": true,
+  "checks": {
+    "initial_unchecked": "blocked without creating record",
+    "check_then_uncheck": "blocked; visible custom tick appears only while native input is checked",
+    "edit_after_check": "budget edit invalidates consent",
+    "history_replay": "old report does not restore current confirmation",
+    "pair_replay": "switching result cards does not hydrate editor",
+    "gradio_adapter": "native checkbox and offline hotel suite work in actual Gradio",
+    "custom_privacy": "analysis blocked until explicit text consent",
+    "unsupported_request": "pet boarding produces clarification, no proposal; old domain cleared on text edit",
+    "supported_request": "buffet fields adopted explicitly; cannot-eat-spicy remains unmodeled",
+    "guide_and_help": "four steps, expert mode, restart and Escape-to-close help checked",
+    "mobile_390x844": "Gradio outer padding fixed; document scroll width375 <= viewport390"
+  },
+  "public_cloud_browser": "pending_deployment",
+  "screenshots": [
+    "assets/v0.5/home-local.jpg",
+    "assets/v0.5/mobile-local.jpg",
+    "assets/v0.5/consent-local.jpg"
+  ]
+}

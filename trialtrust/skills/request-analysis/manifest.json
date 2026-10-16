@@ -1,0 +1,49 @@
+{
+  "id": "request-analysis",
+  "name": "自定义需求拆解",
+  "version": "1.0.0",
+  "description": "分析手动需求，找出已知条件、遗漏信息和下一步；可选真实模型。",
+  "capabilities": [
+    "analyze_text",
+    "model_call"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 1200
+      }
+    },
+    "required": [
+      "text"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "summary": {
+        "type": "string"
+      },
+      "proposal": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "can_rehearse": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "summary",
+      "proposal",
+      "can_rehearse"
+    ]
+  },
+  "required_capabilities": [
+    "analyze_text"
+  ]
+}

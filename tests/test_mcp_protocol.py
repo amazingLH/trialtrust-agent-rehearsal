@@ -19,4 +19,10 @@ def test_real_stdio_protocol_and_budget_rejection():
                 assert not data["valid"]
                 assert "submitted_total" in data["conflicting_constraints"]
                 assert {"user_budget", "current_price_times_quantity_plus_fee"} & set(data["conflicting_constraints"])
+                evidence = await client.call_tool('search_demo_terms', {'query':'现行价格退改规则', 'domain':'museum'})
+                assert json.loads(evidence.content[0].text)['hits']
+                museum = await client.call_tool('check_demo_plan', {
+                    'domain':'museum','quantity':2,'fulfillment':'entry','budget_yuan':100,
+                    'total_yuan':80,'source_ids':['museum-price-v1','museum-cancel-v1']})
+                assert json.loads(museum.content[0].text)['valid'] is True
     asyncio.run(check())

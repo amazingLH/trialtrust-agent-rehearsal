@@ -10,6 +10,7 @@ import re
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .mandate import Mandate
+from .catalog import CATALOG
 
 
 class CompileRequest(BaseModel):
@@ -42,14 +43,18 @@ def compile_stand_in(text: str) -> dict:
         spans.append({"field": field, "value": value, "text": match.group(),
                       "start": match.start(), "end": match.end()})
 
-    for match in re.finditer(r"陶艺|空调清洗|清洗空调", text):
-        add("domain", "pottery" if match.group() == "陶艺" else "cleaning", match)
-    for match in re.finditer(r"(?<![\d一二三四五六七八九十百])([1-8一二两三四五六七八])\s*(人|台)", text):
+    keywords = {word: key for key, entry in CATALOG.items() for word in entry['keywords']}
+    for match in re.finditer('|'.join(re.escape(word) for word in sorted(keywords,key=len,reverse=True)), text, re.I):
+        add("domain", keywords[match.group().lower()], match)
+    quantity_units = []
+    for match in re.finditer(r"(?<![\d一二三四五六七八九十百])([1-8一二两三四五六七八])\s*(人|台|份|间|次)", text):
         add("quantity", numeral[match.group(1)], match)
+        quantity_units.append(match.group(2))
     for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*([0-9]{1,4})\s*元", text):
         add("budget_yuan", int(match.group(1)), match)
-    for match in re.finditer(r"到店自取|自取|作品邮寄|邮寄|上门", text):
-        value = "shipping" if "邮寄" in match.group() else "onsite" if "上门" in match.group() else "pickup"
+    modes = {'到店自取':'pickup','自取':'pickup','作品邮寄':'shipping','邮寄':'shipping','上门':'onsite','到场入园':'entry','入园':'entry','到场':'entry','到店用餐':'dine_in','用餐':'dine_in','集合出行':'meetup','集合':'meetup','入住体验':'stay','入住':'stay'}
+    for match in re.finditer('|'.join(sorted(modes,key=len,reverse=True)), text):
+        value = modes[match.group()]
         add("fulfillment", value, match)
     chosen = {}
     for field, values in fields.items():
@@ -70,6 +75,9 @@ def compile_stand_in(text: str) -> dict:
         if fragment:
             leftovers.append(fragment)
     proposal = None
+    if len(set(fields['domain'])) == 1 and quantity_units:
+        if any(unit != CATALOG[fields['domain'][0]]['unit'] for unit in quantity_units):
+            issues.append({'field':'quantity','reason':'unsupported_quantity_unit'})
     if not issues:
         try:
             proposal = Mandate(**chosen).model_dump()

@@ -3,6 +3,7 @@
 The standalone FastAPI/Docker entry remains trialtrust.webapp:app.
 """
 import os
+import re
 from pathlib import Path
 
 os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
@@ -20,10 +21,11 @@ def create_studio_app():
     app = create_app()
     assets = Path(__file__).parent / "trialtrust" / "web"
     html = (assets / "index.html").read_text(encoding="utf-8").split("<body>", 1)[1].split("</body>", 1)[0]
-    css = (assets / "style.css").read_text(encoding="utf-8").replace(":root", ".trialtrust-root").replace("body{", ".trialtrust-root{")
+    css = (assets / "style.css").read_text(encoding="utf-8").replace(":root", ".trialtrust-root")
+    css = re.sub(r"(?<![\w.-])body\s*\{", ".trialtrust-root {", css)
     javascript = (assets / "app.js").read_text(encoding="utf-8")
     javascript = javascript.replace("document.getElementById(id)", "root.querySelector('#' + id)")
-    javascript = javascript.replace("document.querySelectorAll(", "root.querySelectorAll(")
+    javascript = re.sub(r"document\s*\.\s*querySelectorAll\s*\(", "root.querySelectorAll(", javascript)
     with gr.Blocks(analytics_enabled=False, title="试托 · 委托前试运行") as studio:
         gr.HTML(value='<div class="trialtrust-root">' + html + '</div>',
                 css_template=css, js_on_load="(function(root){\n" + javascript + "\n})(element);",
@@ -32,7 +34,7 @@ def create_studio_app():
     # Gradio shell instead of passing our standalone index.html through.
     app.router.routes[:] = [route for route in app.router.routes if getattr(route, "path", None) not in {"/", "/assets"}]
     app.state.studio_ui = True
-    return gr.mount_gradio_app(app, studio, path="/", css=".gradio-container{max-width:none!important;padding:0!important}footer{display:none!important}")
+    return gr.mount_gradio_app(app, studio, path="/", css=".gradio-container{max-width:none!important;padding:0!important;overflow:visible!important}.gradio-container > main{padding:0!important}.gradio-container footer:not(.site-footer){display:none!important}")
 
 
 if __name__ == "__main__":

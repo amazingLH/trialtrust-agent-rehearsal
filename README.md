@@ -6,7 +6,9 @@
 
 [在线体验](https://l666h666better-trialtrust.ms.show) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![试托封面，价格与条件均为合成示例](assets/cover.jpg)
+![v0.5 本地 Gradio 首页实际截图](assets/v0.5/home-local.jpg)
+
+当前版本 **v0.5**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自本地托管适配器；云端与真实模型证据分别记录。
 
 ## 产品解决的问题
 
@@ -47,9 +49,11 @@ flowchart LR
 | Harness | 自有合成服务环境、涨价/缺证据/注入/超时条件、行为与故障分别记录 | [scenarios.py](trialtrust/scenarios.py) |
 | 状态与恢复 | LangGraph、SQLite Checkpointer、人审Interrupt、父图恢复时复用子图 | [cli.py](trialtrust/cli.py)、[suite.py](trialtrust/suite.py) |
 | MCP | 可独立连接的两个只读stdio工具；主网页内部工具调用不经过该服务 | [mcp_server.py](trialtrust/mcp_server.py) |
+| 应用内 Skills | 可信白名单、按需说明加载、JSON Schema、权限闸门、调用摘要与检查点恢复 | [skill_runtime.py](trialtrust/skill_runtime.py)、[技能说明](docs/skills.md) |
+| 分层需求目录 | 景点、美食、旅行、生活4类12个合成场景；未知文字只形成澄清清单 | [catalog.py](trialtrust/catalog.py)、[request_analysis.py](trialtrust/request_analysis.py) |
 | 服务与预算 | FastAPI、Gradio托管适配、匿名会话归属、同源校验、请求前费用预留 | [webapp.py](trialtrust/webapp.py)、[app.py](app.py) |
 
-完整能力清单与尚未实现的部分见[架构文档](docs/architecture.md)。当前没有应用内的Agent Skills发现/加载运行时、A2A、神经重排或任意第三方Agent接入；不把提示词或MCP工具直接称为Skill。
+完整能力清单与尚未实现的部分见[架构文档](docs/architecture.md)。v0.5已实现应用内可信 Skills 运行时；尚无A2A、神经重排或任意第三方Agent接入。Skills 与只读 MCP 的不同职责见技能文档。
 
 ## 快速开始：无需密钥的离线模式
 
@@ -80,9 +84,9 @@ python tools/verify_evidence.py
 
 ## 验证证据
 
-- Windows开发环境：43项测试通过。
-- 干净Linux核心Docker：42项通过、1项Gradio托管测试跳过。
-- 真实模型工具链、真实Embedding、一次多角色对照均有记录。
+- v0.5 Windows开发环境：113项测试通过（新增70项，含12领域×5条件矩阵、技能权限、未知需求与确认拒绝）。
+- v0.5 干净Linux核心Docker：112项通过、1项Gradio托管测试跳过。
+- v0.5真实博物馆对照、真实Embedding、五项技能路由与未知需求分析已有[新版验证记录](docs/validation-v0.5.md)。
 - 无账号登录的云端API检查完成配置、离线对照、审阅接口和导出；真实模型在两台清洗、220元预算下生成210元草稿。
 - 40条方案探针、24条检索问题及检索消融结果保存在[evals](evals/)。这些是AI编写的开发回归，尚无独立人工金标或真实用户研究。
 
@@ -90,7 +94,7 @@ python tools/verify_evidence.py
 
 ## 当前边界
 
-支持陶艺、分体挂机清洗两个自有合成领域，不连接真实商家、预约、支付或通讯。文本提取仅覆盖有限明确字段；时间、地址、机型等额外要求会作为未建模内容展示。格式替换不能保证完全匿名化。
+支持景点、美食、旅行、生活四类共十二个自有合成场景，不连接真实商家、预约、支付或通讯。自定义需求可使用规则或显式开启真实模型梳理；仅明确映射到目录且四项字段齐全时才能采用为试验条件。时间、地址、机型等额外要求会作为未建模内容展示。格式替换不能保证完全匿名化。
 
 检索对语料不支持的问题仍可能返回文档，尚无可靠的无答案校准。单次成对执行不能证明统计因果、模型排名或整体安全；额外角色是否改善质量也尚未完成对照验证。应用为单进程设计，免费托管需要持续维护。
 
@@ -98,6 +102,8 @@ python tools/verify_evidence.py
 
 | 文档 | 内容 |
 |---|---|
+| [使用教程](docs/usage.md) | 四步操作、新手模式、自定义需求与确认规则 |
+| [Skills运行时](docs/skills.md) | 技能发现、加载、权限、真实执行、证据与限制 |
 | [产品设计](docs/product.md) | 创意来源、目标用户、场景、差异与价值假设 |
 | [系统架构](docs/architecture.md) | 状态流、Agent权限、工具、RAG、核验、恢复与技术取舍 |
 | [开发过程](docs/development.md) | 从场景定义到云端验收的七个工程阶段与复现步骤 |

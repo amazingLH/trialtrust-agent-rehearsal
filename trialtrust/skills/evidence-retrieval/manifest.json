@@ -1,0 +1,56 @@
+{
+  "id": "evidence-retrieval",
+  "name": "现行证据检索",
+  "version": "1.0.0",
+  "description": "按领域和版本过滤，再检索价目、退改及授权资料。",
+  "capabilities": [
+    "read_fixture"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string"
+      },
+      "domain": {
+        "enum": [
+          "museum",
+          "garden",
+          "aquarium",
+          "buffet",
+          "teatime",
+          "picnic",
+          "citywalk",
+          "daytrip",
+          "hotel",
+          "pottery",
+          "cleaning",
+          "organizing"
+        ]
+      }
+    },
+    "required": [
+      "query",
+      "domain"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "hits": {
+        "type": "array"
+      },
+      "mode": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "hits",
+      "mode"
+    ]
+  },
+  "required_capabilities": [
+    "read_fixture"
+  ]
+}

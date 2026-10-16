@@ -23,8 +23,8 @@ ZIP是独立准备的参赛源工程备份，不能代替平台运行。后续Gi
 ## 独立Docker入口
 
 ```bash
-docker build -t trialtrust:0.4 .
-docker run --rm -p 7860:7860 trialtrust:0.4
+docker build -t trialtrust:0.5 .
+docker run --rm -p 7860:7860 trialtrust:0.5
 ```
 
 默认离线。核心入口为`trialtrust.webapp:app`，容器端口7860。需要保留状态时挂载`/mnt/workspace/trialtrust`；需要真实模型时通过托管Secret或安全的环境注入方式配置，不把密钥写进镜像。
@@ -68,3 +68,6 @@ python tools/deployment_smoke.py
 当前应用面向受限演示，为单进程状态模型。长期开放前需验证资源休眠、持久目录、模型额度、错误恢复及访问稳定性。免费资源的可用时长以平台为准，不承诺永久在线；多个独立部署的费用账本不会自动合并。
 
 GitHub CI只运行离线检查，不部署魔搭，不读取任何模型密钥，也不会自动提交赛事作品。
+
+
+v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提交，不强推。Gradio适配另取消外层main额外padding与overflow裁切，保留产品自身footer和手机宽度。新版验收与旧版证据分别记录，不用旧截图证明新部署。

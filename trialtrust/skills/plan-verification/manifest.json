@@ -1,0 +1,48 @@
+{
+  "id": "plan-verification",
+  "name": "费用与授权核验",
+  "version": "1.0.0",
+  "description": "独立检查数量、方式、全部费用、预算和两类依据。",
+  "capabilities": [
+    "check_constraints"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "total_yuan": {
+        "type": "number"
+      },
+      "source_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "quantity": {
+        "type": "integer"
+      },
+      "fulfillment": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "total_yuan",
+      "source_ids"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "valid"
+    ]
+  },
+  "required_capabilities": [
+    "check_constraints"
+  ]
+}

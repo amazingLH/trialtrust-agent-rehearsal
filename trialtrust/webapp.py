@@ -26,10 +26,13 @@ from pydantic import BaseModel, ConfigDict, StrictBool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .cli import run_trial
-from .provider import TokenLedger
+from .provider import TokenLedger, Bailian
 from .scenarios import CASE_LABELS, RunSpec
 from .compiler import CompileRequest, compile_stand_in
 from .suite import run_suite, build_suite_graph
+from .catalog import public_catalog
+from .skill_runtime import discover
+from .request_analysis import AnalysisRequest, analyze
 
 
 class Review(BaseModel):
@@ -204,6 +207,31 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     @app.get("/health")
     def health():
         return {"status": "ok", "synthetic_only": True}
+
+    @app.get('/api/catalog')
+    def catalog():
+        return public_catalog()
+
+    @app.get('/api/skills')
+    def skills():
+        return {'runtime':'trusted-skills-v1','skills':discover(),
+                'boundary':'只加载随应用发布的白名单技能，不执行上传的脚本或任意代码。'}
+
+    @app.post('/api/analyze')
+    def analyze_request(body: AnalysisRequest, request: Request):
+        require_owner(request)
+        if body.use_model and not live_enabled:
+            raise HTTPException(403,'真实模型分析尚未启用；可先选择规则分析')
+        try:
+            provider=Bailian(ledger.for_run('analysis-'+str(uuid4()))) if body.use_model else None
+            result = analyze(body,provider)
+            if provider:
+                result['usage'] = provider.ledger.summary(run_only=True)
+            return result
+        except ValueError as exc:
+            raise HTTPException(422,str(exc)) from None
+        except Exception:
+            raise HTTPException(502,'分析未完成，请保留输入后重试；未生成试运行结论。') from None
 
     @app.post("/api/session")
     def session(request: Request, response: Response):

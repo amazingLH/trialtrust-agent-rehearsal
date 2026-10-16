@@ -1,0 +1,53 @@
+{
+  "id": "pair-audit",
+  "name": "对照事实审阅",
+  "version": "1.0.0",
+  "description": "按两份执行记录核对事实，剔除编造或类型不一致的结论。",
+  "capabilities": [
+    "read_reports",
+    "model_call"
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "observations": {
+        "type": "object",
+        "required": [
+          "baseline",
+          "changed"
+        ],
+        "properties": {
+          "baseline": {
+            "type": "object"
+          },
+          "changed": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "observations"
+    ],
+    "additionalProperties": false
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "verified_facts": {
+        "type": "array"
+      },
+      "rejected_facts": {
+        "type": "array"
+      }
+    },
+    "required": [
+      "verified_facts",
+      "rejected_facts"
+    ]
+  },
+  "required_capabilities": [
+    "read_reports"
+  ]
+}

@@ -15,11 +15,12 @@ def main():
             raise RuntimeError(f"Frozen manifest checksum mismatch: {name}")
         checked.append(name)
     folder = ROOT / "evals" / "results"
-    deployment = json.loads((folder / "deployment-v0.4.json").read_text(encoding="utf-8"))
-    for name, expected in deployment["evidence"].items():
-        if Path(name).name != name or hashlib.sha256((folder / name).read_bytes()).hexdigest() != expected:
-            raise RuntimeError(f"Deployment evidence checksum mismatch: {name}")
-        checked.append(name)
+    for manifest in sorted(folder.glob('deployment-v*.json')):
+        deployment = json.loads(manifest.read_text(encoding="utf-8"))
+        for name, expected in deployment["evidence"].items():
+            if Path(name).name != name or hashlib.sha256((folder / name).read_bytes()).hexdigest() != expected:
+                raise RuntimeError(f"Deployment evidence checksum mismatch: {name}")
+            checked.append(name)
     print(json.dumps({"offline_evidence_integrity": "passed", "checked": checked}))
 
 

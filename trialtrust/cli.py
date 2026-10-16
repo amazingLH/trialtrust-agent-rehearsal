@@ -15,6 +15,7 @@ from .retrieval import EvidenceIndex
 from .sandbox import SOURCES, TrialWorld
 from .workflow import SYSTEM, build_graph
 from .scenarios import RunSpec, DemoAgent, make_world
+from .skill_runtime import instructions_for
 
 
 class ScriptedDemo:
@@ -54,6 +55,7 @@ def run_trial(directory: Path, live: bool = False, dense_model: str | None = Non
     with SqliteSaver.from_conn_string(str(directory / "checkpoints.sqlite")) as saver:
         graph = build_graph(provider, index, world, saver)
         prompt = SYSTEM.replace("总预算300元", f"总预算{world.budget_yuan}元")
+        prompt += '\n\n本次按需加载的可信技能：\n'+instructions_for(['mandate-review','evidence-retrieval','plan-verification'])
         initial = {"messages": [{"role": "system", "content": prompt}, {"role": "user", "content": task}], "rounds": 0}
         snapshot = graph.get_state(config)
         if resume and not snapshot.values:
@@ -73,7 +75,9 @@ def run_trial(directory: Path, live: bool = False, dense_model: str | None = Non
                            "embedding_model": dense_model, "thinking": False if live else None,
                            "started_utc": started_utc, "finished_utc": datetime.now(timezone.utc).isoformat(),
                            "source_hashes": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                                             for p in sorted(Path(__file__).parent.glob("*.py"))}},
+                                             for p in sorted(Path(__file__).parent.glob("*.py"))},
+                           "skill_hashes": {str(p.relative_to(Path(__file__).parent)): hashlib.sha256(p.read_bytes()).hexdigest()
+                                            for p in sorted((Path(__file__).parent / 'skills').rglob('*')) if p.is_file()}},
                        "conditions": spec.model_dump() if spec else None,
                        "user_confirmed_conditions": spec.confirmed if spec else False,
                        "human_reviewed": output.get("human_reviewed")})
