@@ -1,8 +1,8 @@
-# TrialTrust · 试托
+# TrialTrust Agent Rehearsal · 试托
 
 **把生活事务交给 AI 之前，先用确认过的条件试运行，再看证据、费用和动作决定本次委托边界。**
 
-[![CI](https://github.com/amazingLH/trialtrust/actions/workflows/ci.yml/badge.svg)](https://github.com/amazingLH/trialtrust/actions/workflows/ci.yml)
+[![CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml/badge.svg)](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml)
 
 [在线体验](https://l666h666better-trialtrust.ms.show) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
@@ -56,8 +56,8 @@ flowchart LR
 要求Python 3.11。以下命令在项目根目录运行：
 
 ```bash
-git clone https://github.com/amazingLH/trialtrust.git
-cd trialtrust
+git clone https://github.com/amazingLH/trialtrust-agent-rehearsal.git
+cd trialtrust-agent-rehearsal
 python -m venv .venv
 ```
 
