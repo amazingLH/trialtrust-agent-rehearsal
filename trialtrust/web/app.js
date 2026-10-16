@@ -317,7 +317,9 @@ function downloadJSON(value, name) {
   const link = element("a");
   link.href = url;
   link.download = name;
+  $("export-preview").parentElement.append(link);
   link.click();
+  link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function compileStandIn() {
@@ -492,6 +494,9 @@ function render(row, pairSelection = "baseline") {
   $("review").hidden = true;
   $("reviewed").hidden = true;
   $("export").hidden = true;
+  $("preview-export").hidden = true;
+  $("export-preview").hidden = true;
+  $("export-json").value = "";
   $("contract-report").hidden = true;
   $("run-skills").replaceChildren();
   const suite = row.report?.kind === "suite" ? row.report : null;
@@ -620,6 +625,7 @@ function render(row, pairSelection = "baseline") {
       : "你暂不接受这份结果。可以调整条件，开启新一次试托。";
   }
   $("export").hidden = false;
+  $("preview-export").hidden = false;
   $("export").href = `/api/trials/${row.id}/export`;
   if (suite) {
     const area = $("paired-comparison");
@@ -906,6 +912,19 @@ $("new-trial").addEventListener("click", () => {
   updateCoach();
   history().catch((e) => notice(e.message));
   scrollToSection("step-one");
+});
+$("preview-export").addEventListener("click", async () => {
+  const expectedId = activeId;
+  try {
+    const record = await api(`/api/trials/${expectedId}/export`);
+    if (activeId !== expectedId) return;
+    $("export-json").value = JSON.stringify(record, null, 2);
+    $("export-preview").hidden = false;
+    $("export-json").focus();
+    notice("完整记录已展开，可全选复制保存。", "export-json");
+  } catch (error) {
+    notice(error.message);
+  }
 });
 $("export").addEventListener("click", async (event) => {
   event.preventDefault();

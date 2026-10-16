@@ -325,6 +325,23 @@
                   <a id="export" class="secondary download" href="#" hidden
                     >下载完整记录 JSON ↓</a
                   >
+                  <button id="preview-export" class="secondary" hidden>
+                    查看并复制完整 JSON
+                  </button>
+                  <div id="export-preview" hidden>
+                    <label for="export-json">完整记录（只读）</label>
+                    <p class="data-note">
+                      如果下载未出现，可点入下方文本，按
+                      Ctrl+A、Ctrl+C（手机长按全选），粘贴保存为 .json
+                      文件。这里不含模型密钥。
+                    </p>
+                    <textarea
+                      id="export-json"
+                      rows="12"
+                      readonly
+                      spellcheck="false"
+                    ></textarea>
+                  </div>
                   <div class="retry-actions">
                     <p class="muted">想再试一次？先改条件，再重新确认。</p>
                     <button id="try-budget" class="chip">预算改为250元</button
