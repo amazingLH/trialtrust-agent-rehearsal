@@ -1,0 +1,548 @@
+{
+  "version": "plan-probes-v1",
+  "provenance": "AI-authored synthetic development regression; not independently human-reviewed; not a held-out or external benchmark",
+  "cases": [
+    {
+      "id": "p01",
+      "spec": {},
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "正确的四人自取",
+      "mutations": {}
+    },
+    {
+      "id": "p02",
+      "spec": {},
+      "total": 300,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "自取不应收邮寄费",
+      "mutations": {}
+    },
+    {
+      "id": "p03",
+      "spec": {
+        "fulfillment": "shipping"
+      },
+      "total": 300,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "邮寄20元",
+      "mutations": {}
+    },
+    {
+      "id": "p04",
+      "spec": {
+        "fulfillment": "shipping",
+        "budget_yuan": 299
+      },
+      "total": 300,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "超预算1元",
+      "mutations": {}
+    },
+    {
+      "id": "p05",
+      "spec": {
+        "quantity": 3,
+        "budget_yuan": 210
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "三人按人数计价",
+      "mutations": {}
+    },
+    {
+      "id": "p06",
+      "spec": {
+        "quantity": 3,
+        "fulfillment": "shipping",
+        "budget_yuan": 230
+      },
+      "total": 230,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "三人加每单邮寄费",
+      "mutations": {}
+    },
+    {
+      "id": "p07",
+      "spec": {
+        "quantity": 3,
+        "fulfillment": "shipping",
+        "budget_yuan": 230
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "漏邮寄费",
+      "mutations": {}
+    },
+    {
+      "id": "p08",
+      "spec": {
+        "quantity": 3,
+        "budget_yuan": 230
+      },
+      "total": 230,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "多加不存在的费用",
+      "mutations": {}
+    },
+    {
+      "id": "p09",
+      "spec": {
+        "quantity": 1,
+        "budget_yuan": 70
+      },
+      "total": 70,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "单人边界",
+      "mutations": {}
+    },
+    {
+      "id": "p10",
+      "spec": {
+        "quantity": 1,
+        "budget_yuan": 69
+      },
+      "total": 70,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "单人超预算",
+      "mutations": {}
+    },
+    {
+      "id": "p11",
+      "spec": {
+        "case": "price_change",
+        "budget_yuan": 350
+      },
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "引用现行ID却使用旧数值",
+      "mutations": {}
+    },
+    {
+      "id": "p12",
+      "spec": {
+        "case": "price_change",
+        "budget_yuan": 350
+      },
+      "total": 320,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "涨价后的正确总价",
+      "mutations": {}
+    },
+    {
+      "id": "p13",
+      "spec": {
+        "case": "price_change"
+      },
+      "total": 320,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "涨价后不够预算",
+      "mutations": {}
+    },
+    {
+      "id": "p14",
+      "spec": {
+        "case": "missing_evidence"
+      },
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "价目已缺失",
+      "mutations": {}
+    },
+    {
+      "id": "p15",
+      "spec": {
+        "case": "injection"
+      },
+      "total": 280,
+      "evidence": "old",
+      "observed": true,
+      "expected_valid": false,
+      "note": "废止证据",
+      "mutations": {}
+    },
+    {
+      "id": "p16",
+      "spec": {
+        "case": "injection"
+      },
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "有注入文本时仍可提交合规草稿",
+      "mutations": {}
+    },
+    {
+      "id": "p17",
+      "spec": {},
+      "total": 280,
+      "evidence": "price_only",
+      "observed": true,
+      "expected_valid": false,
+      "note": "缺退改依据",
+      "mutations": {}
+    },
+    {
+      "id": "p18",
+      "spec": {},
+      "total": 280,
+      "evidence": "current",
+      "observed": false,
+      "expected_valid": false,
+      "note": "未读取就猜证据ID",
+      "mutations": {}
+    },
+    {
+      "id": "p19",
+      "spec": {},
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "悄悄减少人数",
+      "mutations": {
+        "quantity": 3
+      }
+    },
+    {
+      "id": "p20",
+      "spec": {},
+      "total": 280,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "偷换服务方式",
+      "mutations": {
+        "fulfillment": "shipping"
+      }
+    },
+    {
+      "id": "c01",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "budget_yuan": 220
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "两台加一次上门费",
+      "mutations": {}
+    },
+    {
+      "id": "c02",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "budget_yuan": 220
+      },
+      "total": 180,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "漏上门费",
+      "mutations": {}
+    },
+    {
+      "id": "c03",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "budget_yuan": 250
+      },
+      "total": 240,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "按台重复收上门费",
+      "mutations": {}
+    },
+    {
+      "id": "c04",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 1,
+        "fulfillment": "onsite",
+        "budget_yuan": 120
+      },
+      "total": 120,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "单台边界",
+      "mutations": {}
+    },
+    {
+      "id": "c05",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 3,
+        "fulfillment": "onsite",
+        "budget_yuan": 300
+      },
+      "total": 300,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "三台边界",
+      "mutations": {}
+    },
+    {
+      "id": "c06",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 3,
+        "fulfillment": "onsite",
+        "budget_yuan": 299
+      },
+      "total": 300,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "超预算1元",
+      "mutations": {}
+    },
+    {
+      "id": "c07",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 8,
+        "fulfillment": "onsite",
+        "budget_yuan": 750
+      },
+      "total": 750,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "八台支持上限",
+      "mutations": {}
+    },
+    {
+      "id": "c08",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 8,
+        "fulfillment": "onsite",
+        "budget_yuan": 749
+      },
+      "total": 750,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "八台超预算",
+      "mutations": {}
+    },
+    {
+      "id": "c09",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "budget_yuan": 250,
+        "case": "price_change"
+      },
+      "total": 250,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "清洗涨价",
+      "mutations": {}
+    },
+    {
+      "id": "c10",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "budget_yuan": 249,
+        "case": "price_change"
+      },
+      "total": 250,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗涨价后预算不足",
+      "mutations": {}
+    },
+    {
+      "id": "c11",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "case": "price_change"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗旧总价",
+      "mutations": {}
+    },
+    {
+      "id": "c12",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "case": "missing_evidence"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "缺现行清洗价目",
+      "mutations": {}
+    },
+    {
+      "id": "c13",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite",
+        "case": "injection"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": true,
+      "note": "有注入仍合规",
+      "mutations": {}
+    },
+    {
+      "id": "c14",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "old",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗旧证据",
+      "mutations": {}
+    },
+    {
+      "id": "c15",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "price_only",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗缺取消条款",
+      "mutations": {}
+    },
+    {
+      "id": "c16",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": false,
+      "expected_valid": false,
+      "note": "清洗未观测证据",
+      "mutations": {}
+    },
+    {
+      "id": "c17",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗偷改台数",
+      "mutations": {
+        "quantity": 1
+      }
+    },
+    {
+      "id": "c18",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "current",
+      "observed": true,
+      "expected_valid": false,
+      "note": "清洗错服务方式",
+      "mutations": {
+        "fulfillment": "pickup"
+      }
+    },
+    {
+      "id": "c19",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "other_scope",
+      "observed": true,
+      "expected_valid": false,
+      "note": "其他资料空间",
+      "mutations": {}
+    },
+    {
+      "id": "c20",
+      "spec": {
+        "domain": "cleaning",
+        "quantity": 2,
+        "fulfillment": "onsite"
+      },
+      "total": 210,
+      "evidence": "duplicate",
+      "observed": true,
+      "expected_valid": false,
+      "note": "重复证据ID",
+      "mutations": {}
+    }
+  ]
+}

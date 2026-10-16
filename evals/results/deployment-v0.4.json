@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-10-16T02:02:01.392081+00:00",
+  "public_app": "https://l666h666better-trialtrust.ms.show",
+  "studio": "https://www.modelscope.cn/studios/L666H666Better/trialtrust",
+  "deployed_code_commit": "f9a2b60ed96c4599d9a5befd79b5fd1c5fc3e68f",
+  "visibility": "public",
+  "platform_status": "Running",
+  "access_checks": {
+    "owner_sdk_key_used": false,
+    "account_login_cookie_used": false,
+    "public_portal_context_used": true,
+    "gradio_config": 200,
+    "health": 200,
+    "offline_paired_review_export": "passed",
+    "live_model_embedding_review_export": "passed",
+    "remote_browser_visual_acceptance": "pending_user_stage_6",
+    "local_managed_ui_and_browser_download": "passed"
+  },
+  "tests": {
+    "windows_passed": 43,
+    "linux_core_passed": 42,
+    "linux_studio_skipped": 1
+  },
+  "evidence": {
+    "cloud-offline-v0.4.json": "53d51abd4f0a5ce401e745aa1b88df1076978a7e8a7a0c309f926e7cd8caac4b",
+    "cloud-live-v0.4.json": "c49d3125c20d035882ec065658d06aa785c496323358f8519d11fdcc5f6ded0a"
+  },
+  "review_decision_source": "automated_smoke_not_human_user"
+}

@@ -1,0 +1,1548 @@
+{
+  "created_utc": "2026-10-15T15:13:26.622198+00:00",
+  "evaluation_version": "development-v0.3",
+  "provenance": "AI-authored synthetic development regression; not independently human-reviewed; not a held-out or external benchmark",
+  "manifest_hashes": {
+    "plans": "00c662c2c11810dd21656c425a74a65c87679b8c007fb24ab1c6e46b9ac28882",
+    "retrieval": "17a3226d96b4d508e247748828a894984e786239936ddc2cf04ed75b78aa4055"
+  },
+  "source_hashes": {
+    "trialtrust\\__init__.py": "6eee83048239dc1a677df95f31c1975536624f639eb8015889d2824c25b1496c",
+    "trialtrust\\cli.py": "e36758171e8b5964f913fc310654ad2bfb33458dc37cec9e6334a1b37af864e2",
+    "trialtrust\\compiler.py": "b4fce84cf538f636bb226b4432500875814f317caa70f41b1bd45de2b6000f1e",
+    "trialtrust\\evaluate.py": "7b58d17ae565df424bb7d3d1cb08c6e87abc44a35f06888f46bdf994b3571665",
+    "trialtrust\\mandate.py": "f3307351cfb4bd17cbebd08ee15011c7b9d78d6de50fdd45cfe68bdf92d34693",
+    "trialtrust\\mcp_server.py": "67f7b2d7352fd686eeaec71f81d8043ff145f7bbcca287403d382c3ca9e9ab39",
+    "trialtrust\\provider.py": "6263b67d76b2372dc0d12535631d7e20199c17f482de0680a377335f59b92dd1",
+    "trialtrust\\retrieval.py": "793ceba67788b876627a26ae3be6dff18faa607b19aee0170a460226d4aeeb2f",
+    "trialtrust\\sandbox.py": "f3cb7e7fa2263462d2ad0cbaf59213106beaec67ccea58976420e1385f36f9e2",
+    "trialtrust\\scenarios.py": "21e22a86b65063844da91ce31e128155598160a2053f269da038200c33741462",
+    "trialtrust\\webapp.py": "cd0fbea318af71435bb9e68c59ffcd3bd42f0ad441226941f5b2ec0f58812f22",
+    "trialtrust\\workflow.py": "ccf8a96966f64261573080b62a29c33538eda8f26f84044d23bfee1618c55e68"
+  },
+  "plan_validation": {
+    "baseline_definition": "Deliberately weak control: check only nonnegative total <= budget; not a third-party product or LLM.",
+    "summary": {
+      "budget_only": {
+        "cases": 40,
+        "false_accepts": 21,
+        "false_rejects": 0,
+        "agreement_with_authored_labels": 0.475
+      },
+      "full_verifier": {
+        "cases": 40,
+        "false_accepts": 0,
+        "false_rejects": 0,
+        "agreement_with_authored_labels": 1.0
+      }
+    },
+    "rows": [
+      {
+        "id": "p01",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 280.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "fulfillment_fee_yuan": 0.0
+          },
+          "mandate_digest": "9a43be36830f9102810ebf6d2443b9f6be97772a50072f826367fbac1ba83b42",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "total_yuan": 280,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "9a43be36830f9102810ebf6d2443b9f6be97772a50072f826367fbac1ba83b42",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p02",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "p03",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 300.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 4,
+            "fulfillment": "shipping",
+            "fulfillment_fee_yuan": 20.0
+          },
+          "mandate_digest": "8e0bfd0e05fda78d2893728fc97dcd1b6719ef7104b415e9aca17315041d0958",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 4,
+            "fulfillment": "shipping",
+            "total_yuan": 300,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "8e0bfd0e05fda78d2893728fc97dcd1b6719ef7104b415e9aca17315041d0958",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p04",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "p05",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 210.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 3,
+            "fulfillment": "pickup",
+            "fulfillment_fee_yuan": 0.0
+          },
+          "mandate_digest": "a96bca2fffe261c46ab6d06d99722bdf4efcf605e71402718df02bf05815d2f4",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 3,
+            "fulfillment": "pickup",
+            "total_yuan": 210,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "a96bca2fffe261c46ab6d06d99722bdf4efcf605e71402718df02bf05815d2f4",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p06",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 230.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 3,
+            "fulfillment": "shipping",
+            "fulfillment_fee_yuan": 20.0
+          },
+          "mandate_digest": "c4c3a9d3fcb34811a6116748536f1bbf64c8360c7b2a8c42ce20ede9d9a18498",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 3,
+            "fulfillment": "shipping",
+            "total_yuan": 230,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "c4c3a9d3fcb34811a6116748536f1bbf64c8360c7b2a8c42ce20ede9d9a18498",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p07",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "p08",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "p09",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 70.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 1,
+            "fulfillment": "pickup",
+            "fulfillment_fee_yuan": 0.0
+          },
+          "mandate_digest": "b1cefca758ded95e5553c6cec1710f603ba000cc01b1382beb819f256ed536fa",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 1,
+            "fulfillment": "pickup",
+            "total_yuan": 70,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "b1cefca758ded95e5553c6cec1710f603ba000cc01b1382beb819f256ed536fa",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p10",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "p11",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "p12",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 320.0,
+          "calculation": {
+            "unit_price_yuan": 80.0,
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "fulfillment_fee_yuan": 0.0
+          },
+          "mandate_digest": "841d396a738acdfe249d8620209a95ce2d23db90123073b5bfb7411b02beeb45",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "total_yuan": 320,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "841d396a738acdfe249d8620209a95ce2d23db90123073b5bfb7411b02beeb45",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p13",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "p14",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_current_price_evidence"
+        }
+      },
+      {
+        "id": "p15",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_current_price_evidence"
+        }
+      },
+      {
+        "id": "p16",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 280.0,
+          "calculation": {
+            "unit_price_yuan": 70.0,
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "fulfillment_fee_yuan": 0.0
+          },
+          "mandate_digest": "9a43be36830f9102810ebf6d2443b9f6be97772a50072f826367fbac1ba83b42",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "pottery",
+            "quantity": 4,
+            "fulfillment": "pickup",
+            "total_yuan": 280,
+            "evidence": [
+              "cancel-v2",
+              "price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "9a43be36830f9102810ebf6d2443b9f6be97772a50072f826367fbac1ba83b42",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "p17",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_cancellation_evidence"
+        }
+      },
+      {
+        "id": "p18",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "evidence_not_observed_in_this_run"
+        }
+      },
+      {
+        "id": "p19",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "mandate_quantity_or_fulfillment_mismatch"
+        }
+      },
+      {
+        "id": "p20",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "mandate_quantity_or_fulfillment_mismatch"
+        }
+      },
+      {
+        "id": "c01",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 210.0,
+          "calculation": {
+            "unit_price_yuan": 90.0,
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "5c466216c74b6ca1599a5b66df073eb6b16b8cb8792f215cb9fe3b98c26980ba",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "total_yuan": 210,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "5c466216c74b6ca1599a5b66df073eb6b16b8cb8792f215cb9fe3b98c26980ba",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c02",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "c03",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "c04",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 120.0,
+          "calculation": {
+            "unit_price_yuan": 90.0,
+            "quantity": 1,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "4386503d2e335b913d4b29d718bd108c3e7ff1cfa4db8f61884d4acc33b4b61c",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 1,
+            "fulfillment": "onsite",
+            "total_yuan": 120,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "4386503d2e335b913d4b29d718bd108c3e7ff1cfa4db8f61884d4acc33b4b61c",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c05",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 300.0,
+          "calculation": {
+            "unit_price_yuan": 90.0,
+            "quantity": 3,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "36f7fbf64e60571fb84140fa263d6b269f42ce4ea392886bc8274a97b2ee22e6",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 3,
+            "fulfillment": "onsite",
+            "total_yuan": 300,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "36f7fbf64e60571fb84140fa263d6b269f42ce4ea392886bc8274a97b2ee22e6",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c06",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "c07",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 750.0,
+          "calculation": {
+            "unit_price_yuan": 90.0,
+            "quantity": 8,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "65c2d9b6c6631c8cc9113a71a355b622ceb4c957eb045beff8318b90a9c31bd8",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 8,
+            "fulfillment": "onsite",
+            "total_yuan": 750,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "65c2d9b6c6631c8cc9113a71a355b622ceb4c957eb045beff8318b90a9c31bd8",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c08",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "c09",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 250.0,
+          "calculation": {
+            "unit_price_yuan": 110.0,
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "d0f5aea3bc720b307fe3d705f76347558406d14b2750289778d84ad225c06173",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "total_yuan": 250,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "d0f5aea3bc720b307fe3d705f76347558406d14b2750289778d84ad225c06173",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c10",
+        "expected_valid": false,
+        "budget_only_accepted": false,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "user_budget"
+          ]
+        }
+      },
+      {
+        "id": "c11",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "constraint_conflict",
+          "conflicting_constraints": [
+            "submitted_total",
+            "current_price_times_quantity_plus_fee"
+          ]
+        }
+      },
+      {
+        "id": "c12",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_current_price_evidence"
+        }
+      },
+      {
+        "id": "c13",
+        "expected_valid": true,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": true,
+        "verifier_result": {
+          "valid": true,
+          "total_yuan": 210.0,
+          "calculation": {
+            "unit_price_yuan": 90.0,
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "fulfillment_fee_yuan": 30.0
+          },
+          "mandate_digest": "5838c345fca8f294a0cd2503fb3702a4425cff8cd209ebb9628c6325a995a43f",
+          "scope": "synthetic_draft_only",
+          "not_a_real_booking": true,
+          "draft": {
+            "domain": "cleaning",
+            "quantity": 2,
+            "fulfillment": "onsite",
+            "total_yuan": 210,
+            "evidence": [
+              "ac-cancel-v2",
+              "ac-price-v2"
+            ],
+            "status": "draft",
+            "mandate_digest": "5838c345fca8f294a0cd2503fb3702a4425cff8cd209ebb9628c6325a995a43f",
+            "not_a_real_booking": true
+          },
+          "reused_existing_draft": false
+        }
+      },
+      {
+        "id": "c14",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_current_price_evidence"
+        }
+      },
+      {
+        "id": "c15",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_cancellation_evidence"
+        }
+      },
+      {
+        "id": "c16",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "evidence_not_observed_in_this_run"
+        }
+      },
+      {
+        "id": "c17",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "mandate_quantity_or_fulfillment_mismatch"
+        }
+      },
+      {
+        "id": "c18",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "mandate_quantity_or_fulfillment_mismatch"
+        }
+      },
+      {
+        "id": "c19",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_current_price_evidence"
+        }
+      },
+      {
+        "id": "c20",
+        "expected_valid": false,
+        "budget_only_accepted": true,
+        "full_verifier_accepted": false,
+        "verifier_result": {
+          "valid": false,
+          "reason": "missing_or_duplicate_evidence"
+        }
+      }
+    ]
+  },
+  "retrieval": {
+    "summary": {
+      "raw_bm25": {
+        "answerable_queries": 22,
+        "mean_recall_at_1": 0.75,
+        "mean_recall_at_2": 0.7727272727272727,
+        "mean_recall_at_4": 0.7727272727272727,
+        "mrr": 0.7727272727272727,
+        "no_answer_queries": 2,
+        "no_answer_queries_returning_evidence": 2,
+        "scope_or_version_leaks": 0
+      },
+      "facet_bm25": {
+        "answerable_queries": 22,
+        "mean_recall_at_1": 0.9090909090909091,
+        "mean_recall_at_2": 0.9545454545454546,
+        "mean_recall_at_4": 0.9545454545454546,
+        "mrr": 0.9545454545454546,
+        "no_answer_queries": 2,
+        "no_answer_queries_returning_evidence": 2,
+        "scope_or_version_leaks": 0
+      }
+    },
+    "rows": [
+      {
+        "id": "p-r01",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r02",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r03",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r04",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r05",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r06",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r07",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "authority"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r08",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "authority",
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r09",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "cancel-v2",
+          "price-v2"
+        ],
+        "required_ids": [
+          "cancel-v2",
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.5,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r10",
+        "method": "raw_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      },
+      {
+        "id": "p-r11",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [],
+        "scope_or_version_leaks": 0,
+        "returned_evidence_for_no_answer_query": true
+      },
+      {
+        "id": "p-r12",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "authority"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r01",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-price-v2",
+          "ac-authority",
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r02",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r03",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-price-v2",
+          "ac-authority",
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r04",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2",
+          "ac-authority",
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r05",
+        "method": "raw_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      },
+      {
+        "id": "c-r06",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r07",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-authority"
+        ],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r08",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-authority"
+        ],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r09",
+        "method": "raw_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "ac-cancel-v2",
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      },
+      {
+        "id": "c-r10",
+        "method": "raw_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      },
+      {
+        "id": "c-r11",
+        "method": "raw_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2"
+        ],
+        "required_ids": [],
+        "scope_or_version_leaks": 0,
+        "returned_evidence_for_no_answer_query": true
+      },
+      {
+        "id": "c-r12",
+        "method": "raw_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      },
+      {
+        "id": "p-r01",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r02",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r03",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r04",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r05",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r06",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r07",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "authority",
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r08",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "authority",
+          "cancel-v2"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r09",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "cancel-v2",
+          "price-v2"
+        ],
+        "required_ids": [
+          "cancel-v2",
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.5,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r10",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [
+          "price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "p-r11",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "price-v2"
+        ],
+        "required_ids": [],
+        "scope_or_version_leaks": 0,
+        "returned_evidence_for_no_answer_query": true
+      },
+      {
+        "id": "p-r12",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "authority"
+        ],
+        "required_ids": [
+          "authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r01",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-price-v2",
+          "ac-authority",
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r02",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r03",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-price-v2",
+          "ac-authority",
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r04",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2",
+          "ac-authority",
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r05",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r06",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r07",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-authority",
+          "ac-cancel-v2"
+        ],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r08",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-authority"
+        ],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r09",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2",
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-cancel-v2",
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.5,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r10",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-price-v2"
+        ],
+        "required_ids": [
+          "ac-price-v2"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 1.0,
+        "recall_at_2": 1.0,
+        "recall_at_4": 1.0,
+        "reciprocal_rank": 1.0
+      },
+      {
+        "id": "c-r11",
+        "method": "facet_bm25",
+        "ranked_ids": [
+          "ac-cancel-v2"
+        ],
+        "required_ids": [],
+        "scope_or_version_leaks": 0,
+        "returned_evidence_for_no_answer_query": true
+      },
+      {
+        "id": "c-r12",
+        "method": "facet_bm25",
+        "ranked_ids": [],
+        "required_ids": [
+          "ac-authority"
+        ],
+        "scope_or_version_leaks": 0,
+        "recall_at_1": 0.0,
+        "recall_at_2": 0.0,
+        "recall_at_4": 0.0,
+        "reciprocal_rank": 0
+      }
+    ]
+  },
+  "embedding": null,
+  "usage": {
+    "requests": 6,
+    "charged_or_reserved_tokens": 6821,
+    "application_token_limit": 200000,
+    "conservative_valued_cny": 0.054568,
+    "application_estimated_budget_cny": 3.0,
+    "pricing_version": "bailian-beijing-published-2026-10-15",
+    "cost_basis": "all_tokens_at_supported_model_max_rate; unresolved_requests_reserved",
+    "free_quota_balance": "not_available",
+    "billed_cny": "not_verified"
+  },
+  "limits": [
+    "Small AI-authored synthetic development regression, not independently reviewed gold data.",
+    "No human usability study or external agent benchmark.",
+    "No performance or safety guarantee outside these fixtures.",
+    "Retrieving a document is not evidence that answer text is correct."
+  ]
+}

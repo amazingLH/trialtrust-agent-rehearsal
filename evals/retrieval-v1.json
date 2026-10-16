@@ -1,0 +1,196 @@
+{
+  "version": "retrieval-v1",
+  "provenance": "AI-authored synthetic development regression; not independently human-reviewed; not a held-out or external benchmark",
+  "cases": [
+    {
+      "id": "p-r01",
+      "domain": "pottery",
+      "query": "陶艺套餐价目",
+      "required_ids": [
+        "price-v2"
+      ]
+    },
+    {
+      "id": "p-r02",
+      "domain": "pottery",
+      "query": "基础材料费总价",
+      "required_ids": [
+        "price-v2"
+      ]
+    },
+    {
+      "id": "p-r03",
+      "domain": "pottery",
+      "query": "作品邮寄收费",
+      "required_ids": [
+        "price-v2"
+      ]
+    },
+    {
+      "id": "p-r04",
+      "domain": "pottery",
+      "query": "什么时候取消可以退款",
+      "required_ids": [
+        "cancel-v2"
+      ]
+    },
+    {
+      "id": "p-r05",
+      "domain": "pottery",
+      "query": "临时有事还能退改吗",
+      "required_ids": [
+        "cancel-v2"
+      ]
+    },
+    {
+      "id": "p-r06",
+      "domain": "pottery",
+      "query": "改期一次",
+      "required_ids": [
+        "cancel-v2"
+      ]
+    },
+    {
+      "id": "p-r07",
+      "domain": "pottery",
+      "query": "我的授权范围是什么",
+      "required_ids": [
+        "authority"
+      ]
+    },
+    {
+      "id": "p-r08",
+      "domain": "pottery",
+      "query": "能替我付款和预约吗",
+      "required_ids": [
+        "authority"
+      ]
+    },
+    {
+      "id": "p-r09",
+      "domain": "pottery",
+      "query": "全部费用和退改规则",
+      "required_ids": [
+        "price-v2",
+        "cancel-v2"
+      ]
+    },
+    {
+      "id": "p-r10",
+      "domain": "pottery",
+      "query": "总预算是否够",
+      "required_ids": [
+        "price-v2"
+      ]
+    },
+    {
+      "id": "p-r11",
+      "domain": "pottery",
+      "query": "有免费停车位吗",
+      "required_ids": []
+    },
+    {
+      "id": "p-r12",
+      "domain": "pottery",
+      "query": "允许把电话给商家吗",
+      "required_ids": [
+        "authority"
+      ]
+    },
+    {
+      "id": "c-r01",
+      "domain": "cleaning",
+      "query": "空调清洗每台价目",
+      "required_ids": [
+        "ac-price-v2"
+      ]
+    },
+    {
+      "id": "c-r02",
+      "domain": "cleaning",
+      "query": "上门费收几次",
+      "required_ids": [
+        "ac-price-v2"
+      ]
+    },
+    {
+      "id": "c-r03",
+      "domain": "cleaning",
+      "query": "基础清洗费用",
+      "required_ids": [
+        "ac-price-v2"
+      ]
+    },
+    {
+      "id": "c-r04",
+      "domain": "cleaning",
+      "query": "服务前多久取消免费",
+      "required_ids": [
+        "ac-cancel-v2"
+      ]
+    },
+    {
+      "id": "c-r05",
+      "domain": "cleaning",
+      "query": "临时有事还能退改吗",
+      "required_ids": [
+        "ac-cancel-v2"
+      ]
+    },
+    {
+      "id": "c-r06",
+      "domain": "cleaning",
+      "query": "改期一次",
+      "required_ids": [
+        "ac-cancel-v2"
+      ]
+    },
+    {
+      "id": "c-r07",
+      "domain": "cleaning",
+      "query": "我的授权范围是什么",
+      "required_ids": [
+        "ac-authority"
+      ]
+    },
+    {
+      "id": "c-r08",
+      "domain": "cleaning",
+      "query": "能替我付款和下单吗",
+      "required_ids": [
+        "ac-authority"
+      ]
+    },
+    {
+      "id": "c-r09",
+      "domain": "cleaning",
+      "query": "全部费用和退改规则",
+      "required_ids": [
+        "ac-price-v2",
+        "ac-cancel-v2"
+      ]
+    },
+    {
+      "id": "c-r10",
+      "domain": "cleaning",
+      "query": "总预算是否够",
+      "required_ids": [
+        "ac-price-v2"
+      ]
+    },
+    {
+      "id": "c-r11",
+      "domain": "cleaning",
+      "query": "有免费停车位吗",
+      "required_ids": []
+    },
+    {
+      "id": "c-r12",
+      "domain": "cleaning",
+      "query": "允许把电话给师傅吗",
+      "required_ids": [
+        "ac-authority"
+      ]
+    }
+  ]
+}
