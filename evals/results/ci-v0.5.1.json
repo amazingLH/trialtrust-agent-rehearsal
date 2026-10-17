@@ -1,0 +1,25 @@
+{
+  "version": "v0.5.1",
+  "commit": "01e03ffbc517e5d89fe9a718bc0e5ad1e2137d78",
+  "run_url": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/38996260345",
+  "conclusion": "success",
+  "calls_live_models": false,
+  "tests": {
+    "linux_core_passed": 119,
+    "linux_core_skipped": 1,
+    "studio_passed": 120,
+    "node_passed": 3
+  },
+  "jobs": [
+    {
+      "name": "Python 3.11 / studio",
+      "conclusion": "success",
+      "url": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/38996260345/job/117289381330"
+    },
+    {
+      "name": "Python 3.11 / core",
+      "conclusion": "success",
+      "url": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/38996260345/job/117289381482"
+    }
+  ]
+}

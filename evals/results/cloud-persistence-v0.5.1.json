@@ -1,0 +1,11 @@
+{
+  "version": "v0.5.1",
+  "observed_utc": "2026-10-17T02:52:33.445608+00:00",
+  "method": "same anonymous HTTP client and unchanged visitor token before and after source deployment",
+  "owner_credentials_used": false,
+  "live_model_calls": false,
+  "expected_stylesheet_sha256": "63973df4668b54b7a8587bbddf9acafcafadabe642ee23c0f6621612a30cc18d",
+  "after_status": 200,
+  "conversation_survived_deployment": true,
+  "limits": "This checks platform directory/session continuity, not browser storage or account synchronization."
+}

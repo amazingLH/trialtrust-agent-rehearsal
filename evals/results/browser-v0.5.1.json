@@ -1,0 +1,72 @@
+{
+  "version": "v0.5.1",
+  "observed_utc": "2026-10-17T02:16:28.016096+00:00",
+  "method": "actual CUA interactions in managed Gradio and lightweight localhost workbench",
+  "not_real_user_study": true,
+  "checks": {
+    "skills_default": "collapsed; native open and close verified",
+    "protocol_explainer": "removed from application HTML; retained technical docs",
+    "single_guide": "no guided/expert controls; labelled operation guide; hide/show preserves progress",
+    "initial_layout": "results hidden before a run; selection and conditions occupy two useful columns",
+    "conversation_rounds": "buffet original 190 yuan -> 170 draft / 210 blocked; explicit reuse, change budget to 250 -> both drafts; two rounds remain in same conversation",
+    "new_conversation": "new empty workspace, previous conversation remains selectable",
+    "reload": "after selecting buffet, reload restores same conversation, latest 250 yuan conditions, 2 rounds and step 3; confirmed is false",
+    "consent": "explicit reuse leaves checkbox false; run blocked until rechecked",
+    "managed_adapter": "actual Gradio root shares conversation selection and default collapsed skills",
+    "desktop_width": "managed adapter page width1264.8 of1265 available; fixed1280 maximum removed",
+    "mobile_width": "375 client pixels within390 viewport; scrollWidth375, no old modes; compact header",
+    "late_analysis": "Actual localhost dev harness delays real rule analysis by2s; new conversation created while disabled/pending; after response compile enabled, new task and result remain empty. Normal same-conversation rule analysis still completes. No network interception or paid model calls.",
+    "expanded_drawers": "Local real browser: expanded history231.55px; collapsed neighbour48.15px; single1138.4px grid column, not a stretched empty box."
+  },
+  "screenshots": [
+    "assets/v0.5.1/wide-local.jpg",
+    "assets/v0.5.1/mobile-local.jpg",
+    "assets/v0.5.1/wide-cloud.jpg",
+    "assets/v0.5.1/history-cloud.jpg",
+    "assets/v0.5.1/mobile-cloud.jpg"
+  ],
+  "cloud": {
+    "entry": "https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&app_path=%2Fapi%2Fworkbench",
+    "method": "actual CUA browser interactions; public API checks recorded separately",
+    "old_profile_recovery": "Prior pre-upgrade records were not present in this browser context; no claim of recovering them. Legacy database migration tested separately.",
+    "new_conversation": "Created new empty conversation, original buffet conversation remains in list",
+    "history_switch": "Returned to buffet; budget190, record count1, confirmationfalse",
+    "continued_round": "Explicit reuse and budget250, reconfirmed and ran; same conversation now2 records, original170 and changed210 drafts pass at250",
+    "guide": "Operation guide step3 follows completed run; no guided/expert mode controls",
+    "initial_ui": "Skills defaultcollapsed; protocol explainer removed in normal and full managed views",
+    "wide_geometry": {
+      "top_viewport": 1920,
+      "iframe_left": 0,
+      "iframe_width": 1920,
+      "app_client": 1905,
+      "app_width": 1904.8,
+      "app_scroll": 1905
+    },
+    "final_stylesheet_drawer_check": {
+      "columns": "1740px",
+      "history_height": 174.75,
+      "collapsed_height": 48.15,
+      "result": "expanded drawer uses full row; collapsed drawer is not stretched"
+    },
+    "real_user_feedback": false,
+    "after_final_deployment_refresh": {
+      "conversation": "buffet",
+      "records": 2,
+      "budget": 250,
+      "confirmed": false,
+      "skills_open": false
+    },
+    "mobile": {
+      "viewport": [
+        390,
+        844
+      ],
+      "actual_page_width": 390,
+      "actual_responsive_container_width": 390,
+      "skills_open": false,
+      "screenshot": "assets/v0.5.1/mobile-cloud.jpg"
+    }
+  },
+  "retained_layout_failure": "assets/v0.5.1/conversation-folders-observation.jpg",
+  "updated_utc": "2026-10-17T03:02:05.206316+00:00"
+}

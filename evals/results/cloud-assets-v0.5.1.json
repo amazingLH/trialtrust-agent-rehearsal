@@ -1,0 +1,22 @@
+{
+  "version": "v0.5.1",
+  "observed_utc": "2026-10-17T02:56:05.962355+00:00",
+  "owner_credentials_used": false,
+  "login_cookie_used": false,
+  "assets": {
+    "app.js": {
+      "sha256": "db810dc47beef3f9037e86ca8946ac73cac003ee24935c343cf389e7b3e2fc19",
+      "matches_source": true
+    },
+    "style.css": {
+      "sha256": "63973df4668b54b7a8587bbddf9acafcafadabe642ee23c0f6621612a30cc18d",
+      "matches_source": true
+    },
+    "portal_viewport.js": {
+      "sha256": "1047b48283e26e8ab554045e153211dd3680aa55ccda0c5a8d7467d5e7a4aecc",
+      "matches_source": true
+    }
+  },
+  "single_guide_and_conversations": true,
+  "old_mode_controls_and_protocol_explainer": false
+}

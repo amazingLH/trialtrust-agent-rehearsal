@@ -6,9 +6,9 @@
 
 [在线体验](https://l666h666better-trialtrust.ms.show/api/workbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![v0.5 公开门户首页实际截图](assets/v0.5/home-cloud.jpg)
+![v0.5.1 公开全屏首页实际截图](assets/v0.5.1/wide-cloud.jpg)
 
-当前版本 **v0.5**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
+当前版本 **v0.5.1**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
 ## 产品解决的问题
 
@@ -84,9 +84,13 @@ python tools/verify_evidence.py
 
 ## 验证证据
 
+[v0.5.1会话与布局验证](docs/validation-v0.5.1.md)包含公开页面两轮继续操作、全屏/手机截图、静态资源指纹和一次跨部署匿名会话连续性检查。
+
+- v0.5.1 Windows托管环境120项Python测试和3项Node测试通过；新增会话分组、owner隔离、旧库迁移、重启延续、过期及同源检查。新界面支持当前/历史会话、明确沿用条件和统一操作指引。
+
 - v0.5 Windows开发环境：113项测试通过（新增70项，含12领域×5条件矩阵、技能权限、未知需求与确认拒绝）。
 - v0.5 干净Linux核心Docker：112项通过、1项Gradio托管测试跳过。
-- v0.5真实博物馆对照、真实Embedding、五项技能路由与未知需求分析已有[新版验证记录](docs/validation-v0.5.md)。
+- v0.5真实博物馆对照、真实Embedding、五项技能路由与未知需求分析已有[v0.5真实调用记录](docs/validation-v0.5.md)。
 - v0.5云端无账号API完成目录、Skills、确认拒绝、未知需求、成对运行、审阅与导出；真实模型/Embedding的自助餐170元对照证据缺失无草稿有原始记录。公开门户桌面与390×844手机、取消确认、对照、实际技能和审阅保存已实操。
 - 3项Node回归验证可信父窗口、消息边界及仅限布局的用途；CI在核心与托管两个矩阵均运行。
 - 40条方案探针、24条检索问题及检索消融结果保存在[evals](evals/)。这些是AI编写的开发回归，尚无独立人工金标或真实用户研究。
@@ -103,7 +107,7 @@ python tools/verify_evidence.py
 
 | 文档 | 内容 |
 |---|---|
-| [使用教程](docs/usage.md) | 四步操作、新手模式、自定义需求与确认规则 |
+| [使用教程](docs/usage.md) | 四步操作、多轮会话、自定义需求与确认规则 |
 | [Skills运行时](docs/skills.md) | 技能发现、加载、权限、真实执行、证据与限制 |
 | [产品设计](docs/product.md) | 创意来源、目标用户、场景、差异与价值假设 |
 | [系统架构](docs/architecture.md) | 状态流、Agent权限、工具、RAG、核验、恢复与技术取舍 |

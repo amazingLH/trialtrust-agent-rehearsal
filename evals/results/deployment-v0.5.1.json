@@ -1,0 +1,37 @@
+{
+  "version": "v0.5.1",
+  "status": "public_api_and_browser_verified",
+  "observed_utc": "2026-10-17T03:02:05.206316+00:00",
+  "application_source_commit": "01e03ffbc517e5d89fe9a718bc0e5ad1e2137d78",
+  "studio_application_commit": "8f14af19e9b07f1e79994a6bb3958187c7456aa8",
+  "public_entry": "https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&app_path=%2Fapi%2Fworkbench",
+  "platform_runtime": "Running",
+  "tests": {
+    "windows_studio_passed": 120,
+    "linux_core_passed": 119,
+    "linux_core_skipped": 1,
+    "node_passed": 3
+  },
+  "evidence": {
+    "browser-v0.5.1.json": "147874f82a43fb298c59b2d0abfc0fec6b324d99df67805fc961c4016eb20fef",
+    "ci-v0.5.1.json": "e91a83314dc54846caec0e1cfea520f5010f2113b1e823d941c16ef1088e1280",
+    "cloud-offline-v0.5.1.json": "b66fac29ece9526c1252cb208d6846bdc488090996238ae2405b4fc6452db4b3",
+    "cloud-assets-v0.5.1.json": "195841f4845f4676fb76a8bb69bf71b090aa67a9188a6ab25a142259206c45c0",
+    "cloud-persistence-v0.5.1.json": "505ac3807f5bd254252e06b43960654ce817a7ac427c3ad1c1d60c127dd36b46"
+  },
+  "screenshots": {
+    "conversation-folders-observation.jpg": "23879d2091d62a9e4a897376806790dbcaca2f9a68f6339836ed71161bdd2376",
+    "history-cloud.jpg": "f9c66d11a07d8780d3fa5c9723b82cda53e18208f3fead0e5275ae009350e5f0",
+    "mobile-cloud.jpg": "a7fab91f2f4aab351dcd7cb2fee8f8e7055c0a459a1029cc9b98dccbcdae3d3b",
+    "mobile-local.jpg": "cbe4f449f2953cac1aeab8f97fbfedc2bf18a123815ebf8aab89a2cf5994ec61",
+    "wide-cloud.jpg": "a3129af310eb551178876518eb2f1298ca85d44c6845878feb57ecd708316aaf",
+    "wide-local.jpg": "12c3f664be35e2f8669a9c3eedf425bc204c0fa609affd3f22535296980419d1"
+  },
+  "limits": [
+    "Automated browser interactions and review flags are not real user-study feedback.",
+    "No additional paid model evaluation in this release; old live-call records retain their own version and fingerprints.",
+    "Anonymous identities expire after24h; distinct browser storage contexts are not account synchronization.",
+    "One controlled source deployment preserved a fixed anonymous client; this is not a permanent storage guarantee.",
+    "Old-profile records were not available in this browser context; legacy schema migration is separately tested."
+  ]
+}
