@@ -47,11 +47,11 @@ def main():
         response.raise_for_status()
         component = next(c for c in response.json()["components"] if c["type"] == "html")
         assert 'id="run-suite"' in component["props"]["value"]
-        assert 'id="guided-mode"' in component['props']['value']
+        assert 'id="show-guide"' in component['props']['value']
         assert 'confirmedFor' in component['props']['js_on_load']
         direct = client.get('/api/workbench')
         direct.raise_for_status()
-        assert 'id="guided-mode"' in direct.text and '/api/workbench-assets/app.js' in direct.text
+        assert 'id="show-guide"' in direct.text and '/api/workbench-assets/app.js' in direct.text
         assert client.get('/api/workbench-assets/app.js').status_code == 200
         response = client.get("/health")
         response.raise_for_status()
@@ -62,6 +62,12 @@ def main():
             client.headers["X-TrialTrust-Session"] = session.json()["session_token"]
         assert len(client.get('/api/catalog').json()['scenarios']) == 12
         assert len(client.get('/api/skills').json()['skills']) == 5
+        conv = client.post('/api/conversations', json={})
+        conv.raise_for_status()
+        conversation_id = conv.json()['id']
+        client.headers['X-TrialTrust-Conversation'] = conversation_id
+        assert any(c['id'] == conversation_id for c in client.get('/api/conversations').json())
+        assert client.get('/api/trials', params={'conversation_id': conversation_id}).json() == []
         analysis_body={'text':'帮我比较宠物托管，总预算300元','reviewed':True,'use_model':args.live}
         assert client.post('/api/analyze',json={**analysis_body,'reviewed':False,'use_model':False}).status_code == 422
         analysis=client.post('/api/analyze',json=analysis_body)
@@ -92,11 +98,18 @@ def main():
         response = client.get(f"/api/trials/{run_id}/export")
         response.raise_for_status()
         report = response.json()
+        rows = client.get('/api/trials', params={'conversation_id': conversation_id}).json()
+        assert len(rows) == 1 and rows[0]['id'] == run_id
+        assert rows[0]['conversation_id'] == conversation_id
+        second = client.post('/api/conversations', json={})
+        second.raise_for_status()
+        assert client.get('/api/trials', params={'conversation_id':second.json()['id']}).json() == []
+        assert len(client.get('/api/trials', params={'conversation_id':conversation_id}).json()) == 1
         assert report["human_reviewed"] is True and not report["awaiting_human_review"]
         report["smoke_test_context"] = {"annotation_source": "test_client",
             "review_decision_source": "automated_smoke_not_human_user",
             "owner_gateway": args.owner_gateway, "live": args.live,'local_studio':args.local_studio,
-            'version':'v0.5','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export']}
+            'version':'v0.5.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history']}
         report['custom_analysis_check'] = analysis.json()
         assert report['skill_events'][0]['skill_id'] == 'pair-audit'
         assert report['baseline']['skill_events'][0]['skill_id'] == 'mandate-review'

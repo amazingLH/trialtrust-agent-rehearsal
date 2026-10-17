@@ -28,13 +28,29 @@ let chosenCase = "baseline",
   confirmedFor = null,
   currentCategory = null,
   currentStep = 1,
-  guided = true,
   latestRow = null,
   analysisResult = null;
-let sessionToken = null;
-try {
-  sessionToken = sessionStorage.getItem("trialtrust-session");
-} catch {}
+let sessionToken = readLocal("trialtrust-session");
+let conversationId = null;
+function readLocal(key) {
+  try {
+    const value = localStorage.getItem(key);
+    if (value) return value;
+  } catch {}
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function remember(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {}
+}
 function element(tag, text, cls) {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -55,6 +71,8 @@ function notice(text = "", target) {
 async function api(path, body) {
   const opts = { headers: { "X-TrialTrust-Client": "web" } };
   if (sessionToken) opts.headers["X-TrialTrust-Session"] = sessionToken;
+  if (conversationId)
+    opts.headers["X-TrialTrust-Conversation"] = conversationId;
   if (body !== undefined) {
     opts.method = "POST";
     opts.headers["Content-Type"] = "application/json";
@@ -137,10 +155,13 @@ function setBusy(value) {
     "cases",
     "text-reviewed",
     "analyze-live",
+    "new-conversation",
+    "new-trial",
+    "continue-trial",
   ].forEach((id) => ($(id).disabled = value));
   document
     .querySelectorAll(
-      ".category,.retry-actions button,.history-item,.analysis-result button",
+      ".category,.retry-actions button,.history-item,.conversation-item,.analysis-result button",
     )
     .forEach((b) => (b.disabled = value));
   $("dense").disabled = value || $("agent").value !== "live";
@@ -190,6 +211,7 @@ function domainFields(reset = false) {
     $("fulfillment").append(opt);
     $("scenario-description").textContent =
       "选择后会显示这个示例能核验的条件。";
+    $("quantity-label").textContent = "数量";
     $("fee-note").textContent = "示例费用会显示在这里。";
     return;
   }
@@ -218,11 +240,9 @@ function feeNote() {
   $("fee-note").textContent =
     `合成示例：¥${s.price}/${s.unit}，每单附加费¥${fee}。价格变化测试改为¥${s.changed_price}/${s.unit}；非真实报价。`;
 }
-function setGuided(value) {
-  guided = value;
+function showGuide(value = true) {
   $("coach").hidden = !value;
-  $("guided-mode").setAttribute("aria-pressed", String(value));
-  $("expert-mode").setAttribute("aria-pressed", String(!value));
+  $("show-guide").setAttribute("aria-expanded", String(value));
   updateCoach();
 }
 function updateCoach() {
@@ -448,15 +468,126 @@ function renderSkillCatalog() {
     $("skills-catalog").append(node);
   }
 }
+function clearRun() {
+  activeId = null;
+  latestRow = null;
+  clearTimeout(pollTimer);
+  $("result-column").hidden = true;
+  $("workspace").classList.remove("has-result");
+  $("result-content").hidden = true;
+  $("export-preview").hidden = true;
+  $("export-json").value = "";
+  currentStep = $("domain").value ? 2 : 1;
+  invalidateConfirmation();
+}
+function clearInputs() {
+  $("private-task").value = "";
+  $("stand-in").value = "";
+  $("stand-in-stage").hidden = true;
+  $("compile-result").replaceChildren();
+  $("text-reviewed").checked = false;
+  $("analyze-live").checked = false;
+  analysisResult = null;
+  $("budget").value = 200;
+  $("agent").value = "demo_careful";
+  $("dense").checked = false;
+  chooseCase("baseline");
+  selectCategory(catalog.categories[0].id);
+  modeNote();
+}
+function restoreConditions(spec) {
+  const scenario = catalog.scenarios.find((s) => s.id === spec.domain);
+  if (!scenario) {
+    notice("这条历史记录的场景已不可用，可以查看记录。");
+    return;
+  }
+  selectCategory(scenario.category, spec.domain);
+  $("quantity").value = spec.quantity;
+  $("fulfillment").value = spec.fulfillment;
+  $("budget").value = spec.budget_yuan;
+  $("agent").value = spec.agent;
+  $("dense").checked = spec.dense;
+  chosenCase = spec.case;
+  $("cases").value = spec.case;
+  modeNote();
+  feeNote();
+  currentStep = 2;
+  invalidateConfirmation();
+}
+async function refreshConversations() {
+  const rows = await api("/api/conversations");
+  $("conversations").replaceChildren();
+  $("conversation-count").textContent = rows.length;
+  for (const row of rows) {
+    const b = element("button", undefined, "conversation-item");
+    b.type = "button";
+    b.disabled = running;
+    b.setAttribute("aria-pressed", String(row.id === conversationId));
+    b.append(
+      element("b", row.title),
+      element(
+        "small",
+        `${row.run_count || 0}次彩排 · ${new Date(row.updated * 1000).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`,
+      ),
+    );
+    b.addEventListener("click", () =>
+      switchConversation(row.id).catch((e) => notice(e.message)),
+    );
+    $("conversations").append(b);
+    if (row.id === conversationId) {
+      $("conversation-title").textContent = row.title;
+      $("conversation-meta").textContent =
+        `本会话已记录 ${row.run_count || 0} 次彩排；查看旧结果或沿用条件继续。`;
+    }
+  }
+  return rows;
+}
+async function switchConversation(id) {
+  if (running) {
+    notice("当前彩排仍在进行，请完成后切换会话。");
+    return;
+  }
+  conversationId = id;
+  remember("trialtrust-current-conversation", id);
+  clearInputs();
+  clearRun();
+  await refreshConversations();
+  const rows = await history();
+  if (conversationId !== id) return;
+  if (rows.length) {
+    restoreConditions(rows[0].conditions);
+    await loadRun(rows[0].id);
+    currentStep = latestRow?.report
+      ? latestRow.status === "reviewed"
+        ? 4
+        : 3
+      : 2;
+  }
+  updateCoach();
+}
+async function newConversation(notify = true) {
+  if (running) {
+    notice("当前彩排仍在进行，请完成后新建会话。");
+    return;
+  }
+  const row = await api("/api/conversations", {});
+  await switchConversation(row.id);
+  if (notify) notice("新会话已创建。先选择事情；历史会话仍然保留。");
+}
 async function history() {
-  const rows = await api("/api/trials");
+  const expected = conversationId;
+  if (!expected) return [];
+  const rows = await api(
+    `/api/trials?conversation_id=${encodeURIComponent(expected)}`,
+  );
+  if (conversationId !== expected) return [];
   $("history-count").textContent = rows.length;
   $("history").replaceChildren();
   if (!rows.length) {
     $("history").append(
       element("p", "还没有记录。从一组离线对照彩排开始吧。", "muted"),
     );
-    return;
+    return rows;
   }
   for (const row of rows) {
     const b = element("button", undefined, "history-item");
@@ -479,8 +610,11 @@ async function history() {
     });
     $("history").append(b);
   }
+  return rows;
 }
 function render(row, pairSelection = "baseline") {
+  $("result-column").hidden = false;
+  $("workspace").classList.add("has-result");
   $("paired-comparison").hidden = true;
   $("paired-comparison").replaceChildren();
   $("empty-state").hidden = true;
@@ -744,12 +878,13 @@ async function loadRun(id) {
   clearTimeout(pollTimer);
   try {
     const row = await api(`/api/trials/${id}`);
-    if (activeId !== id) return;
+    if (activeId !== id || row.conversation_id !== conversationId) return;
     const wasRunning = running;
     latestRow = row;
     render(row);
     setBusy(row.status === "running");
     await history();
+    await refreshConversations();
     if (row.status === "running")
       pollTimer = setTimeout(() => loadRun(id), 1200);
     else if (wasRunning && row.report) {
@@ -896,22 +1031,24 @@ for (const [id, value] of [
     goStep(2);
     notice("已选择测试条件。请重新确认，再点击单次试运行。");
   });
+$("new-conversation").addEventListener("click", () =>
+  newConversation().catch((e) => notice(e.message)),
+);
 $("new-trial").addEventListener("click", () => {
   if (running) {
-    notice("当前彩排仍在进行，请完成后再开启新一次。");
+    notice("当前彩排仍在进行，请完成后再试。");
     return;
   }
-  activeId = null;
-  latestRow = null;
-  clearTimeout(pollTimer);
-  invalidateConfirmation();
-  $("empty-state").hidden = false;
-  $("result-content").hidden = true;
-  $("run-status").textContent = "尚未开始";
-  currentStep = 1;
-  updateCoach();
+  clearRun();
   history().catch((e) => notice(e.message));
-  scrollToSection("step-one");
+  scrollToSection($("domain").value ? "step-two" : "step-one");
+});
+$("continue-trial").addEventListener("click", () => {
+  if (running || !latestRow) return;
+  clearInputs();
+  restoreConditions(latestRow.conditions);
+  goStep(2);
+  notice("已沿用这次记录的结构化条件。请核对并重新勾选确认；不会自动运行。");
 });
 $("preview-export").addEventListener("click", async () => {
   const expectedId = activeId;
@@ -937,13 +1074,10 @@ $("export").addEventListener("click", async (event) => {
     notice(error.message);
   }
 });
-$("guided-mode").addEventListener("click", () => setGuided(true));
-$("expert-mode").addEventListener("click", () => setGuided(false));
-$("close-guide").addEventListener("click", () => setGuided(false));
+$("show-guide").addEventListener("click", () => showGuide($("coach").hidden));
+$("close-guide").addEventListener("click", () => showGuide(false));
 $("restart-guide").addEventListener("click", () => {
-  setGuided(true);
-  currentStep = 1;
-  updateCoach();
+  showGuide();
   scrollToSection("coach");
 });
 $("to-conditions").addEventListener("click", () => goStep(2));
@@ -959,20 +1093,17 @@ $("help").addEventListener("click", () => $("help-dialog").showModal());
 $("close-help").addEventListener("click", () => $("help-dialog").close());
 $("start-tutorial").addEventListener("click", () => {
   $("help-dialog").close();
-  setGuided(true);
-  currentStep = 1;
-  updateCoach();
-  scrollToSection("step-one");
+  showGuide();
+  scrollToSection("coach");
 });
 $("dismiss-notice").addEventListener("click", () => notice());
 (async () => {
   try {
+    $("full-screen").hidden = !window.location.hostname.endsWith(".ms.show");
     const config = await api("/api/session", {});
     if (config.session_token) {
       sessionToken = config.session_token;
-      try {
-        sessionStorage.setItem("trialtrust-session", sessionToken);
-      } catch {}
+      remember("trialtrust-session", sessionToken);
     }
     liveEnabled = config.live_enabled;
     catalog = await api("/api/catalog");
@@ -992,7 +1123,13 @@ $("dismiss-notice").addEventListener("click", () => notice());
       : "真实模型 · 尚未启用";
     $("analyze-live").disabled = !liveEnabled;
     modeNote();
-    await history();
+    const conversations = await refreshConversations();
+    const saved = readLocal("trialtrust-current-conversation");
+    if (conversations.length)
+      await switchConversation(
+        conversations.some((c) => c.id === saved) ? saved : conversations[0].id,
+      );
+    else await newConversation(false);
   } catch (error) {
     notice(error.message);
   }

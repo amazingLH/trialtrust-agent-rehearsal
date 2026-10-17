@@ -44,4 +44,9 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
         client.cookies.clear()  # Simulate the portal iframe blocking cookies.
         assert client.get("/api/trials").status_code == 401
         assert client.get("/api/trials", headers={"X-TrialTrust-Session": token}).json() == []
+        capability = {**headers, "X-TrialTrust-Session": token}
+        conversation = client.post('/api/conversations', json={}, headers=capability)
+        assert conversation.status_code == 201
+        assert client.get('/api/conversations', headers=capability).json()[0]['id'] == conversation.json()['id']
+        assert client.get('/api/trials', params={'conversation_id': conversation.json()['id']}, headers=capability).json() == []
         assert client.post("/api/session", json={}, headers={**headers, "Origin": "https://other.invalid"}).status_code == 403

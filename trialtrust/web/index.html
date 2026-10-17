@@ -15,10 +15,23 @@
           ><span class="brand-mark">试</span
           ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
         >
-        <div class="mode-switch" aria-label="使用模式">
-          <button id="guided-mode" aria-pressed="true">✦ 新手引导</button
-          ><button id="expert-mode" aria-pressed="false">已熟练使用</button>
-        </div>
+        <button
+          id="show-guide"
+          class="quiet"
+          aria-expanded="true"
+          aria-controls="coach"
+        >
+          操作指引
+        </button>
+        <a
+          id="full-screen"
+          class="quiet fullscreen-link"
+          hidden
+          href="https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&amp;app_path=%2Fapi%2Fworkbench"
+          target="_blank"
+          rel="noopener noreferrer"
+          >全屏体验 ↗</a
+        >
         <button id="help" class="quiet">使用帮助 ?</button>
       </header>
       <div class="page">
@@ -51,9 +64,10 @@
             <p>你的彩排搭子 · 小托</p>
           </div>
         </section>
-        <section id="coach" class="coach" aria-label="新手引导">
+        <section id="coach" class="coach" aria-label="操作指引">
           <span class="coach-avatar" aria-hidden="true">✦</span>
           <div>
+            <p class="coach-label">操作指引</p>
             <span id="coach-counter" class="eyebrow">第 1 步 / 共 4 步</span>
             <h2 id="coach-title">先选一件想交给 AI 的小事</h2>
             <p id="coach-description">
@@ -64,10 +78,40 @@
           ><button
             id="close-guide"
             class="icon-button"
-            aria-label="关闭新手引导"
+            aria-label="收起操作指引"
           >
             ×
           </button>
+        </section>
+        <section class="panel conversation-panel" aria-label="会话工作台">
+          <div class="conversation-heading">
+            <div>
+              <p class="eyebrow">当前会话</p>
+              <h2 id="conversation-title">正在加载会话…</h2>
+              <p id="conversation-meta" class="muted"></p>
+            </div>
+            <button id="new-conversation" class="secondary">新建会话 +</button>
+            <button id="new-trial" class="text-button">
+              本会话再试一次 ↗
+            </button>
+          </div>
+          <div class="conversation-folders">
+            <details id="conversation-drawer">
+              <summary>
+                历史会话 <span id="conversation-count" class="count">0</span>
+              </summary>
+              <div id="conversations" class="conversation-list"></div>
+            </details>
+            <details id="run-drawer">
+              <summary>
+                本会话彩排记录 <span id="history-count" class="count">0</span>
+              </summary>
+              <div id="history"></div>
+            </details>
+          </div>
+          <p class="session-note">
+            同一浏览器身份下的会话可返回继续；匿名身份有效期为24小时。清除浏览器数据、更换浏览器或平台重置存储后，可能无法找回记录。
+          </p>
         </section>
         <nav class="stepper" aria-label="使用顺序">
           <button data-step="1" aria-current="step"><b>01</b> 选事情</button
@@ -75,7 +119,7 @@
           ><button data-step="3"><b>03</b> 看对照与证据</button
           ><button data-step="4"><b>04</b> 审阅与导出</button>
         </nav>
-        <main class="workspace">
+        <main class="workspace" id="workspace">
           <div class="column config-column">
             <section class="panel config-panel" id="step-one">
               <div class="section-heading">
@@ -249,31 +293,8 @@
                 ><button id="run" class="secondary">运行这次试托 ↗</button>
               </details>
             </section>
-            <section class="panel skills-panel">
-              <div class="section-heading">
-                <span class="step-number peach">✦</span>
-                <div>
-                  <p class="eyebrow">真正参与执行的能力</p>
-                  <h2>小托会用哪些 Skills？</h2>
-                </div>
-              </div>
-              <p class="muted">
-                可信白名单技能按需加载；执行由宿主工具控制。下方介绍能力，右侧结果记录这次实际调用。
-              </p>
-              <div id="skills-catalog"></div>
-              <details>
-                <summary>MCP 和 Skills 有什么关系？</summary>
-                <p>
-                  Skills
-                  提供受控任务说明、输入输出约束和权限检查；应用内运行时调用本地宿主函数。仓库另有两个只读
-                  stdio MCP
-                  工具，用于外部客户端查询合成规则及检查方案。网页当前直接调用同源后端，不经过外部
-                  MCP 会话；也不允许上传任意可执行技能。
-                </p>
-              </details>
-            </section>
           </div>
-          <div class="column result-column">
+          <div class="column result-column" id="result-column" hidden>
             <section class="panel result-panel" id="step-three">
               <div class="section-heading">
                 <span class="step-number lilac">03</span>
@@ -293,6 +314,9 @@
               </div>
               <div id="result-content" hidden>
                 <p id="run-meta" class="muted"></p>
+                <button id="continue-trial" class="text-button">
+                  沿用这次条件继续 →
+                </button>
                 <div id="progress" aria-live="polite"></div>
                 <div id="paired-comparison" hidden></div>
                 <div id="finding"></div>
@@ -351,27 +375,22 @@
                 </section>
               </div>
             </section>
-            <section class="panel history-panel">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">当前浏览器会话</p>
-                  <h2>
-                    我的彩排记录 <span id="history-count" class="count">0</span>
-                  </h2>
-                </div>
-                <button id="new-trial" class="text-button">开启新一次 +</button>
-              </div>
-              <p class="muted">
-                记录属于当前匿名会话。回放不会恢复旧的授权勾选；会话可能在24小时后过期。
-              </p>
-              <div id="history"></div>
-            </section>
           </div>
         </main>
+        <details class="panel skills-panel" id="skills-panel">
+          <summary>
+            <span class="step-number peach" aria-hidden="true">✦</span>
+            <h2>小托会用哪些 Skills？</h2>
+          </summary>
+          <p class="muted">
+            按需查看能力介绍。结果中的“本次实际技能调用”会记录这次真正使用的技能。
+          </p>
+          <div id="skills-catalog"></div>
+        </details>
         <footer class="site-footer">
-          <span>试托 v0.5 · 合成环境中的委托彩排</span
+          <span>试托 v0.5.1 · 合成环境中的委托彩排</span
           ><button id="restart-guide" class="text-button">
-            重新开始新手引导 ↻
+            查看操作指引 ↻
           </button>
           <p>
             4类12个示例场景；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
@@ -418,7 +437,7 @@
       <p class="data-note">
         自定义文字先生成本地替身，再亲自去除遗漏的个人资料。只有明确映射到支持场景的四项条件才能彩排；否则会给出缺失信息与证据清单。
       </p>
-      <button id="start-tutorial" class="primary">跟着小托走一遍 →</button>
+      <button id="start-tutorial" class="primary">查看操作指引 →</button>
     </dialog>
   </body>
 </html>

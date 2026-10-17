@@ -53,6 +53,15 @@ class Store:
             """)
             if "kind" not in {row[1] for row in db.execute("PRAGMA table_info(runs)")}:
                 db.execute("ALTER TABLE runs ADD COLUMN kind TEXT NOT NULL DEFAULT 'trial'")
+            if "conversation_id" not in {row[1] for row in db.execute("PRAGMA table_info(runs)")}:
+                db.execute("ALTER TABLE runs ADD COLUMN conversation_id TEXT")
+            db.executescript("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id TEXT PRIMARY KEY, owner TEXT NOT NULL, title TEXT NOT NULL,
+                    created REAL NOT NULL, updated REAL NOT NULL);
+                CREATE INDEX IF NOT EXISTS conversations_owner ON conversations(owner, updated);
+                CREATE INDEX IF NOT EXISTS runs_conversation ON runs(owner, conversation_id, created);
+            """)
 
     def connect(self):
         db = sqlite3.connect(self.path, timeout=10)
@@ -81,6 +90,42 @@ class Store:
             raise HTTPException(404, "未找到这次试托")
         return dict(row)
 
+    def conversation(self, conversation_id, owner):
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM conversations WHERE id=? AND owner=?",
+                             (conversation_id, owner)).fetchone()
+        if not row:
+            raise HTTPException(404, "未找到这个会话")
+        return dict(row)
+
+    def conversations(self, owner):
+        with self.connect() as db:
+            # Group older, unassigned records lazily, under their original owner.
+            # This is idempotent and preserves reports and graph checkpoints.
+            db.execute("BEGIN IMMEDIATE")
+            old = db.execute("SELECT MIN(created),MAX(created) FROM runs WHERE owner=? AND conversation_id IS NULL",
+                             (owner,)).fetchone()
+            if old[0] is not None:
+                legacy = str(uuid4())
+                db.execute("INSERT INTO conversations VALUES (?,?,?,?,?)",
+                           (legacy, owner, "历史彩排", old[0], old[1]))
+                db.execute("UPDATE runs SET conversation_id=? WHERE owner=? AND conversation_id IS NULL",
+                           (legacy, owner))
+            rows = db.execute("""SELECT c.id,c.title,c.created,c.updated,COUNT(r.id) AS run_count
+                FROM conversations c LEFT JOIN runs r ON r.conversation_id=c.id AND r.owner=c.owner
+                WHERE c.owner=? GROUP BY c.id ORDER BY c.updated DESC,c.id LIMIT 100""", (owner,)).fetchall()
+        return [dict(row) for row in rows]
+
+    def new_conversation(self, owner):
+        conversation_id, now = str(uuid4()), time.time()
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            if db.execute("SELECT COUNT(*) FROM conversations WHERE owner=?", (owner,)).fetchone()[0] >= 100:
+                raise HTTPException(429, "当前浏览器身份的会话数已达上限")
+            db.execute("INSERT INTO conversations VALUES (?,?,?,?,?)",
+                       (conversation_id, owner, "新会话", now, now))
+        return self.conversation(conversation_id, owner)
+
     def update(self, run_id, **fields):
         if not fields.keys() <= {"status", "stage", "report", "error", "reviewed"}:
             raise ValueError("Invalid storage field")
@@ -88,17 +133,28 @@ class Store:
             db.execute("UPDATE runs SET " + ",".join(f"{k}=?" for k in fields) + " WHERE id=?",
                        [*fields.values(), run_id])
 
-    def create(self, owner, spec, kind="trial"):
+    def create(self, owner, spec, kind="trial", conversation_id=None):
+        if conversation_id is None:
+            previous = self.conversations(owner)
+            conversation_id = previous[0]["id"] if previous else self.new_conversation(owner)["id"]
         run_id = str(uuid4())
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            conversation = db.execute("SELECT * FROM conversations WHERE id=? AND owner=?",
+                                      (conversation_id, owner)).fetchone()
+            if not conversation:
+                raise HTTPException(404, "未找到这个会话")
             if db.execute("SELECT COUNT(*) FROM runs WHERE status='running'").fetchone()[0] >= 2:
                 raise HTTPException(429, "当前有两次试运行，请稍后再试")
             if db.execute("SELECT COUNT(*) FROM runs WHERE owner=? AND created>?",
                           (owner, time.time() - 86400)).fetchone()[0] >= 20:
                 raise HTTPException(429, "今天的试运行次数已达上限")
-            db.execute("INSERT INTO runs(id,owner,spec,status,stage,created,kind) VALUES (?,?,?,?,?,?,?)",
-                       (run_id, owner, spec.model_dump_json(), "running", "正在准备合成条件", time.time(), kind))
+            now = time.time()
+            db.execute("INSERT INTO runs(id,owner,spec,status,stage,created,kind,conversation_id) VALUES (?,?,?,?,?,?,?,?)",
+                       (run_id, owner, spec.model_dump_json(), "running", "正在准备合成条件", now, kind, conversation_id))
+            title = next(s["label"] for s in public_catalog()["scenarios"] if s["id"] == spec.domain)
+            db.execute("UPDATE conversations SET updated=?,title=CASE WHEN title='新会话' THEN ? ELSE title END WHERE id=? AND owner=?",
+                       (now, title, conversation_id, owner))
         return run_id
 
 
@@ -178,7 +234,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         return owner
 
     def public(row, full=False):
-        result = {k: row[k] for k in ("id", "status", "stage", "created", "reviewed", "error", "kind")}
+        result = {k: row[k] for k in ("id", "status", "stage", "created", "reviewed", "error", "kind", "conversation_id")}
         result["conditions"] = json.loads(row["spec"])
         if full and row["report"]:
             result["report"] = json.loads(row["report"])
@@ -268,11 +324,25 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         return result
 
     @app.get("/api/trials")
-    def list_trials(request: Request):
+    def list_trials(request: Request, conversation_id: str | None = None):
         owner = require_owner(request)
+        if conversation_id:
+            store.conversation(conversation_id, owner)
         with store.connect() as db:
-            rows = db.execute("SELECT * FROM runs WHERE owner=? ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
+            if conversation_id:
+                rows = db.execute("SELECT * FROM runs WHERE owner=? AND conversation_id=? ORDER BY created DESC LIMIT 100",
+                                  (owner, conversation_id)).fetchall()
+            else:
+                rows = db.execute("SELECT * FROM runs WHERE owner=? ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
         return [public(dict(row)) for row in rows]
+
+    @app.get("/api/conversations")
+    def list_conversations(request: Request):
+        return store.conversations(require_owner(request))
+
+    @app.post("/api/conversations", status_code=201)
+    def new_conversation(request: Request):
+        return store.new_conversation(require_owner(request))
 
     @app.post("/api/trials", status_code=202)
     def start(spec: RunSpec, request: Request, background_tasks: BackgroundTasks):
@@ -292,7 +362,8 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             raise HTTPException(403, "运营者尚未启用真实模型调用")
         if spec.dense and spec.agent != "live":
             raise HTTPException(422, "离线演示不会调用向量模型")
-        run_id = store.create(owner, spec, kind)
+        conversation_id = request.headers.get("x-trialtrust-conversation")
+        run_id = store.create(owner, spec, kind, conversation_id=conversation_id)
         background_tasks.add_task(work, run_id, spec, False, kind)
         return {"id": run_id}
 
