@@ -30,7 +30,7 @@
     "Public API access uses no owner credentials; owner records explicitly identify owner_gateway.",
     "Live backend source fingerprints match this version; subsequent entry/frontend changes do not imply another paid model evaluation.",
     "Native cloud browser download completion was not captured; local download and public export API succeeded; readable export fallback provided.",
-    "Real merchant data, bookings, payments, independent user research and personal contest submission are outside this release."
+    "Real merchant data, bookings, payments and independent user research are outside this release."
   ],
   "platform_runtime": "Running",
   "visibility": "public",

@@ -112,7 +112,6 @@ python tools/verify_evidence.py
 | [评测记录](docs/evaluation.md) | 数据来源、消融、指标定义、反例与原始记录 |
 | [部署说明](docs/deployment.md) | GitHub、Git与魔搭的关系，构建入口和服务维护 |
 | [演示与试用](docs/demo.md) | 可操作案例、预期行为、真实反馈记录模板 |
-| [赛事记录](docs/competition.md) | 赛事来源、材料、报名与最终提报状态 |
 | [变更记录](CHANGELOG.md) | 版本能力和发布范围 |
 
 开发与文档整理使用AI辅助；合成回归样本的来源和验证限制在评测文档中披露。项目当前未指定开源许可证；第三方依赖、引用与素材的说明见[NOTICE](NOTICE.md)。
