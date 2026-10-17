@@ -35,12 +35,14 @@ let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
 function readLocal(key) {
+  // Preserve an existing tab's anonymous identity before adopting a shared one.
+  // Older releases stored identities only in sessionStorage.
   try {
-    const value = localStorage.getItem(key);
+    const value = sessionStorage.getItem(key);
     if (value) return value;
   } catch {}
   try {
-    return sessionStorage.getItem(key);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
