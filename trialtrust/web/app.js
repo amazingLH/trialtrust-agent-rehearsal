@@ -32,6 +32,8 @@ let chosenCase = "baseline",
   analysisResult = null;
 let sessionToken = readLocal("trialtrust-session");
 let conversationId = null;
+let analysisNonce = 0,
+  analyzing = false;
 function readLocal(key) {
   try {
     const value = localStorage.getItem(key);
@@ -164,6 +166,7 @@ function setBusy(value) {
       ".category,.retry-actions button,.history-item,.conversation-item,.analysis-result button",
     )
     .forEach((b) => (b.disabled = value));
+  $("compile").disabled = value || analyzing;
   $("dense").disabled = value || $("agent").value !== "live";
   $("analyze-live").disabled = value || !liveEnabled;
   $("run-suite").textContent = value
@@ -306,6 +309,7 @@ function goStep(step, scroll = true) {
     );
 }
 function prepareStandIn() {
+  analysisNonce++;
   let value = $("private-task").value;
   if (!value.trim()) {
     notice("请先写下需求，不要填写真实个人资料。", "private-task");
@@ -343,19 +347,25 @@ function downloadJSON(value, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function compileStandIn() {
-  if (running) return;
+  if (running || analyzing) return;
   if (!$("text-reviewed").checked) {
     notice("请先检查替身文本，并勾选同意发送进行分析。", "text-reviewed");
     return;
   }
   notice();
   $("compile").disabled = true;
+  analyzing = true;
+  const expectedConversation = conversationId,
+    nonce = ++analysisNonce;
   try {
     const result = await api("/api/analyze", {
       text: $("stand-in").value,
       reviewed: $("text-reviewed").checked,
       use_model: $("analyze-live").checked,
     });
+    if (conversationId !== expectedConversation || nonce !== analysisNonce)
+      return;
+    notice();
     analysisResult = result;
     const box = $("compile-result");
     box.replaceChildren(
@@ -417,9 +427,11 @@ async function compileStandIn() {
     );
     box.append(exp);
   } catch (error) {
-    notice(error.message);
+    if (conversationId === expectedConversation && nonce === analysisNonce)
+      notice(error.message);
   } finally {
-    $("compile").disabled = false;
+    analyzing = false;
+    $("compile").disabled = running;
   }
 }
 function renderSkills(events) {
@@ -481,6 +493,7 @@ function clearRun() {
   invalidateConfirmation();
 }
 function clearInputs() {
+  analysisNonce++;
   $("private-task").value = "";
   $("stand-in").value = "";
   $("stand-in-stage").hidden = true;
@@ -557,11 +570,7 @@ async function switchConversation(id) {
   if (rows.length) {
     restoreConditions(rows[0].conditions);
     await loadRun(rows[0].id);
-    currentStep = latestRow?.report
-      ? latestRow.status === "reviewed"
-        ? 4
-        : 3
-      : 2;
+    currentStep = latestRow?.status === "reviewed" ? 4 : 3;
   }
   updateCoach();
 }
@@ -900,6 +909,10 @@ async function loadRun(id) {
 }
 async function start(isSuite = false) {
   if (running) return;
+  if (analyzing) {
+    notice("需求分析仍在进行，请等待结果返回后再开始彩排。");
+    return;
+  }
   notice();
   if (!$("domain").value) {
     notice("请先选择类别和具体需求。", "domain");
@@ -994,9 +1007,13 @@ $("run").addEventListener("click", () => start(false));
 $("run-suite").addEventListener("click", () => start(true));
 $("accept").addEventListener("click", () => review(true));
 $("reject").addEventListener("click", () => review(false));
+["text-reviewed", "analyze-live"].forEach((id) =>
+  $(id).addEventListener("change", () => analysisNonce++),
+);
 $("prepare-stand-in").addEventListener("click", prepareStandIn);
 $("compile").addEventListener("click", compileStandIn);
 $("stand-in").addEventListener("input", () => {
+  analysisNonce++;
   currentStep = 1;
   $("domain").value = "";
   domainFields();
@@ -1006,6 +1023,7 @@ $("stand-in").addEventListener("input", () => {
   analysisResult = null;
 });
 $("private-task").addEventListener("input", () => {
+  analysisNonce++;
   currentStep = 1;
   $("domain").value = "";
   domainFields();
