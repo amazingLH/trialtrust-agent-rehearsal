@@ -1538,3 +1538,11 @@ dialog::backdrop {
     display: none;
   }
 }
+
+/* An expanded drawer must not stretch its collapsed neighbour into an empty box. */
+.conversation-folders {
+  align-items: start;
+}
+.conversation-folders:has(> details[open]) {
+  grid-template-columns: minmax(0, 1fr);
+}
