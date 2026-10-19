@@ -2,6 +2,8 @@ import json
 import sqlite3
 import time
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from trialtrust.webapp import Store, create_app
@@ -129,3 +131,96 @@ def test_conversation_creation_requires_same_origin_and_valid_owner(tmp_path):
         assert client.post("/api/conversations", json={},
                            headers={**HEADERS, "Origin": "https://other.invalid"}).status_code == 403
         assert client.get("/api/conversations").json() == []
+
+
+def test_rename_is_persistent_and_never_overwritten_by_first_run(tmp_path):
+    root = tmp_path / "web"
+    with TestClient(create_app(root, enable_live=False)) as client:
+        initialize(client)
+        first = conversation(client)
+        assert client.patch(f"/api/conversations/{first}", json={"title": "  新会话  "}, headers=HEADERS).status_code == 200
+        run(client, first)
+        assert client.get("/api/conversations").json()[0]["title"] == "新会话"
+        assert client.patch(f"/api/conversations/{first}", json={"title": "周六聚会预算对照"}, headers=HEADERS).status_code == 200
+        cookies = dict(client.cookies)
+    with TestClient(create_app(root, enable_live=False)) as client:
+        client.cookies.update(cookies)
+        assert client.get("/api/conversations").json()[0]["title"] == "周六聚会预算对照"
+
+
+def test_deleted_conversation_and_all_its_rounds_are_inaccessible(tmp_path):
+    root = tmp_path / "web"
+    with TestClient(create_app(root, enable_live=False)) as client:
+        initialize(client)
+        first = conversation(client)
+        runs = [run(client, first), run(client, first, budget=350)]
+        other = conversation(client)
+        kept = run(client, other)
+        assert client.delete(f"/api/conversations/{first}", headers=HEADERS).status_code == 200
+        assert [row["id"] for row in client.get("/api/conversations").json()] == [other]
+        assert [row["id"] for row in client.get("/api/trials").json()] == [kept]
+        assert client.get("/api/trials", params={"conversation_id": first}).status_code == 404
+        for run_id in runs:
+            for suffix in ["", "/export"]:
+                assert client.get(f"/api/trials/{run_id}{suffix}").status_code == 404
+            assert client.post(f"/api/trials/{run_id}/review", json={"accepted": True}, headers=HEADERS).status_code == 404
+            assert client.post(f"/api/trials/{run_id}/resume", json={}, headers=HEADERS).status_code == 404
+        assert client.post("/api/trials", json={"confirmed": True}, headers={**HEADERS, "X-TrialTrust-Conversation": first}).status_code == 404
+        assert client.patch(f"/api/conversations/{first}", json={"title": "cannot return"}, headers=HEADERS).status_code == 404
+        assert client.delete(f"/api/conversations/{first}", headers=HEADERS).status_code == 404
+        Store(root)  # Schema migration and legacy grouping must not resurrect it.
+        assert [row["id"] for row in client.get("/api/conversations").json()] == [other]
+        with sqlite3.connect(root / "web.sqlite") as db:
+            assert db.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 3
+
+
+@pytest.mark.parametrize("title", ["", "   ", "x" * 61, "a\nb", "a\x00b", 123, None])
+def test_invalid_conversation_titles_are_rejected(tmp_path, title):
+    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+        initialize(client)
+        first = conversation(client)
+        assert client.patch(f"/api/conversations/{first}", json={"title": title}, headers=HEADERS).status_code == 422
+        assert client.get("/api/conversations").json()[0]["title"] == "新会话"
+
+
+def test_conversation_mutations_are_owner_and_origin_scoped(tmp_path):
+    app = create_app(tmp_path / "web", enable_live=False)
+    with TestClient(app) as a, TestClient(app) as b:
+        initialize(a)
+        initialize(b)
+        first = conversation(a)
+        for method, body in [("PATCH", {"title": "changed"}), ("DELETE", None)]:
+            url = f"/api/conversations/{first}"
+            assert b.request(method, url, json=body, headers=HEADERS).status_code == 404
+            assert a.request(method, url, json=body).status_code == 403
+            assert a.request(method, url, json=body, headers={**HEADERS, "Origin": "https://foreign.invalid"}).status_code == 403
+        assert a.get("/api/conversations").json()[0]["title"] == "新会话"
+
+
+def test_running_conversation_cannot_be_renamed_or_deleted(tmp_path):
+    from fastapi import HTTPException
+    from trialtrust.scenarios import RunSpec
+    store = Store(tmp_path / "web")
+    first = store.new_conversation("owner-a")["id"]
+    run_id = store.create("owner-a", RunSpec(confirmed=True), conversation_id=first)
+    for title in [None, "later"]:
+        with pytest.raises(HTTPException) as caught:
+            store.change_conversation(first, "owner-a", title=title)
+        assert caught.value.status_code == 409
+    store.update(run_id, status="interrupted")
+    assert store.change_conversation(first, "owner-a")["deleted"] is True
+
+
+def test_deletion_does_not_reset_daily_run_quota(tmp_path):
+    from fastapi import HTTPException
+    from trialtrust.scenarios import RunSpec
+    store = Store(tmp_path / "web")
+    for _ in range(20):
+        first = store.new_conversation("owner-a")["id"]
+        run_id = store.create("owner-a", RunSpec(confirmed=True), conversation_id=first)
+        store.update(run_id, status="interrupted")
+        store.change_conversation(first, "owner-a")
+    first = store.new_conversation("owner-a")["id"]
+    with pytest.raises(HTTPException) as caught:
+        store.create("owner-a", RunSpec(confirmed=True), conversation_id=first)
+    assert caught.value.status_code == 429

@@ -22,7 +22,7 @@ from uuid import uuid4
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict, StrictBool
+from pydantic import BaseModel, ConfigDict, StrictBool, Field, field_validator
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .cli import run_trial
@@ -38,6 +38,19 @@ from .request_analysis import AnalysisRequest, analyze
 class Review(BaseModel):
     model_config = ConfigDict(extra="forbid")
     accepted: StrictBool
+
+
+class ConversationTitle(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(strict=True, min_length=1, max_length=60)
+
+    @field_validator("title")
+    @classmethod
+    def clean_title(cls, value):
+        value = value.strip()
+        if not value or any(ord(c) < 32 or ord(c) == 127 for c in value):
+            raise ValueError("会话名称需为1—60个可见字符")
+        return value
 
 
 class Store:
@@ -63,6 +76,9 @@ class Store:
                 CREATE INDEX IF NOT EXISTS runs_conversation ON runs(owner, conversation_id, created);
             """)
 
+            if "deleted" not in {row[1] for row in db.execute("PRAGMA table_info(conversations)")}:
+                db.execute("ALTER TABLE conversations ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0")
+
     def connect(self):
         db = sqlite3.connect(self.path, timeout=10)
         db.row_factory = sqlite3.Row
@@ -85,14 +101,14 @@ class Store:
 
     def owned(self, run_id, owner):
         with self.connect() as db:
-            row = db.execute("SELECT * FROM runs WHERE id=? AND owner=?", (run_id, owner)).fetchone()
+            row = db.execute("SELECT * FROM runs WHERE id=? AND owner=? AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1)", (run_id, owner)).fetchone()
         if not row:
             raise HTTPException(404, "未找到这次试托")
         return dict(row)
 
     def conversation(self, conversation_id, owner):
         with self.connect() as db:
-            row = db.execute("SELECT * FROM conversations WHERE id=? AND owner=?",
+            row = db.execute("SELECT * FROM conversations WHERE id=? AND owner=? AND deleted=0",
                              (conversation_id, owner)).fetchone()
         if not row:
             raise HTTPException(404, "未找到这个会话")
@@ -107,13 +123,13 @@ class Store:
                              (owner,)).fetchone()
             if old[0] is not None:
                 legacy = str(uuid4())
-                db.execute("INSERT INTO conversations VALUES (?,?,?,?,?)",
+                db.execute("INSERT INTO conversations(id,owner,title,created,updated) VALUES (?,?,?,?,?)",
                            (legacy, owner, "历史彩排", old[0], old[1]))
                 db.execute("UPDATE runs SET conversation_id=? WHERE owner=? AND conversation_id IS NULL",
                            (legacy, owner))
             rows = db.execute("""SELECT c.id,c.title,c.created,c.updated,COUNT(r.id) AS run_count
                 FROM conversations c LEFT JOIN runs r ON r.conversation_id=c.id AND r.owner=c.owner
-                WHERE c.owner=? GROUP BY c.id ORDER BY c.updated DESC,c.id LIMIT 100""", (owner,)).fetchall()
+                WHERE c.owner=? AND c.deleted=0 GROUP BY c.id ORDER BY c.updated DESC,c.id LIMIT 100""", (owner,)).fetchall()
         return [dict(row) for row in rows]
 
     def new_conversation(self, owner):
@@ -122,9 +138,29 @@ class Store:
             db.execute("BEGIN IMMEDIATE")
             if db.execute("SELECT COUNT(*) FROM conversations WHERE owner=?", (owner,)).fetchone()[0] >= 100:
                 raise HTTPException(429, "当前浏览器身份的会话数已达上限")
-            db.execute("INSERT INTO conversations VALUES (?,?,?,?,?)",
+            db.execute("INSERT INTO conversations(id,owner,title,created,updated) VALUES (?,?,?,?,?)",
                        (conversation_id, owner, "新会话", now, now))
         return self.conversation(conversation_id, owner)
+
+    def change_conversation(self, conversation_id, owner, title=None):
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT id FROM conversations WHERE id=? AND owner=? AND deleted=0",
+                             (conversation_id, owner)).fetchone()
+            if not row:
+                raise HTTPException(404, "未找到这个会话")
+            if db.execute("SELECT 1 FROM runs WHERE conversation_id=? AND owner=? AND status='running'",
+                          (conversation_id, owner)).fetchone():
+                raise HTTPException(409, "这个会话仍有彩排进行中，请完成后再操作")
+            if title is None:
+                # Keep tombstones and usage rows so deletion cannot reset quotas.
+                # All owner-facing reads and writes exclude deleted conversations.
+                db.execute("UPDATE conversations SET deleted=1,updated=? WHERE id=? AND owner=?",
+                           (time.time(), conversation_id, owner))
+                return {"deleted": True}
+            db.execute("UPDATE conversations SET title=?,updated=? WHERE id=? AND owner=?",
+                       (title, time.time(), conversation_id, owner))
+            return {"id": conversation_id, "title": title}
 
     def update(self, run_id, **fields):
         if not fields.keys() <= {"status", "stage", "report", "error", "reviewed"}:
@@ -140,7 +176,7 @@ class Store:
         run_id = str(uuid4())
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            conversation = db.execute("SELECT * FROM conversations WHERE id=? AND owner=?",
+            conversation = db.execute("SELECT * FROM conversations WHERE id=? AND owner=? AND deleted=0",
                                       (conversation_id, owner)).fetchone()
             if not conversation:
                 raise HTTPException(404, "未找到这个会话")
@@ -153,7 +189,7 @@ class Store:
             db.execute("INSERT INTO runs(id,owner,spec,status,stage,created,kind,conversation_id) VALUES (?,?,?,?,?,?,?,?)",
                        (run_id, owner, spec.model_dump_json(), "running", "正在准备合成条件", now, kind, conversation_id))
             title = next(s["label"] for s in public_catalog()["scenarios"] if s["id"] == spec.domain)
-            db.execute("UPDATE conversations SET updated=?,title=CASE WHEN title='新会话' THEN ? ELSE title END WHERE id=? AND owner=?",
+            db.execute("UPDATE conversations SET updated=?,title=CASE WHEN title='新会话' AND updated=created THEN ? ELSE title END WHERE id=? AND owner=?",
                        (now, title, conversation_id, owner))
         return run_id
 
@@ -333,7 +369,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
                 rows = db.execute("SELECT * FROM runs WHERE owner=? AND conversation_id=? ORDER BY created DESC LIMIT 100",
                                   (owner, conversation_id)).fetchall()
             else:
-                rows = db.execute("SELECT * FROM runs WHERE owner=? ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
+                rows = db.execute("SELECT * FROM runs WHERE owner=? AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1) ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
         return [public(dict(row)) for row in rows]
 
     @app.get("/api/conversations")
@@ -343,6 +379,14 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     @app.post("/api/conversations", status_code=201)
     def new_conversation(request: Request):
         return store.new_conversation(require_owner(request))
+
+    @app.patch("/api/conversations/{conversation_id}")
+    def rename_conversation(conversation_id: str, body: ConversationTitle, request: Request):
+        return store.change_conversation(conversation_id, require_owner(request), title=body.title)
+
+    @app.delete("/api/conversations/{conversation_id}")
+    def delete_conversation(conversation_id: str, request: Request):
+        return store.change_conversation(conversation_id, require_owner(request))
 
     @app.post("/api/trials", status_code=202)
     def start(spec: RunSpec, request: Request, background_tasks: BackgroundTasks):
@@ -439,7 +483,9 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             raise HTTPException(403, "真实模型调用当前未启用")
         with store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            current = db.execute("SELECT status FROM runs WHERE id=?", (run_id,)).fetchone()
+            current = db.execute("SELECT r.status FROM runs r JOIN conversations c ON c.id=r.conversation_id AND c.owner=r.owner WHERE r.id=? AND r.owner=? AND c.deleted=0", (run_id, require_owner(request))).fetchone()
+            if not current:
+                raise HTTPException(404, "未找到这次试托")
             if current["status"] not in {"failed", "interrupted"}:
                 raise HTTPException(409, "只有中断或失败的试运行可以继续")
             if db.execute("SELECT COUNT(*) FROM runs WHERE status='running'").fetchone()[0] >= 2:

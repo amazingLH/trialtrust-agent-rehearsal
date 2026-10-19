@@ -72,7 +72,7 @@ function notice(text = "", target) {
     setTimeout(() => outline.classList.remove("field-error"), 6000);
   }
 }
-async function api(path, body) {
+async function api(path, body, method) {
   const opts = { headers: { "X-TrialTrust-Client": "web" } };
   if (sessionToken) opts.headers["X-TrialTrust-Session"] = sessionToken;
   if (conversationId)
@@ -82,6 +82,7 @@ async function api(path, body) {
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
   }
+  if (method) opts.method = method;
   const response = await fetch(path, opts);
   let result;
   try {
@@ -143,6 +144,7 @@ function modeNote() {
 }
 function setBusy(value) {
   running = value;
+  if (value) closeConversationMenus();
   [
     "run",
     "run-suite",
@@ -165,7 +167,7 @@ function setBusy(value) {
   ].forEach((id) => ($(id).disabled = value));
   document
     .querySelectorAll(
-      ".category,.retry-actions button,.history-item,.conversation-item,.analysis-result button",
+      ".category,.retry-actions button,.history-item,.conversation-item,.conversation-actions button,.analysis-result button",
     )
     .forEach((b) => (b.disabled = value));
   $("compile").disabled = value || analyzing;
@@ -530,6 +532,73 @@ function restoreConditions(spec) {
   currentStep = 2;
   invalidateConfirmation();
 }
+let conversationAction = null;
+function closeConversationMenus(except) {
+  $("conversations").querySelectorAll(".conversation-actions[open]").forEach(menu => {
+    if (menu !== except) menu.open = false;
+  });
+}
+function openConversationAction(row, type) {
+  if (running) return;
+  closeConversationMenus();
+  setSidebar(false);
+  conversationAction = { id: row.id, type };
+  $("conversation-action-title").textContent = type === "rename" ? "重命名会话" : "删除会话？";
+  $("conversation-action-name").textContent = row.title;
+  $("rename-field").hidden = type !== "rename";
+  $("delete-explanation").hidden = type !== "delete";
+  $("conversation-name").value = row.title;
+  $("conversation-name").required = type === "rename";
+  $("confirm-conversation-action").textContent = type === "rename" ? "保存名称" : "确认删除";
+  $("confirm-conversation-action").classList.toggle("danger-button", type === "delete");
+  $("conversation-action-error").textContent = "";
+  $("conversation-action-dialog").showModal();
+  (type === "rename" ? $("conversation-name") : $("cancel-conversation-action")).focus();
+  if (type === "rename") $("conversation-name").select();
+}
+document.addEventListener("click", (event) => {
+  if (!event.composedPath().some(node => node instanceof Element && node.classList.contains("conversation-actions"))) closeConversationMenus();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  const menu = $("conversations").querySelector(".conversation-actions[open]");
+  if (menu) { event.preventDefault(); event.stopImmediatePropagation(); menu.open = false; menu.querySelector("summary").focus(); }
+});
+$("cancel-conversation-action").addEventListener("click", () => $("conversation-action-dialog").close());
+$("conversation-action-dialog").addEventListener("cancel", event => {
+  if ($("confirm-conversation-action").disabled) event.preventDefault();
+});
+$("conversation-action-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!conversationAction || running || $("confirm-conversation-action").disabled) return;
+  const {id, type} = conversationAction;
+  const title = $("conversation-name").value.trim();
+  if (type === "rename" && (!title || [...title].length > 60 || /[\x00-\x1f\x7f]/.test(title))) {
+    $("conversation-action-error").textContent = "请输入1—60个字符的名称，不要包含换行或控制字符。";
+    $("conversation-name").focus(); return;
+  }
+  $("confirm-conversation-action").disabled = true;
+  $("cancel-conversation-action").disabled = true;
+  try {
+    await api(`/api/conversations/${encodeURIComponent(id)}`, type === "rename" ? {title} : undefined, type === "rename" ? "PATCH" : "DELETE");
+    $("conversation-action-dialog").close();
+    if (type === "delete" && id === conversationId) {
+      conversationId = null;
+      remember("trialtrust-current-conversation", "");
+      clearInputs(); clearRun();
+      const rows = await refreshConversations();
+      if (rows.length) await switchConversation(rows[0].id);
+      else await newConversation(false);
+    } else await refreshConversations();
+    notice(type === "rename" ? "会话名称已更新。" : "会话已从历史中删除；已导出的文件不受影响。");
+  } catch(error) {
+    if ($("conversation-action-dialog").open) $("conversation-action-error").textContent = error.message;
+    else notice(error.message);
+  } finally {
+    $("confirm-conversation-action").disabled = false;
+    $("cancel-conversation-action").disabled = false;
+  }
+});
 async function refreshConversations() {
   const rows = await api("/api/conversations");
   $("conversations").replaceChildren();
@@ -549,7 +618,26 @@ async function refreshConversations() {
     b.addEventListener("click", () =>
       switchConversation(row.id).catch((e) => notice(e.message)),
     );
-    $("conversations").append(b);
+    const rowElement = element("div", undefined, "conversation-row");
+    const menu = element("details", undefined, "conversation-actions");
+    const toggle = element("summary", "⋯");
+    toggle.setAttribute("aria-label", `会话操作：${row.title}`);
+    toggle.setAttribute("title", "重命名或删除会话");
+    toggle.addEventListener("click", (event) => {
+      if (running) { event.preventDefault(); return; }
+      closeConversationMenus(menu);
+    });
+    const actions = element("div", undefined, "conversation-menu");
+    for (const [label, type] of [["重命名", "rename"], ["删除会话", "delete"]]) {
+      const action = element("button", label, type === "delete" ? "danger-text" : "");
+      action.type = "button";
+      action.disabled = running;
+      action.addEventListener("click", () => openConversationAction(row, type));
+      actions.append(action);
+    }
+    menu.append(toggle, actions);
+    rowElement.append(b, menu);
+    $("conversations").append(rowElement);
     if (row.id === conversationId) {
       $("conversation-title").textContent = row.title;
       $("conversation-meta").textContent =

@@ -418,6 +418,25 @@
         ×
       </button>
     </div>
+    <dialog id="conversation-action-dialog" aria-labelledby="conversation-action-title" aria-describedby="conversation-action-name">
+      <form id="conversation-action-form">
+        <h2 id="conversation-action-title">重命名会话</h2>
+        <p id="conversation-action-name" class="muted"></p>
+        <label id="rename-field" class="field">会话名称
+          <input id="conversation-name" aria-label="会话名称" maxlength="60" autocomplete="off" />
+          <small>最多60个字符，请勿填写个人隐私资料。</small>
+        </label>
+        <div id="delete-explanation" hidden>
+          <p>该会话和其中的彩排记录将从历史中移除，无法在页面中恢复。已导出的文件不受影响。</p>
+          <p class="muted">此操作为逻辑删除，不会立即清除服务器存储；用量限制不会重置。</p>
+        </div>
+        <p id="conversation-action-error" class="danger-text" role="alert"></p>
+        <div class="review-actions">
+          <button id="cancel-conversation-action" type="button" class="secondary">取消</button>
+          <button id="confirm-conversation-action" type="submit" class="primary">保存名称</button>
+        </div>
+      </form>
+    </dialog>
     <dialog id="help-dialog" aria-labelledby="help-title">
       <div class="dialog-heading">
         <h2 id="help-title">第一次怎么用？</h2>
