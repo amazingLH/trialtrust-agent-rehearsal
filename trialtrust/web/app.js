@@ -1374,6 +1374,11 @@ $("dismiss-notice").addEventListener("click", () => notice());
       remember("trialtrust-session", sessionToken);
     }
     liveEnabled = config.live_enabled;
+    if (typeof config.studio_url === "string" && config.studio_url.startsWith("https://www.modelscope.cn/studios/L666H666Better/")) {
+      const target = new URL(config.studio_url);
+      target.searchParams.set("mode", "full"); target.searchParams.set("app_path", "/api/workbench");
+      $("full-screen").href = target.href;
+    }
     catalog = await api("/api/catalog");
     domainLabels = Object.fromEntries(
       catalog.scenarios.map((s) => [s.id, s.label]),
