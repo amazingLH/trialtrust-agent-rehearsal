@@ -1,0 +1,18 @@
+{
+  "kind": "anonymous_public_api_smoke",
+  "owner_credentials_used": false,
+  "live_model_calls": 0,
+  "renamed": true,
+  "deleted": true,
+  "deleted_run_hidden_from_lists": true,
+  "deleted_run_endpoints": {
+    "GET ": 404,
+    "GET /export": 404,
+    "POST /review": 404,
+    "POST /resume": 404
+  },
+  "application_js_sha256": "4214355b7d4c396a075d6a56a0352d861d4e12d13d9aef5d610adca7fe0add04",
+  "github_application_commit": "3c97eb0",
+  "studio_application_commit": "2d7f146",
+  "only_self_created_test_data": true
+}

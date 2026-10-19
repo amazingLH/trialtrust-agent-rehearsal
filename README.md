@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml/badge.svg)](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml)
 
-[在线体验](https://l666h666better-trialtrust.ms.show/api/workbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
+[在线体验](https://l666h666better-trialtrust-workbench.ms.show/api/workbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![会话侧栏与单列步骤：公开工作台实际截图](assets/layout-2026-10-19/steps-cloud.png)
+![v0.6.1实际工作台：条件设置与合成费用预览](assets/v0.6.1/settings-cloud.png)
 
-当前版本 **v0.6**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
+当前版本 **v0.6.1**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
 ## 工作台能力
 

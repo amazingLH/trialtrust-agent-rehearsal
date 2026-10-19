@@ -1,0 +1,23 @@
+{
+  "anonymous_public_assets": true,
+  "owner_credentials_used": false,
+  "github_application_commit": "cee293b",
+  "studio_application_commit": "7fa09f5",
+  "assets": {
+    "app.js": {
+      "http_status": 200,
+      "sha256": "0ceacd125d8e08ebaa4e964356aed59fdbf46b7f03c5406f21fd7783b1e0fd3f",
+      "matches_source": true
+    },
+    "style.css": {
+      "http_status": 200,
+      "sha256": "bd3ba626f943cc62a8bdbb603db5c39c4f14031a578bcd09ec32e4959a472e97",
+      "matches_source": true
+    },
+    "workbench_tools.js": {
+      "http_status": 200,
+      "sha256": "f85caaabdcb852238ac466d9ba9738cdb4aaafc10803cf1f5c862832cb504187",
+      "matches_source": true
+    }
+  }
+}

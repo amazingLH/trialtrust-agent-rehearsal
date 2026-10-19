@@ -16,15 +16,15 @@ flowchart LR
     P -->|Git push| G[GitHub仓库与CI]
 ```
 
-魔搭远程为`https://modelscope.cn/studios/L666H666Better/trialtrust.git`。推送源码后调用平台部署接口，由平台安装依赖、运行入口并发布到`https://l666h666better-trialtrust.ms.show`。这次没有通过GitHub导入，也没有上传ZIP来部署。
+魔搭远程为`https://modelscope.cn/studios/L666H666Better/trialtrust-workbench.git`。推送源码后调用平台部署接口，由平台安装依赖、运行入口并发布到`https://l666h666better-trialtrust-workbench.ms.show`。这次没有通过GitHub导入，也没有上传ZIP来部署。
 
 GitHub提交不会自动同步到魔搭；修改应用后，需要将同一经过验证的代码更新到部署仓库，再执行部署和验收。
 
 ## 独立Docker入口
 
 ```bash
-docker build -t trialtrust:0.5 .
-docker run --rm -p 7860:7860 trialtrust:0.5
+docker build -t trialtrust:0.6.1 .
+docker run --rm -p 7860:7860 trialtrust:0.6.1
 ```
 
 默认离线。核心入口为`trialtrust.webapp:app`，容器端口7860。需要保留状态时挂载`/mnt/workspace/trialtrust`；需要真实模型时通过托管Secret或安全的环境注入方式配置，不把密钥写进镜像。
@@ -47,6 +47,7 @@ docker run --rm -p 7860:7860 trialtrust:0.5
 | `TRIALTRUST_RUNTIME` | 持久化运行目录 |
 | `TRIALTRUST_ENABLE_LIVE` | 是否开放真实模型模式 |
 | `TRIALTRUST_PUBLIC_ORIGIN` | 明确的公开HTTPS来源 |
+| `TRIALTRUST_STUDIO_URL` | 当前创空间页面地址，保持全屏链接与部署一致 |
 | `TRIALTRUST_ALLOWED_HOSTS` | 独立入口或公共网关的Host白名单 |
 | `TRIALTRUST_BUDGET_CNY` | 每个应用账本的保守估算费用上限 |
 | `TRIALTRUST_TOKEN_LIMIT` | 每个账本的token上限 |
@@ -75,10 +76,19 @@ v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提�
 
 ## 轻量工作台入口
 
-推荐体验入口为 `https://l666h666better-trialtrust.ms.show/api/workbench`，与Gradio入口共用同一HTML、CSS、JS、匿名会话和费用账本，资源位于独立的`/api/workbench-assets/`，避免Gradio资源路径冲突。
+推荐体验入口为 `https://l666h666better-trialtrust-workbench.ms.show/api/workbench`，与Gradio入口共用同一HTML、CSS、JS、匿名会话和费用账本，资源位于独立的`/api/workbench-assets/`，避免Gradio资源路径冲突。
 
 浏览器实测表明：魔搭会将该地址转到官方门户，保留`app_path`，再通过iframe显示，所以不能把接口返回200当作绕过门户的证明。托管版仅允许自身和两个魔搭官方域名嵌入，轻量页面保留同源脚本、样式、连接的严格CSP；独立Docker版仍禁止外部嵌入。会话和Origin校验保持一致。
 
 原Gradio入口和根`/config`继续提供。门户缩放观察与自动化兼容性单独记录，实际显示与点击结果见[新版验证记录](validation-v0.5.md)。
 
 自有`portal_viewport.js`只接收实际父窗口、官方魔搭域名或同源父窗口的iframe-resizer初始化和有界尺寸信息，再用CSS容器查询排版。不会接收任务或执行命令，不发送条件文本、凭据；不加载第三方运行代码。来源、消息长度、尺寸和布局用途有3项Node回归。保留早期被裁切的失败截图，不能用它冒充已通过的手机效果。
+
+
+## v0.6.1 发布入口
+
+当前部署仓库为`trialtrust-workbench`。此前`trialtrust`多次重建仍返回旧快照，资源字节校验拦截了这类假阳性，因此建立独立默认CPU部署入口，原空间和匿名记录保留。两处数据不自动迁移；浏览器模板也按站点保存。代码主仓库仍是同一个GitHub项目。
+
+公共网关明确拒绝PATCH和DELETE，会话操作使用同源POST路径`/api/conversations/{id}/rename`与`/api/conversations/{id}/delete`；删除必须传严格布尔确认。标准方法继续供独立服务使用，所有入口共用身份和运行中校验。
+
+发布验收需匹配实际`app.js`、`style.css`、`workbench_tools.js`，并实际测试页面与API。单独Running或HTTP200不足以确认部署正确。详情见[v0.6验证记录](validation-v0.6.md)。

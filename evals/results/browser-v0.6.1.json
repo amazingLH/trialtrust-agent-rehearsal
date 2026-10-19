@@ -1,0 +1,42 @@
+{
+  "version": "v0.6.1",
+  "github_application_commit": "3c97eb0",
+  "studio_application_commit": "2d7f146",
+  "public_entry": "https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench?mode=full&app_path=%2Fapi%2Fworkbench",
+  "anonymous_public_browser": {
+    "version_visible": "v0.6.1",
+    "rename_saved": "周末聚餐练习",
+    "template_applied": "starter-buffet",
+    "fee_preview": {
+      "original": 170,
+      "price_change": 210,
+      "remaining_budget": 20
+    },
+    "full_screen_link_targets_current_studio": true,
+    "phone": {
+      "viewport": [
+        390,
+        844
+      ],
+      "app_container_width": 390,
+      "sidebar_initially_inert": true,
+      "sidebar_left": -310,
+      "manual_case_settings_visible_after_selection": true
+    }
+  },
+  "local_browser": {
+    "personal_template_persisted_after_reload": true,
+    "single_missing_evidence_created_second_round": true,
+    "cross_round_facts_table_verified": true,
+    "changed_selection_cleared_old_table": true,
+    "post_rename_and_delete_web_flow_verified": true,
+    "gradio_native_sidebar_and_template_verified": true
+  },
+  "regression": {
+    "windows_python_passed": 135,
+    "node_passed": 11,
+    "ci_url": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39193264163"
+  },
+  "live_model_calls_this_round": 0,
+  "limit": "Offline synthetic development checks; not real user feedback or a new live model evaluation. Old and new Studio data do not automatically migrate."
+}

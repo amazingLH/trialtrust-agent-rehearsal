@@ -1,0 +1,19 @@
+{
+  "kind": "observed_public_gateway_rejection",
+  "studio": "trialtrust-workbench",
+  "github_application_commit": "cee293b",
+  "studio_application_commit": "7fa09f5",
+  "observed": {
+    "PATCH": {
+      "status": 403,
+      "code": "AccessDenied",
+      "message": "unauthorized method 'PATCH'"
+    },
+    "DELETE": {
+      "status": 403,
+      "code": "AccessDenied",
+      "message": "unauthorized method 'DELETE'"
+    }
+  },
+  "resolution": "v0.6.1 uses same-origin authenticated POST action endpoints, with strict deletion confirmation; standard methods remain for standalone use."
+}

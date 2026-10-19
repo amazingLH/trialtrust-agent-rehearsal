@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 from trialtrust.provider import credential
 from trialtrust.catalog import CATALOG
 
-HOST = "https://l666h666better-trialtrust.ms.show"
+HOST = "https://l666h666better-trialtrust-workbench.ms.show"
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     args = parser.parse_args()
     if args.local_studio and args.owner_gateway:
         parser.error('Select either local Studio or owner gateway')
-    host = "https://studio-l666h666better-trialtrust.api-inference.modelscope.net" if args.owner_gateway else HOST
+    host = "https://studio-l666h666better-trialtrust-workbench.api-inference.modelscope.net" if args.owner_gateway else HOST
     if args.local_studio:
         host = 'http://127.0.0.1:8781'
     origin = host if args.local_studio else HOST
@@ -105,15 +105,24 @@ def main():
         second.raise_for_status()
         assert client.get('/api/trials', params={'conversation_id':second.json()['id']}).json() == []
         assert len(client.get('/api/trials', params={'conversation_id':conversation_id}).json()) == 1
+        spare = second.json()['id']
+        renamed = client.post(f'/api/conversations/{spare}/rename', json={'title':'public smoke spare'})
+        renamed.raise_for_status()
+        assert client.post(f'/api/conversations/{spare}/delete',json={'confirmed':False}).status_code == 409
+        deleted = client.post(f'/api/conversations/{spare}/delete',json={'confirmed':True})
+        deleted.raise_for_status()
+        assert spare not in {c['id'] for c in client.get('/api/conversations').json()}
+        assert client.get(f'/api/trials/{run_id}').status_code == 200
+
         assert report["human_reviewed"] is True and not report["awaiting_human_review"]
         report["smoke_test_context"] = {"annotation_source": "test_client",
             "review_decision_source": "automated_smoke_not_human_user",
             "owner_gateway": args.owner_gateway, "live": args.live,'local_studio':args.local_studio,
-            'version':'v0.5.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history']}
+            'version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','post_rename_and_confirmed_delete']}
         report['custom_analysis_check'] = analysis.json()
         assert report['skill_events'][0]['skill_id'] == 'pair-audit'
         assert report['baseline']['skill_events'][0]['skill_id'] == 'mandate-review'
-        target = args.output or ROOT/'runtime'/('v0.5-live-smoke.json' if args.live else 'v0.5-offline-smoke.json')
+        target = args.output or ROOT/'runtime'/('v0.6.1-live-smoke.json' if args.live else 'v0.6.1-offline-smoke.json')
         target.parent.mkdir(parents=True,exist_ok=True)
         target.write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
