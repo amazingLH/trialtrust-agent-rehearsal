@@ -1,0 +1,29 @@
+{
+  "studio": "L666H666Better/trialtrust",
+  "source": "420ef02",
+  "mechanism": "official_deep_restart_after_sdk_change",
+  "public_validation_used_owner_credentials": false,
+  "deployment_control_used_owner_credentials": true,
+  "paid_model_calls": 0,
+  "before": {
+    "database": "sqlite",
+    "storage_id": "cd6a7f8a-b954-4fb3-80e6-f8dd70686fc7",
+    "boot_id": "1528060f-677d-46ec-b007-8749b2b7747c",
+    "startup_backup_exists": true,
+    "file_permissions_managed_by_platform": true
+  },
+  "after": {
+    "database": "sqlite",
+    "storage_id": "cd6a7f8a-b954-4fb3-80e6-f8dd70686fc7",
+    "boot_id": "76743027-a5bb-4794-b436-8175e48b2962",
+    "startup_backup_exists": true,
+    "file_permissions_managed_by_platform": true
+  },
+  "checks": {
+    "same_storage_id": true,
+    "new_boot_id": true,
+    "existing_account_login_succeeded": true,
+    "prior_conversation_found_by_smoke": true,
+    "startup_backup_exists": true
+  }
+}

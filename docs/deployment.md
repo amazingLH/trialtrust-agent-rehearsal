@@ -20,7 +20,9 @@ DASHSCOPE_API_KEY仅供模型后端。ALIPAY_MODELSCOPE_KEY只供本地部署管
 
 ## 发布验收
 
-正常提交和推送魔搭仓库，调用平台部署后，核对公开HTML及app.js/auth.js/style.css/workbench_tools.js与Git对象一致。Running或HTTP200不代表实际交互通过。
+正常提交和推送魔搭仓库后，先通过官方settings接口明确sdk_type=docker；SDK、镜像变更或restart_check返回需要深度重启时，使用官方管理页的深度重启流程（PUT /api/v1/studio/{owner}/{repo}/reset_restart），重建临时运行环境。普通deploy在本空间曾选到历史Gradio构建分支；明确SDK后单独deploy仍复现，不能当作已解决。应核对构建日志实际使用当前主分支、项目Dockerfile及Python入口。平台将新镜像描述标签自动回退，部署仓库保留该回退历史，没有重复提交标签。
+
+调用平台部署后，核对公开HTML及app.js/auth.js/style.css/workbench_tools.js与Git对象一致。Running或HTTP200不代表实际交互通过。
 
 使用tools/deployment_smoke.py --managed-docker完成公开门户上下文下的注册登录及完整离线流程；--account-state必须指向runtime中的私有测试账号文件，用于重新部署后验证同一账号与历史。不得把该文件当作公开证据上传。--live才调用模型，本轮不需要。
 

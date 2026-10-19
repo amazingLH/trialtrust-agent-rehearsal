@@ -6,11 +6,11 @@
 
 [在线体验](https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&app_path=%2Fapi%2Fworkbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![试托账号入口：原创太空小托与登录注册](assets/v0.7/login-local.png)
+![试托账号入口：原创太空小托与登录注册](assets/v0.7/login-cloud.png)
 
-当前版本 **v0.7**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
+当前版本 **v0.7**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。首页截图来自公开魔搭门户；桌面、手机、API与各版真实模型证据分别记录。
 
-> v0.7新增独立登录注册入口与账号隔离，SQLite运行数据不进入镜像或Git。上线和重启持久化验收进展见[账号验证记录](docs/validation-accounts.md)，旧版本证据保留原版本标记。
+> v0.7新增独立登录注册入口与账号隔离，SQLite运行数据不进入镜像或Git。公开登录、账号隔离、云端深度重启数据保留及手机布局已验收；详情见[账号验证记录](docs/validation-accounts.md)，旧版本证据保留原版本标记。
 
 当前托管入口为 **`L666H666Better/trialtrust`**，展示名称为“试托·Agent委托前试运行工作台”。
 

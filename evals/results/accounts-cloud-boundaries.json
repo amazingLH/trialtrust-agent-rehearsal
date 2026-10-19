@@ -1,0 +1,16 @@
+{
+  "public_portal_without_owner_key": true,
+  "paid_model_calls": 0,
+  "checks": {
+    "unauthenticated_history_rejected": true,
+    "same_browser_second_registration_rejected": true,
+    "account_history_isolated": true,
+    "foreign_trial_and_export_rejected": true,
+    "foreign_review_rejected": true,
+    "recovery_revokes_sessions": true,
+    "recovery_code_rotates": true,
+    "old_password_rejected": true,
+    "password_change_revokes_sessions": true,
+    "logout_revokes_replayed_token": true
+  }
+}

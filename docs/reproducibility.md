@@ -28,7 +28,7 @@ python -m pytest -q
 python -m uvicorn trialtrust.webapp:app --host 127.0.0.1 --port 8774
 ```
 
-打开 <http://127.0.0.1:8774/>。核心依赖不包含Gradio，托管测试会跳过；若需要托管入口，另外安装`requirements.txt`，完整测试会包含该项。
+打开 <http://127.0.0.1:8774/>，先注册用户名/密码并保存恢复码，再进入工作台。核心依赖不包含Gradio，托管测试会跳过；若需要托管入口，另外安装`requirements.txt`，完整测试会包含该项。
 
 ```bash
 python -m pip install -r requirements.txt

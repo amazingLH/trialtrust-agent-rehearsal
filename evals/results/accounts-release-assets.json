@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-10-19T13:40:16.236879+00:00",
+  "deployed_candidate": "42c89cff3589823f21be87cb49d0382376b2166b",
+  "public_resource_request_used_owner_credentials": false,
+  "status_read_used_deployment_credentials": true,
+  "assets": {
+    "app.js": {
+      "http": 200,
+      "matches_git_blob": true,
+      "sha256": "e2d1d71e9841f1224a6986ee4c193376f4559af4dd21298756c46b55c67e9eef"
+    },
+    "auth.js": {
+      "http": 200,
+      "matches_git_blob": true,
+      "sha256": "adcfed47d259a872336397a169f06212a91e6343e8fb978e77ea1ff25d651107"
+    },
+    "style.css": {
+      "http": 200,
+      "matches_git_blob": true,
+      "sha256": "cc091ad7996836e5bd43af8e34e1eb85137df23fc2cd87423eab847ae7f14329"
+    },
+    "workbench_tools.js": {
+      "http": 200,
+      "matches_git_blob": true,
+      "sha256": "f85caaabdcb852238ac466d9ba9738cdb4aaafc10803cf1f5c862832cb504187"
+    }
+  }
+}

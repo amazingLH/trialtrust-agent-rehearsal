@@ -39,4 +39,4 @@
 浏览器限制不是物理设备识别：清理数据、无痕或更换浏览器可绕过；共享IP也不能等同设备。本实现不使用侵入式硬件指纹，不承诺绝对防多账号。多用户登录与数据隔离已加入验证；当前仍是单进程、受限规模的SQLite应用，不宣称多副本或大并发生产能力。
 
 
-参考：[魔搭官方创空间说明](https://modelscope.cn/skills/modelscope/modelscope-studio)、[OWASP密码存储说明](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)。本项目按所选bcrypt实现并明确其输入限制；新系统也可评估Argon2id，但本轮没有暗中改变约定算法。
+参考：[魔搭官方创空间说明](https://modelscope.cn/skills/modelscope/modelscope-studio)、[OWASP密码存储说明](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)。本版使用bcrypt并明确72字节输入限制；其他实现可评估Argon2id。

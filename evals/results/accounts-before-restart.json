@@ -1,0 +1,13 @@
+{
+  "public_portal_without_owner_key": true,
+  "source": "420ef02",
+  "storage": {
+    "database": "sqlite",
+    "storage_id": "cd6a7f8a-b954-4fb3-80e6-f8dd70686fc7",
+    "boot_id": "1528060f-677d-46ec-b007-8749b2b7747c",
+    "startup_backup_exists": true,
+    "file_permissions_managed_by_platform": true
+  },
+  "conversation_id": "e616d5d0-b841-4243-89a4-04c498eebb7c",
+  "trial_id": "4849320a-513b-4520-8c4a-49941d4111f9"
+}

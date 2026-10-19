@@ -1,0 +1,15 @@
+{
+  "studio": "L666H666Better/trialtrust",
+  "source": "42c89cf",
+  "public_application_validation_owner_credentials": false,
+  "storage": {
+    "database": "sqlite",
+    "storage_id": "cd6a7f8a-b954-4fb3-80e6-f8dd70686fc7",
+    "boot_id": "5d256fc7-68bb-4059-8f44-82072081cf39",
+    "startup_backup_exists": true,
+    "file_permissions_managed_by_platform": true
+  },
+  "original_conversation_preserved": true,
+  "existing_account_session_preserved": true,
+  "paid_model_calls": 0
+}
