@@ -224,3 +224,38 @@ def test_deletion_does_not_reset_daily_run_quota(tmp_path):
     with pytest.raises(HTTPException) as caught:
         store.create("owner-a", RunSpec(confirmed=True), conversation_id=first)
     assert caught.value.status_code == 429
+
+
+def test_gateway_compatible_post_actions_preserve_owner_isolation(tmp_path):
+    app = create_app(tmp_path / "web", enable_live=False)
+    with TestClient(app) as a, TestClient(app) as b:
+        initialize(a)
+        initialize(b)
+        first = conversation(a)
+        assert a.post(f"/api/conversations/{first}/rename", json={"title":"兼容入口"}, headers=HEADERS).status_code == 200
+        for action,body in [("rename",{"title":"not owned"}),("delete",{"confirmed":True})]:
+            url=f"/api/conversations/{first}/{action}"
+            assert b.post(url,json=body,headers=HEADERS).status_code == 404
+            assert a.post(url,json=body,headers={**HEADERS,"Origin":"https://foreign.invalid"}).status_code == 403
+        assert a.get("/api/conversations").json()[0]["title"] == "兼容入口"
+        assert a.post(f"/api/conversations/{first}/delete",json={"confirmed":True},headers=HEADERS).status_code == 200
+        assert a.get("/api/conversations").json() == []
+
+
+def test_post_deletion_requires_true_boolean_confirmation(tmp_path):
+    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+        initialize(client)
+        first = conversation(client)
+        for body,status in [({},422),({"confirmed":"true"},422),({"confirmed":False},409)]:
+            assert client.post(f"/api/conversations/{first}/delete",json=body,headers=HEADERS).status_code == status
+        assert len(client.get("/api/conversations").json()) == 1
+
+
+def test_post_deletion_hides_existing_round_and_export(tmp_path):
+    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+        initialize(client)
+        first = conversation(client)
+        rid=run(client,first)
+        assert client.post(f"/api/conversations/{first}/delete",json={"confirmed":True},headers=HEADERS).status_code == 200
+        assert client.get(f"/api/trials/{rid}/export").status_code == 404
+        assert client.get("/api/trials").json() == []

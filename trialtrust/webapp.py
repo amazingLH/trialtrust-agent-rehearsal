@@ -53,6 +53,11 @@ class ConversationTitle(BaseModel):
         return value
 
 
+class ConversationDeletion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    confirmed: StrictBool
+
+
 class Store:
     def __init__(self, root: Path):
         root.mkdir(parents=True, exist_ok=True)
@@ -380,6 +385,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     def new_conversation(request: Request):
         return store.new_conversation(require_owner(request))
 
+    @app.post("/api/conversations/{conversation_id}/rename")
     @app.patch("/api/conversations/{conversation_id}")
     def rename_conversation(conversation_id: str, body: ConversationTitle, request: Request):
         return store.change_conversation(conversation_id, require_owner(request), title=body.title)
@@ -387,6 +393,13 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     @app.delete("/api/conversations/{conversation_id}")
     def delete_conversation(conversation_id: str, request: Request):
         return store.change_conversation(conversation_id, require_owner(request))
+
+    @app.post("/api/conversations/{conversation_id}/delete")
+    def delete_conversation_compatible(conversation_id: str, body: ConversationDeletion, request: Request):
+        owner = require_owner(request)
+        if not body.confirmed:
+            raise HTTPException(409, "请先确认删除这个会话")
+        return store.change_conversation(conversation_id, owner)
 
     @app.post("/api/trials", status_code=202)
     def start(spec: RunSpec, request: Request, background_tasks: BackgroundTasks):

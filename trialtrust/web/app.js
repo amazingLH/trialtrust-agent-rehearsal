@@ -693,7 +693,7 @@ $("conversation-action-form").addEventListener("submit", async event => {
   $("confirm-conversation-action").disabled = true;
   $("cancel-conversation-action").disabled = true;
   try {
-    await api(`/api/conversations/${encodeURIComponent(id)}`, type === "rename" ? {title} : undefined, type === "rename" ? "PATCH" : "DELETE");
+    await api(`/api/conversations/${encodeURIComponent(id)}/${type === "rename" ? "rename" : "delete"}`, type === "rename" ? {title} : {confirmed: true});
     $("conversation-action-dialog").close();
     if (type === "delete" && id === conversationId) {
       conversationId = null;
