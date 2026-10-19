@@ -381,6 +381,9 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
     def list_conversations(request: Request):
         return store.conversations(require_owner(request))
 
+    from .conversation_actions import register_conversation_actions
+    register_conversation_actions(app, store, require_owner)
+
     @app.post("/api/conversations", status_code=201)
     def new_conversation(request: Request):
         return store.new_conversation(require_owner(request))

@@ -109,9 +109,10 @@ def main():
         assert len(client.get('/api/trials', params={'conversation_id':conversation_id}).json()) == 1
         spare = second.json()['id']
         if args.managed_docker:
-            renamed = client.patch(f'/api/conversations/{spare}', json={'title':'public smoke spare'})
+            renamed = client.post(f'/api/conversations/{spare}/actions', json={'operation':'rename','title':'public smoke spare','confirmed':True})
             renamed.raise_for_status()
-            deleted = client.delete(f'/api/conversations/{spare}')
+            assert client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':False}).status_code == 409
+            deleted = client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':True})
         else:
             renamed = client.post(f'/api/conversations/{spare}/rename', json={'title':'public smoke spare'})
             renamed.raise_for_status()
@@ -125,7 +126,7 @@ def main():
         report["smoke_test_context"] = {"annotation_source": "test_client",
             "review_decision_source": "automated_smoke_not_human_user",
             "owner_gateway": args.owner_gateway, "live": args.live,'local_studio':args.local_studio,
-            'managed_docker':args.managed_docker,'conversation_methods':'standard_patch_delete' if args.managed_docker else 'confirmed_post','version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','rename_and_delete_own_spare_conversation']}
+            'managed_docker':args.managed_docker,'conversation_methods':'typed_confirmed_actions' if args.managed_docker else 'confirmed_post','version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','rename_and_delete_own_spare_conversation']}
         report['custom_analysis_check'] = analysis.json()
         assert report['skill_events'][0]['skill_id'] == 'pair-audit'
         assert report['baseline']['skill_events'][0]['skill_id'] == 'mandate-review'
