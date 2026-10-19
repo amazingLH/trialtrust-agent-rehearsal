@@ -6,6 +6,10 @@
 
 本次未覆盖平台回退，未重复提交被拒代码。历史截图和API记录仅证明当时的运行结果。当前状态见[发布状态记录](../evals/results/deployment-status-v0.6.1.json)，复核信息与本地使用方式见[发布复核说明](hosting-review.md)。
 
+## 当前入口与历史部署
+
+对外链接、仓库主页和新部署统一使用[trialtrust-workbench](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench)。原`trialtrust`空间仅保留历史部署及旧匿名记录，不再推荐使用。删除旧空间前，应先导出需要保留的报告，并确认新版已完成平台复核及稳定重部署；删除空间不会把历史数据迁移到新版。
+
 ## Git、GitHub和魔搭各自负责什么
 
 Git是本地版本管理工具；GitHub和魔搭都可以提供Git远程仓库。GitHub保存项目代码、文档与变更记录，魔搭创空间保存用于构建应用的代码并提供运行资源。二者不需要先后依赖。

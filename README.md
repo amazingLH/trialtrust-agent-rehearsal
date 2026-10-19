@@ -4,13 +4,15 @@
 
 [![CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml/badge.svg)](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/workflows/ci.yml)
 
-[在线体验](https://l666h666better-trialtrust-workbench.ms.show/api/workbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
+[在线体验](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench?mode=full&app_path=%2Fapi%2Fworkbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
 ![v0.6.1实际工作台：条件设置与合成费用预览](assets/v0.6.1/settings-cloud.png)
 
 当前版本 **v0.6.1**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
 > 发布状态：v0.6.1代码与回归已完成；托管实例当前可体验，但平台随后自动回退了部分源码，稳定重部署待复核。详见[发布复核说明](docs/hosting-review.md)。截图与公开验收为当时记录。
+
+当前唯一推荐的托管入口为 **`L666H666Better/trialtrust-workbench`**。早期 `trialtrust` 空间为历史部署，不再作为当前版本入口；两处匿名记录与浏览器模板不会自动迁移。
 
 ## 工作台能力
 
