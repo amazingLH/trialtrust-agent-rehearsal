@@ -1,0 +1,24 @@
+{
+  "checked_at": "2026-10-19T06:56:30.590534+00:00",
+  "owner_credentials_used": false,
+  "assets": {
+    "app.js": {
+      "status": 200,
+      "matches_local_v061": true
+    },
+    "style.css": {
+      "status": 200,
+      "matches_local_v061": true
+    },
+    "workbench_tools.js": {
+      "status": 200,
+      "matches_local_v061": true
+    }
+  },
+  "studio_remote_head": "6d86ec9453dadfe6f3e2112f0da85e27e19b2c3e",
+  "source_status": "six platform automatic reverts after tested deployment",
+  "moderation_message": "sensitive file content or message",
+  "specific_trigger": "not disclosed",
+  "release_status": "runtime matched at this check; stable redeployment blocked pending platform review",
+  "no_rejected_code_reapplied": true
+}
