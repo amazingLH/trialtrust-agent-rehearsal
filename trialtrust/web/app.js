@@ -166,7 +166,7 @@ function setBusy(value) {
     "new-conversation",
     "new-trial",
     "continue-trial",
-    "run-method", "apply-template", "save-template", "remove-template", "compare-rounds",
+    "run-method", "template-select", "manual-demand", "template-demand", "apply-template", "save-template", "remove-template", "compare-rounds",
   ].forEach((id) => ($(id).disabled = value));
   document
     .querySelectorAll(
@@ -214,6 +214,7 @@ function selectCategory(id, selected = "") {
 function domainFields(reset = false) {
   const s = catalog.scenarios.find((s) => s.id === $("domain").value),
     old = $("fulfillment").value;
+  $("selected-demand").textContent = s ? `当前需求：${s.label}` : "当前需求：尚未选择";
   $("fulfillment").replaceChildren();
   if (!s) {
     const opt = element("option", "请先选择具体需求");
@@ -259,7 +260,7 @@ function updateCoach() {
   const texts = {
     1: [
       "先选一件想交给 AI 的小事",
-      "选择类别，再选具体需求。没有合适选项，可以先分析自己的需求。",
+      "自己选需求，或应用一套条件模板，两种方式选一种即可。没有合适选项，可以分析自己的需求。",
       "去选事情 ↓",
     ],
     2: [
@@ -297,7 +298,7 @@ function updateCoach() {
 }
 function goStep(step, scroll = true) {
   if (step === 2 && !$("domain").value) {
-    notice("请先选择类别和具体需求。", "domain");
+    notice("请先选择具体需求，或应用一套条件模板。", $("manual-demand-fields").hidden ? "template-select" : "domain");
     scrollToSection("step-one");
     return;
   }
@@ -305,7 +306,8 @@ function goStep(step, scroll = true) {
     step >= 3 &&
     (!latestRow || latestRow.status === "running" || !latestRow.report)
   ) {
-    notice("先完成一次试运行，结果会显示在右侧。");
+    notice("先完成第二步试运行，再查看这里的结果。");
+    if (scroll) scrollToSection(step === 4 ? "step-four" : "step-three");
     return;
   }
   currentStep = step;
@@ -491,8 +493,13 @@ function clearRun() {
   activeId = null;
   latestRow = null;
   clearTimeout(pollTimer);
-  $("result-column").hidden = true;
-  $("step-four").hidden = true;
+  $("empty-state").hidden = false;
+  $("run-status").textContent = "尚未开始";
+  $("result-details").hidden = true;
+  $("review-content").hidden = true;
+  $("review-placeholder").hidden = false;
+  $("review-placeholder").textContent = "等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。";
+  $("executor-explanation").open = false;
   $("workspace").classList.remove("has-result");
   compareNonce++;
   $("round-comparison-output").replaceChildren();
@@ -503,6 +510,7 @@ function clearRun() {
   invalidateConfirmation();
 }
 function clearInputs() {
+  setDemandPath("manual");
   analysisNonce++;
   $("private-task").value = "";
   $("stand-in").value = "";
@@ -570,12 +578,22 @@ function setRunMethod(method) {
   $("test-description").textContent = single ? "你指定一个测试条件，只运行一次；所有设置仍需确认。" : "先运行原始条件，再由设计角色选择一个变化；不会同时覆盖全部测试条件。";
 }
 $("run-method").addEventListener("change", () => {setRunMethod($("run-method").value); invalidateConfirmation();});
+function setDemandPath(path) {
+  const template = path === "template";
+  $("template-demand-fields").hidden = !template;
+  $("manual-demand-fields").hidden = template;
+  $("manual-demand").setAttribute("aria-pressed", String(!template));
+  $("template-demand").setAttribute("aria-pressed", String(template));
+}
+$("manual-demand").addEventListener("click", () => setDemandPath("manual"));
+$("template-demand").addEventListener("click", () => setDemandPath("template"));
 $("apply-template").addEventListener("click", () => {
   if (running) return;
   const template = [...builtInTemplates, ...personalTemplates()].find(t=>t.id === $("template-select").value);
   if (!template) {notice("请先选择一个条件模板。", "template-select"); return;}
   clearInputs();
   restoreConditions(template.spec, template.method);
+  setDemandPath("template");
   if (!liveEnabled && $("agent").value === "live") {$("agent").value="demo_careful";$("dense").checked=false;modeNote();}
   invalidateConfirmation(); goStep(2);
   notice("模板条件已填入。请核对场景、费用与执行方式，重新确认后才会运行。");
@@ -830,8 +848,12 @@ async function history() {
   return rows;
 }
 function render(row, pairSelection = "baseline") {
-  $("step-four").hidden = true;
-  $("result-column").hidden = false;
+  $("result-details").hidden = true;
+  $("review-content").hidden = true;
+  $("review-placeholder").hidden = false;
+  $("review-placeholder").textContent = row.status === "running"
+    ? "彩排进行中，完成后可在这里审阅并导出结果。"
+    : "本次尚无可审阅的结果，请先在第三步查看执行状态。";
   $("workspace").classList.add("has-result");
   $("paired-comparison").hidden = true;
   $("paired-comparison").replaceChildren();
@@ -893,7 +915,9 @@ function render(row, pairSelection = "baseline") {
     $("finding").append(box);
     return;
   }
-  $("step-four").hidden = false;
+  $("result-details").hidden = false;
+  $("review-content").hidden = false;
+  $("review-placeholder").hidden = true;
   renderResultChecklist(row, pairSelection);
   const draftCount = report.drafts.length,
     outside = report.attempted_out_of_scope_actions;
@@ -1127,7 +1151,7 @@ async function start(isSuite = false) {
   }
   notice();
   if (!$("domain").value) {
-    notice("请先选择类别和具体需求。", "domain");
+    notice("请先选择具体需求，或应用一套条件模板。", $("manual-demand-fields").hidden ? "template-select" : "domain");
     return;
   }
   const budget = Number($("budget").value),

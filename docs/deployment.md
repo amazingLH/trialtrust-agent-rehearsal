@@ -6,9 +6,9 @@
 
 本次未覆盖平台回退，未重复提交被拒代码。历史截图和API记录仅证明当时的运行结果。当前状态见[发布状态记录](../evals/results/deployment-status-v0.6.1.json)，复核信息与本地使用方式见[发布复核说明](hosting-review.md)。
 
-## 当前入口与历史部署
+## 单一入口迁移安排
 
-对外链接、仓库主页和新部署统一使用[trialtrust-workbench](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench)。原`trialtrust`空间仅保留历史部署及旧匿名记录，不再推荐使用。删除旧空间前，应先导出需要保留的报告，并确认新版已完成平台复核及稳定重部署；删除空间不会把历史数据迁移到新版。
+按项目维护者的最新选择，最终保留[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)，展示名称“试托·Agent委托前试运行工作台”。临时`trialtrust-workbench`在原空间完整迁移验收后删除，不迁移匿名会话或浏览器模板。当前平台自动回退事项仍需处理，迁移验收不能只看Running或网页标题。
 
 ## Git、GitHub和魔搭各自负责什么
 
@@ -26,7 +26,7 @@ flowchart LR
     P -->|Git push| G[GitHub仓库与CI]
 ```
 
-魔搭远程为`https://modelscope.cn/studios/L666H666Better/trialtrust-workbench.git`。推送源码后调用平台部署接口，由平台安装依赖、运行入口并发布到`https://l666h666better-trialtrust-workbench.ms.show`。这次没有通过GitHub导入，也没有上传ZIP来部署。
+魔搭远程为`https://modelscope.cn/studios/L666H666Better/trialtrust.git`。推送源码后调用平台部署接口，由平台安装依赖、运行入口并发布到`https://l666h666better-trialtrust.ms.show`。这次没有通过GitHub导入，也没有上传ZIP来部署。
 
 GitHub提交不会自动同步到魔搭；修改应用后，需要将同一经过验证的代码更新到部署仓库，再执行部署和验收。
 
@@ -86,7 +86,7 @@ v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提�
 
 ## 轻量工作台入口
 
-推荐体验入口为 `https://l666h666better-trialtrust-workbench.ms.show/api/workbench`，与Gradio入口共用同一HTML、CSS、JS、匿名会话和费用账本，资源位于独立的`/api/workbench-assets/`，避免Gradio资源路径冲突。
+推荐体验入口为 `https://l666h666better-trialtrust.ms.show/api/workbench`，与Gradio入口共用同一HTML、CSS、JS、匿名会话和费用账本，资源位于独立的`/api/workbench-assets/`，避免Gradio资源路径冲突。
 
 浏览器实测表明：魔搭会将该地址转到官方门户，保留`app_path`，再通过iframe显示，所以不能把接口返回200当作绕过门户的证明。托管版仅允许自身和两个魔搭官方域名嵌入，轻量页面保留同源脚本、样式、连接的严格CSP；独立Docker版仍禁止外部嵌入。会话和Origin校验保持一致。
 
@@ -97,7 +97,7 @@ v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提�
 
 ## v0.6.1 发布入口
 
-当前部署仓库为`trialtrust-workbench`。此前`trialtrust`多次重建仍返回旧快照，资源字节校验拦截了这类假阳性，因此建立独立默认CPU部署入口，原空间和匿名记录保留。两处数据不自动迁移；浏览器模板也按站点保存。代码主仓库仍是同一个GitHub项目。
+此前临时部署仓库为`trialtrust-workbench`。此前`trialtrust`多次重建仍返回旧快照，资源字节校验拦截了这类假阳性，因此建立独立默认CPU部署入口，原空间和匿名记录保留。两处数据不自动迁移；浏览器模板也按站点保存。代码主仓库仍是同一个GitHub项目。
 
 公共网关明确拒绝PATCH和DELETE，会话操作使用同源POST路径`/api/conversations/{id}/rename`与`/api/conversations/{id}/delete`；删除必须传严格布尔确认。标准方法继续供独立服务使用，所有入口共用身份和运行中校验。
 

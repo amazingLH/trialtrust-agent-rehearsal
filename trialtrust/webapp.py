@@ -355,7 +355,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             response.set_cookie("trialtrust_session", token, httponly=True,
                                 secure=request.url.scheme == "https" or bool(public_origin and public_origin.startswith("https://")),
                                 samesite="strict", max_age=86400)
-        result = {"live_enabled": live_enabled, "studio_url": os.environ.get("TRIALTRUST_STUDIO_URL", "https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench"), "cases": CASE_LABELS,
+        result = {"live_enabled": live_enabled, "studio_url": os.environ.get("TRIALTRUST_STUDIO_URL", "https://www.modelscope.cn/studios/L666H666Better/trialtrust"), "cases": CASE_LABELS,
                   "limit": "仅测试自有合成场景；不连接真实商家或第三方智能体"}
         # ModelScope embeds a different-site iframe. Strict cookies may be
         # blocked there. This short-lived anonymous capability is sent only to

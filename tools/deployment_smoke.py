@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 from trialtrust.provider import credential
 from trialtrust.catalog import CATALOG
 
-HOST = "https://l666h666better-trialtrust-workbench.ms.show"
+HOST = "https://l666h666better-trialtrust.ms.show"
 
 
 def main():

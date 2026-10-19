@@ -1637,3 +1637,16 @@ button.danger-button:hover:not(:disabled) { background: #92293e; }
 input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10px 12px; border:1px solid #d7d0e1; border-radius:10px; font-size:16px; color:var(--ink); background:#fcfbfe; }
 .conditions-panel .form-grid .field { margin:8px 0; }
 .conditions-panel .control-stage { margin-top:18px; }
+
+/* Alternate input routes and persistent, compact stage headings. */
+.demand-paths { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 8px; }
+.demand-paths button { flex:1 1 180px; min-height:48px; }
+.demand-paths button[aria-pressed="true"] { color:var(--purple); background:#eee7ff; border-color:var(--purple); box-shadow:inset 0 0 0 1px var(--purple); }
+.selection-summary { padding:10px 14px; background:#f4f0fb; border-radius:10px; font-weight:650; margin:12px 0; }
+.empty-state { min-height:0; padding:12px 16px; text-align:left; background:#f7f5fb; border-radius:10px; }
+.empty-state p, .stage-placeholder { margin:0; color:var(--muted); font-size:15px; line-height:1.7; }
+#executor-explanation .answer { margin-top:14px; }
+#review-content .retry-actions { margin-top:20px; }
+
+/* The waiting panel must not reserve the old mobile result height. */
+.result-panel { min-height:0; }

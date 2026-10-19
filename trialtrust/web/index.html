@@ -63,7 +63,7 @@
           id="full-screen"
           class="quiet fullscreen-link"
           hidden
-          href="https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench?mode=full&amp;app_path=%2Fapi%2Fworkbench"
+          href="https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&amp;app_path=%2Fapi%2Fworkbench"
           target="_blank"
           rel="noopener noreferrer"
           >全屏体验 ↗</a
@@ -139,12 +139,19 @@
                   <h2>这次，想先试哪类事情？</h2>
                 </div>
               </div>
+              <div class="demand-paths" role="group" aria-label="选择需求填写方式">
+                <button id="manual-demand" class="secondary" aria-pressed="true" aria-controls="manual-demand-fields">自己选择需求</button>
+                <button id="template-demand" class="secondary" aria-pressed="false" aria-controls="template-demand-fields">使用条件模板</button>
+              </div>
+              <p class="micro-note">两种方式选一种即可。模板会同时填好需求和第二步条件，无需重复选择。</p>
+              <div id="template-demand-fields" hidden>
               <div class="task-toolbar">
-                <label class="field">从常用条件开始（可选）<select id="template-select"><option value="">请选择模板</option></select></label>
+                <label class="field">选择一套条件模板<select id="template-select"><option value="">请选择模板</option></select></label>
                 <button id="apply-template" class="secondary">应用模板</button>
                 <button id="remove-template" class="quiet">删除个人模板</button>
               </div>
-              <p class="micro-note">先选类别与需求，也可应用模板；之后仍需亲自核对并确认。</p>
+              </div>
+              <div id="manual-demand-fields">
               <div
                 id="categories"
                 class="categories"
@@ -155,6 +162,8 @@
                   <option value="">请先选择一个类别</option>
                 </select></label
               >
+              </div>
+              <p id="selected-demand" class="selection-summary" aria-live="polite">当前需求：尚未选择</p>
               <p id="scenario-description" class="muted">
                 选择后会显示这个示例能核验的条件。
               </p>
@@ -320,7 +329,7 @@
               <button id="run" class="primary run-button" hidden>运行这次试托 ↗</button>
             </section>
           </div>
-          <div class="column result-column" id="result-column" hidden>
+          <div class="column result-column" id="result-column">
             <section class="panel result-panel" id="step-three">
               <div class="section-heading">
                 <span class="step-number lilac">03</span>
@@ -331,12 +340,7 @@
                 <span id="run-status" class="status-pill">尚未开始</span>
               </div>
               <div id="empty-state" class="empty-state">
-                <div class="empty-symbol" aria-hidden="true">◎</div>
-                <h3>给第一次委托，留一次彩排</h3>
-                <p>
-                  完成上方条件核对后，这里会出现两次结果、费用检查和工具证据。
-                </p>
-                <p class="muted">建议先用离线示例熟悉流程，再切换真实模型。</p>
+                <p>尚未运行。完成第二步后，这里显示结果、费用检查和工具证据。</p>
               </div>
               <div id="result-content" hidden>
                 <p id="run-meta" class="muted"></p>
@@ -347,16 +351,19 @@
                 <div id="paired-comparison" hidden></div>
                 <div id="finding"></div>
                 <div id="metrics" class="metrics"></div>
-                <pre id="contract-report" class="contract-report" hidden></pre>
+                <div id="result-details" hidden>
                 <h3>本次检查清单</h3>
                 <div id="result-checklist" class="result-checklist"></div>
-                <h3>执行者的说明</h3>
-                <p id="answer" class="answer"></p>
-                <details class="evidence-details" open>
+                <details id="executor-explanation" class="compact-help">
+                  <summary>执行者的说明与条件明细</summary>
+                  <p id="answer" class="answer"></p>
+                  <pre id="contract-report" class="contract-report" hidden></pre>
+                </details>
+                <details class="evidence-details">
                   <summary>逐步工具证据 <span id="trace-count"></span></summary>
                   <div id="trace"></div>
                 </details>
-                <details class="skill-events" open>
+                <details class="skill-events">
                   <summary>本次实际技能调用</summary>
                   <div id="run-skills"></div>
                 </details>
@@ -370,10 +377,10 @@
                   </div>
                   <div id="round-comparison-output" aria-live="polite"></div>
                 </details>
-
+                </div>
               </div>
             </section>
-                <section id="step-four" class="panel review-block" hidden>
+                <section id="step-four" class="panel review-block">
                   <div class="section-heading">
                     <span class="step-number peach">04</span>
                     <div>
@@ -381,6 +388,8 @@
                       <h2>这份结果，你愿意保留吗？</h2>
                     </div>
                   </div>
+                  <p id="review-placeholder" class="stage-placeholder" role="status">等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。</p>
+                  <div id="review-content" hidden>
                   <p>保留的是试运行记录，不是同意真实预约或付款。</p>
                   <div id="review" class="review-actions" hidden>
                     <button id="accept" class="primary">保留结果</button
@@ -412,6 +421,7 @@
                     <button id="try-budget" class="chip">预算改为250元</button
                     ><button id="try-price" class="chip">试试价格上涨</button
                     ><button id="try-missing" class="chip">试试证据缺失</button>
+                  </div>
                   </div>
                 </section>
           </div>

@@ -26,7 +26,7 @@ def create_studio_app():
     javascript = (assets / 'portal_viewport.js').read_text(encoding='utf-8') + '\n' + (assets / 'workbench_tools.js').read_text(encoding='utf-8') + '\n' + (assets / "app.js").read_text(encoding="utf-8")
     javascript = javascript.replace("document.getElementById(id)", "root.querySelector('#' + id)")
     javascript = re.sub(r"document\s*\.\s*querySelectorAll\s*\(", "root.querySelectorAll(", javascript)
-    with gr.Blocks(analytics_enabled=False, title="试托 v0.6.1 · 委托前试运行") as studio:
+    with gr.Blocks(analytics_enabled=False, title="试托·Agent委托前试运行工作台") as studio:
         gr.HTML(value='<div class="trialtrust-root">' + html + '</div>',
                 css_template=css, js_on_load="(function(root){\n" + javascript + "\n})(element);",
                 apply_default_css=False)
