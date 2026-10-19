@@ -10,6 +10,15 @@
 - 默认桌面及390×844手机布局已查看；手机无横向溢出。太空小托为代码原创SVG/CSS，动效遵循prefers-reduced-motion。
 - 使用生产默认配置进行本地HTTP完整烟测：未登录拒绝、注册登录、场景/技能、自定义澄清、离线对照、审阅、导出、会话重命名/删除通过。测试账号凭据仅在忽略的runtime目录，没有付费模型调用。
 
+## 持续集成与部署候选
+
+主仓库应用提交d3e1fa3的[GitHub CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39256566799)通过。魔搭正常源码提交125cb2b已推送，Docker构建中，硬件保持免费CPU。部署工作区账号与会话专项17项通过，冻结证据校验通过。
+
 ## 云端
 
 等待正常同步、部署、公开API和实际门户验证。尚未将本地SQLite重启测试当作魔搭持久化证据。
+
+
+## 云端启动兼容修复
+
+首次候选125cb2b构建成功但启动失败；运行日志明确为PermissionError: Operation not permitted，挂载盘拒绝web.sqlite的chmod，非SQLite读写失败。修复保留非root、私有目录及Web鉴权，对平台禁止的chmod元数据操作兼容处理；意外I/O仍报错。新增EPERM和EIO两项回归，账号/会话专项19项通过。重新部署验收中，未将失败候选标为完成。

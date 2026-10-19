@@ -190,3 +190,25 @@ def test_running_legacy_import_rolls_back_registration_and_binding(tmp_path):
             assert db.execute("SELECT COUNT(*) FROM account_users").fetchone()[0]==0
             assert db.execute("SELECT COUNT(*) FROM browser_devices WHERE user_id IS NOT NULL").fetchone()[0]==0
         assert store.owner(legacy)==owner
+
+
+def test_platform_managed_chmod_does_not_prevent_auth_or_sqlite(tmp_path,monkeypatch):
+    import errno
+    from pathlib import Path
+    def refused(*a,**kw):raise PermissionError(errno.EPERM,"platform-owned modes")
+    with monkeypatch.context() as m:
+        m.setattr(Path,"chmod",refused)
+        a=app(tmp_path)
+    with TestClient(a) as c:
+        assert register(c).status_code==201
+        assert c.get("/api/account/storage").json()["file_permissions_managed_by_platform"] is True
+        assert c.post("/api/conversations",json={},headers=H).status_code==201
+
+
+def test_unexpected_storage_mode_errors_are_not_swallowed(tmp_path,monkeypatch):
+    import errno
+    from pathlib import Path
+    def broken(*a,**kw):raise OSError(errno.EIO,"storage I/O failed")
+    with monkeypatch.context() as m:
+        m.setattr(Path,"chmod",broken)
+        with pytest.raises(OSError,match="storage I/O failed"):app(tmp_path)

@@ -27,6 +27,10 @@ def create_managed_app(*, require_accounts=True):
 def main():
     import uvicorn
 
+    # Private defaults for newly created state; existing managed-volume files
+    # may have a platform-owned mode that this non-root user cannot chmod.
+    os.umask(0o077)
+
     target = ("trialtrust.managed:create_managed_app"
               if os.environ.get("TRIALTRUST_MANAGED_STUDIO") == "1"
               else "trialtrust.webapp:create_app")

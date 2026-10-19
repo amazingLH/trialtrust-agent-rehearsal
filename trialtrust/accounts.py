@@ -6,6 +6,8 @@ an authentication factor. Account passwords and recovery codes never reach logs.
 from __future__ import annotations
 
 import hashlib
+import errno
+import logging
 import re
 import secrets
 import sqlite3
@@ -87,6 +89,7 @@ class Accounts:
     def __init__(self, store):
         self.store = store
         self.boot_id = str(uuid4())
+        self.file_modes_managed = False
         # sqlite.backup makes a transactionally consistent private snapshot.
         if store.path.exists() and store.path.stat().st_size:
             backup = store.root / "backups"
@@ -96,7 +99,7 @@ class Accounts:
             if not target.exists():
                 with store.connect() as src, sqlite3.connect(target) as dst:
                     src.backup(dst)
-                target.chmod(0o600)
+                self.protect_file(target)
             for old in sorted(backup.glob("before-start-*.sqlite"))[:-3]:
                 old.unlink()
         with store.connect() as db:
@@ -116,9 +119,21 @@ class Accounts:
                 CREATE TABLE IF NOT EXISTS storage_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             """)
             db.execute("INSERT OR IGNORE INTO storage_metadata VALUES ('storage_id',?)", (str(uuid4()),))
-        store.path.chmod(0o600)
+        self.protect_file(store.path)
         # Unknown usernames still incur the same bcrypt verification work.
         self.dummy_hash = bcrypt.hashpw(secrets.token_bytes(32), bcrypt.gensalt(rounds=12))
+
+    def protect_file(self, path):
+        try:
+            path.chmod(0o600)
+        except OSError as exc:
+            # Managed mounts can support normal SQLite I/O but reject Unix
+            # mode changes. Their access policy remains platform-controlled;
+            # no database/backup is exposed through an application file route.
+            if exc.errno not in {errno.EPERM, errno.ENOTSUP, errno.EOPNOTSUPP}:
+                raise
+            self.file_modes_managed = True
+            logging.getLogger("trialtrust.storage").warning("Mounted file permissions are managed by the hosting platform")
 
     @staticmethod
     def managed(request):
@@ -300,7 +315,8 @@ class Accounts:
         with self.store.connect() as db:
             storage_id = db.execute("SELECT value FROM storage_metadata WHERE key='storage_id'").fetchone()[0]
         return {"database": "sqlite", "storage_id": storage_id, "boot_id": self.boot_id,
-                "startup_backup_exists": any((self.store.root / "backups").glob("*.sqlite"))}
+                "startup_backup_exists": any((self.store.root / "backups").glob("*.sqlite")),
+                "file_permissions_managed_by_platform": self.file_modes_managed}
 
 
 def register_account_routes(app, accounts):
