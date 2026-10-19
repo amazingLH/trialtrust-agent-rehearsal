@@ -1261,41 +1261,43 @@ for (const [id, value] of [
     goStep(2);
     notice("已选择测试条件。请重新确认，再点击单次试运行。");
   });
+function sidebarShell() { return $("conversation-sidebar").closest(".trialtrust-responsive"); }
+function activeControl() { return $("conversation-sidebar").getRootNode().activeElement || document.activeElement; }
 function sidebarIsNarrow() {
-  return document.querySelector(".trialtrust-responsive").getBoundingClientRect().width <= 1050;
+  return sidebarShell().getBoundingClientRect().width <= 1050;
 }
 function setSidebar(open) {
-  document.body.classList.toggle("sidebar-open", open);
+  sidebarShell().classList.toggle("sidebar-open", open);
   $("sidebar-backdrop").hidden = !open;
   $("toggle-sidebar").setAttribute("aria-expanded", String(open));
   const mobile = sidebarIsNarrow();
   $("conversation-sidebar").inert = mobile && !open;
-  document.querySelector(".app-content").inert = mobile && open;
+  $("workspace").closest(".app-content").inert = mobile && open;
   if (mobile) $("conversation-sidebar").setAttribute("role", "dialog");
   else $("conversation-sidebar").removeAttribute("role");
   if (mobile && open) $("conversation-sidebar").setAttribute("aria-modal", "true");
   else $("conversation-sidebar").removeAttribute("aria-modal");
   if (mobile && open) $("close-sidebar").focus();
-  else if (mobile && $("conversation-sidebar").contains(document.activeElement)) $("toggle-sidebar").focus();
+  else if (mobile && $("conversation-sidebar").contains(activeControl())) $("toggle-sidebar").focus();
 }
 $("toggle-sidebar").addEventListener("click", () => setSidebar(true));
 $("close-sidebar").addEventListener("click", () => setSidebar(false));
 $("sidebar-backdrop").addEventListener("click", () => setSidebar(false));
 document.addEventListener("keydown", (event) => {
-  if (!document.body.classList.contains("sidebar-open")) return;
+  if (!sidebarShell().classList.contains("sidebar-open")) return;
   if (event.key === "Escape") { event.preventDefault(); setSidebar(false); }
   if (event.key === "Tab" && sidebarIsNarrow()) {
     const focusable = [...$("conversation-sidebar").querySelectorAll("button:not(:disabled), summary")].filter(el => el.checkVisibility());
     const first = focusable[0], last = focusable.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    if (event.shiftKey && activeControl() === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && activeControl() === last) { event.preventDefault(); first?.focus(); }
   }
 });
 let sidebarWasNarrow = sidebarIsNarrow();
 new ResizeObserver(() => {
   const narrow = sidebarIsNarrow();
   if (narrow !== sidebarWasNarrow) { sidebarWasNarrow = narrow; setSidebar(false); }
-}).observe(document.querySelector(".trialtrust-responsive"));
+}).observe(sidebarShell());
 setSidebar(false);
 $("new-conversation").addEventListener("click", () =>
   newConversation().catch((e) => notice(e.message)),

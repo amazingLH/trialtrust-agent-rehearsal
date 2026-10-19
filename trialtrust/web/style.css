@@ -1570,7 +1570,7 @@ dialog::backdrop {
 @container (max-width: 1050px) {
   .app-shell { display: block; }
   .conversation-panel { position: fixed; inset: 0 auto 0 0; width: min(310px, 86vw); height: 100dvh; z-index: 60; transform: translateX(-100%); visibility: hidden; transition: transform .2s ease, visibility .2s; box-shadow: 12px 0 40px #29233f22; }
-  body.sidebar-open .conversation-panel { transform: translateX(0); visibility: visible; }
+  .trialtrust-responsive.sidebar-open .conversation-panel { transform: translateX(0); visibility: visible; }
   #toggle-sidebar, #close-sidebar { display: inline-flex; align-items: center; justify-content: center; }
   #toggle-sidebar { gap: 5px; padding: 8px 10px; }
   .topbar { gap: 10px; }
@@ -1578,7 +1578,7 @@ dialog::backdrop {
 @media (max-width: 560px) { #toggle-sidebar span { display: none; } }
 @media (prefers-reduced-motion: reduce) { .conversation-panel { transition: none; } }
 
-body.sidebar-open { overflow: hidden; }
+body:has(.trialtrust-responsive.sidebar-open) { overflow: hidden; }
 
 /* Each numbered step occupies its own row, including narrow portal embeds. */
 .workspace .column { display: flex; flex-direction: column; align-items: stretch; }
