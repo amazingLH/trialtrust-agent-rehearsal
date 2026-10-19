@@ -1318,22 +1318,14 @@ dialog::backdrop {
   }
 }
 
-/* Start with two useful input panels, instead of an empty results column. */
-.workspace {
-  display: block;
+/* Follow the task in a single vertical sequence at every screen width. */
+.workspace, .workspace.has-result { display: block; }
+.config-column, .workspace.has-result .config-column, .result-column {
+  display: flex; flex-direction: column; align-items: stretch; gap: 24px;
 }
-.config-column {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-  align-items: start;
-}
-.workspace.has-result {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-}
-.workspace.has-result .config-column {
-  grid-template-columns: minmax(0, 1fr);
-}
+.result-column { margin-top: 24px; }
+.result-column .review-block { margin-top: 0; }
+.form-grid { grid-template-columns: minmax(0, 1fr); }
 #show-guide {
   margin-left: auto;
 }
@@ -1587,3 +1579,7 @@ dialog::backdrop {
 @media (prefers-reduced-motion: reduce) { .conversation-panel { transition: none; } }
 
 body.sidebar-open { overflow: hidden; }
+
+/* Each numbered step occupies its own row, including narrow portal embeds. */
+.workspace .column { display: flex; flex-direction: column; align-items: stretch; }
+.workspace .form-grid { grid-template-columns: minmax(0, 1fr); }

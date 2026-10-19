@@ -487,6 +487,7 @@ function clearRun() {
   latestRow = null;
   clearTimeout(pollTimer);
   $("result-column").hidden = true;
+  $("step-four").hidden = true;
   $("workspace").classList.remove("has-result");
   $("result-content").hidden = true;
   $("export-preview").hidden = true;
@@ -626,6 +627,7 @@ async function history() {
   return rows;
 }
 function render(row, pairSelection = "baseline") {
+  $("step-four").hidden = true;
   $("result-column").hidden = false;
   $("workspace").classList.add("has-result");
   $("paired-comparison").hidden = true;
@@ -687,6 +689,7 @@ function render(row, pairSelection = "baseline") {
     $("finding").append(box);
     return;
   }
+  $("step-four").hidden = false;
   const draftCount = report.drafts.length,
     outside = report.attempted_out_of_scope_actions;
   let title = "当前条件下，没有可接受的草稿",
