@@ -17,6 +17,7 @@ HOST = "https://l666h666better-trialtrust.ms.show"
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--managed-docker", action="store_true", help="Check the managed Docker HTML entry and standard conversation methods")
     parser.add_argument("--live", action="store_true", help="Explicitly exercise the real model and embedding; uses studio budget")
     parser.add_argument("--owner-gateway", action="store_true", help="Use authenticated owner API instead of public URL")
     parser.add_argument('--domain', choices=sorted(CATALOG), default='buffet')
@@ -25,7 +26,7 @@ def main():
     args = parser.parse_args()
     if args.local_studio and args.owner_gateway:
         parser.error('Select either local Studio or owner gateway')
-    host = "https://studio-l666h666better-trialtrust-workbench.api-inference.modelscope.net" if args.owner_gateway else HOST
+    host = "https://studio-l666h666better-trialtrust.api-inference.modelscope.net" if args.owner_gateway else HOST
     if args.local_studio:
         host = 'http://127.0.0.1:8781'
     origin = host if args.local_studio else HOST
@@ -43,12 +44,13 @@ def main():
         if viewer:
             headers["X-Studio-Token"] = viewer
     with httpx.Client(base_url=host, timeout=30, follow_redirects=False, headers=headers) as client:
-        response = client.get("/config")
-        response.raise_for_status()
-        component = next(c for c in response.json()["components"] if c["type"] == "html")
-        assert 'id="run-suite"' in component["props"]["value"]
-        assert 'id="show-guide"' in component['props']['value']
-        assert 'confirmedFor' in component['props']['js_on_load']
+        if not args.managed_docker:
+            response = client.get("/config")
+            response.raise_for_status()
+            component = next(c for c in response.json()["components"] if c["type"] == "html")
+            assert 'id="run-suite"' in component["props"]["value"]
+            assert 'id="show-guide"' in component['props']['value']
+            assert 'confirmedFor' in component['props']['js_on_load']
         direct = client.get('/api/workbench')
         direct.raise_for_status()
         assert 'id="show-guide"' in direct.text and '/api/workbench-assets/app.js' in direct.text
@@ -106,10 +108,15 @@ def main():
         assert client.get('/api/trials', params={'conversation_id':second.json()['id']}).json() == []
         assert len(client.get('/api/trials', params={'conversation_id':conversation_id}).json()) == 1
         spare = second.json()['id']
-        renamed = client.post(f'/api/conversations/{spare}/rename', json={'title':'public smoke spare'})
-        renamed.raise_for_status()
-        assert client.post(f'/api/conversations/{spare}/delete',json={'confirmed':False}).status_code == 409
-        deleted = client.post(f'/api/conversations/{spare}/delete',json={'confirmed':True})
+        if args.managed_docker:
+            renamed = client.patch(f'/api/conversations/{spare}', json={'title':'public smoke spare'})
+            renamed.raise_for_status()
+            deleted = client.delete(f'/api/conversations/{spare}')
+        else:
+            renamed = client.post(f'/api/conversations/{spare}/rename', json={'title':'public smoke spare'})
+            renamed.raise_for_status()
+            assert client.post(f'/api/conversations/{spare}/delete',json={'confirmed':False}).status_code == 409
+            deleted = client.post(f'/api/conversations/{spare}/delete',json={'confirmed':True})
         deleted.raise_for_status()
         assert spare not in {c['id'] for c in client.get('/api/conversations').json()}
         assert client.get(f'/api/trials/{run_id}').status_code == 200
@@ -118,7 +125,7 @@ def main():
         report["smoke_test_context"] = {"annotation_source": "test_client",
             "review_decision_source": "automated_smoke_not_human_user",
             "owner_gateway": args.owner_gateway, "live": args.live,'local_studio':args.local_studio,
-            'version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','post_rename_and_confirmed_delete']}
+            'managed_docker':args.managed_docker,'conversation_methods':'standard_patch_delete' if args.managed_docker else 'confirmed_post','version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','rename_and_delete_own_spare_conversation']}
         report['custom_analysis_check'] = analysis.json()
         assert report['skill_events'][0]['skill_id'] == 'pair-audit'
         assert report['baseline']['skill_events'][0]['skill_id'] == 'mandate-review'

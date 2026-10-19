@@ -16,4 +16,4 @@ USER trialtrust
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860/health', timeout=3)"
-CMD ["python", "-m", "uvicorn", "trialtrust.webapp:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["python", "-m", "trialtrust.managed"]
