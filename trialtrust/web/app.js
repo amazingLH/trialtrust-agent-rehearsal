@@ -673,9 +673,11 @@ function openConversationAction(row, type) {
   if (running) return;
   closeConversationMenus();
   setSidebar(false);
-  conversationAction = { id: row.id, type };
+  conversationAction = { id: row.id, type, expectedUpdated: row.updated };
   $("conversation-action-title").textContent = type === "rename" ? "重命名会话" : "删除会话？";
   $("conversation-action-name").textContent = row.title;
+  $("conversation-action-name").hidden = type === "delete";
+  $("conversation-action-dialog").setAttribute("aria-describedby", type === "delete" ? "delete-explanation" : "conversation-action-name");
   $("rename-field").hidden = type !== "rename";
   $("delete-explanation").hidden = type !== "delete";
   $("conversation-name").value = row.title;
@@ -702,7 +704,7 @@ $("conversation-action-dialog").addEventListener("cancel", event => {
 $("conversation-action-form").addEventListener("submit", async event => {
   event.preventDefault();
   if (!conversationAction || running || $("confirm-conversation-action").disabled) return;
-  const {id, type} = conversationAction;
+  const {id, type, expectedUpdated} = conversationAction;
   const title = $("conversation-name").value.trim();
   if (type === "rename" && (!title || [...title].length > 60 || /[\x00-\x1f\x7f]/.test(title))) {
     $("conversation-action-error").textContent = "请输入1—60个字符的名称，不要包含换行或控制字符。";
@@ -711,7 +713,7 @@ $("conversation-action-form").addEventListener("submit", async event => {
   $("confirm-conversation-action").disabled = true;
   $("cancel-conversation-action").disabled = true;
   try {
-    await api(`/api/conversations/${encodeURIComponent(id)}/actions`, {operation:type, confirmed:true, ...(type === "rename" ? {title} : {})});
+    await api(`/api/conversations/${encodeURIComponent(id)}/actions`, {operation:type, confirmed:true, expected_updated:expectedUpdated, ...(type === "rename" ? {title} : {})});
     $("conversation-action-dialog").close();
     if (type === "delete" && id === conversationId) {
       conversationId = null;

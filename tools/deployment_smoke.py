@@ -109,10 +109,12 @@ def main():
         assert len(client.get('/api/trials', params={'conversation_id':conversation_id}).json()) == 1
         spare = second.json()['id']
         if args.managed_docker:
-            renamed = client.post(f'/api/conversations/{spare}/actions', json={'operation':'rename','title':'public smoke spare','confirmed':True})
+            stamp = next(c['updated'] for c in client.get('/api/conversations').json() if c['id'] == spare)
+            renamed = client.post(f'/api/conversations/{spare}/actions', json={'operation':'rename','title':'public smoke spare','confirmed':True,'expected_updated':stamp})
             renamed.raise_for_status()
-            assert client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':False}).status_code == 409
-            deleted = client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':True})
+            stamp = next(c['updated'] for c in client.get('/api/conversations').json() if c['id'] == spare)
+            assert client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':False,'expected_updated':stamp}).status_code == 409
+            deleted = client.post(f'/api/conversations/{spare}/actions',json={'operation':'delete','confirmed':True,'expected_updated':stamp})
         else:
             renamed = client.post(f'/api/conversations/{spare}/rename', json={'title':'public smoke spare'})
             renamed.raise_for_status()

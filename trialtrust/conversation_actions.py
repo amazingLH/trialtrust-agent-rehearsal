@@ -8,6 +8,7 @@ class ConversationAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     operation: Literal["rename", "delete"]
     confirmed: StrictBool
+    expected_updated: float = Field(strict=True, gt=0, allow_inf_nan=False)
     title: str | None = Field(default=None, strict=True, min_length=1, max_length=60)
 
     @model_validator(mode="after")
@@ -30,5 +31,6 @@ def register_conversation_actions(app, store, require_owner):
         if not body.confirmed:
             raise HTTPException(409, "请先明确确认本次会话操作")
         return store.change_conversation(
-            conversation_id, owner, title=body.title if body.operation == "rename" else None
+            conversation_id, owner, title=body.title if body.operation == "rename" else None,
+            expected_updated=body.expected_updated
         )

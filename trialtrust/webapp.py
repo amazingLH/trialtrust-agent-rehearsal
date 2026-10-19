@@ -147,13 +147,15 @@ class Store:
                        (conversation_id, owner, "新会话", now, now))
         return self.conversation(conversation_id, owner)
 
-    def change_conversation(self, conversation_id, owner, title=None):
+    def change_conversation(self, conversation_id, owner, title=None, expected_updated=None):
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            row = db.execute("SELECT id FROM conversations WHERE id=? AND owner=? AND deleted=0",
+            row = db.execute("SELECT id,updated FROM conversations WHERE id=? AND owner=? AND deleted=0",
                              (conversation_id, owner)).fetchone()
             if not row:
                 raise HTTPException(404, "未找到这个会话")
+            if expected_updated is not None and row["updated"] != expected_updated:
+                raise HTTPException(409, "会话已发生变化，请关闭弹窗后重新选择操作")
             if db.execute("SELECT 1 FROM runs WHERE conversation_id=? AND owner=? AND status='running'",
                           (conversation_id, owner)).fetchone():
                 raise HTTPException(409, "这个会话仍有彩排进行中，请完成后再操作")
