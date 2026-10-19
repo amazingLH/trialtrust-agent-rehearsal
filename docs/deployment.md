@@ -1,113 +1,27 @@
-# 源码托管、构建与公开部署
+# Docker部署与SQLite持久化
 
-## 发布状态补记（2026-10-19）
+当前唯一维护入口：[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)，名称“试托·Agent委托前试运行工作台”。GitHub记录开发与CI；魔搭独立Git仓库负责构建发布，推送GitHub不会自动更新魔搭。
 
-代码版本v0.6.1已通过本地回归及一次公开交互验收；随后平台自动回退了6个文件，提交信息为“sensitive file content or message”。平台没有给出具体触发原因。公开运行实例在最新检查中仍匹配v0.6.1，但远端源码已不同，**不能据此声明稳定部署完成，也不要直接重建**。
-
-本次未覆盖平台回退，未重复提交被拒代码。历史截图和API记录仅证明当时的运行结果。当前状态见[发布状态记录](../evals/results/deployment-status-v0.6.1.json)，复核信息与本地使用方式见[发布复核说明](hosting-review.md)。
-
-## 单一入口迁移安排
-
-按项目维护者的最新选择，最终保留[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)，展示名称“试托·Agent委托前试运行工作台”。临时`trialtrust-workbench`在原空间完整迁移验收后删除，不迁移匿名会话或浏览器模板。当前平台自动回退事项仍需处理，迁移验收不能只看Running或网页标题。
-
-## Git、GitHub和魔搭各自负责什么
-
-Git是本地版本管理工具；GitHub和魔搭都可以提供Git远程仓库。GitHub保存项目代码、文档与变更记录，魔搭创空间保存用于构建应用的代码并提供运行资源。二者不需要先后依赖。
-
-当前公开演示的部署链路是：
-
-```mermaid
-flowchart LR
-    L[本地应用工程] -->|Git push| M[魔搭创空间Git仓库]
-    M --> B[平台构建安装依赖]
-    B --> E[app.py Gradio与FastAPI]
-    E --> U[公开体验地址]
-    L --> P[整理公开文档与源代码快照]
-    P -->|Git push| G[GitHub仓库与CI]
-```
-
-魔搭远程为`https://modelscope.cn/studios/L666H666Better/trialtrust.git`。推送源码后调用平台部署接口，由平台安装依赖、运行入口并发布到`https://l666h666better-trialtrust.ms.show`。这次没有通过GitHub导入，也没有上传ZIP来部署。
-
-GitHub提交不会自动同步到魔搭；修改应用后，需要将同一经过验证的代码更新到部署仓库，再执行部署和验收。
-
-## 独立Docker入口
+## 构建与启动
 
 ```bash
-docker build -t trialtrust:0.6.1 .
-docker run --rm -p 7860:7860 trialtrust:0.6.1
+docker build -t trialtrust:0.7 .
+docker volume create trialtrust-data
+docker run --rm -p 7860:7860 -v trialtrust-data:/mnt/workspace/trialtrust trialtrust:0.7
 ```
 
-默认离线。核心入口为`trialtrust.webapp:app`，容器端口7860。需要保留状态时挂载`/mnt/workspace/trialtrust`；需要真实模型时通过托管Secret或安全的环境注入方式配置，不把密钥写进镜像。
+Dockerfile锁定Python镜像与依赖，使用非root用户，监听0.0.0.0:7860。生产入口trialtrust.managed默认账号鉴权；TRIALTRUST_MANAGED_STUDIO=1启用魔搭iframe适配，公共Origin及允许Host由托管Secret配置。ms_deploy.json记录Docker与免费CPU资源，不创建第二个空间。
 
-## 魔搭托管入口
+## 数据和密钥
 
-- `app.py`为Gradio 6.2入口，`requirements.txt`包含托管依赖。
-- `ms_deploy.json`记录SDK、基础镜像、端口与所选CPU资源。
-- 平台的公开Gradio前端读取`/config`，因此配置必须包含实际工作台，而不是只挂载状态页。
-- 托管适配避免独立网页的`/assets`路由遮挡Gradio资源。
-- 平台每次部署可能改变内部FC域名；适配接受观察到的平台内部后缀，但外部Origin固定为应用域名，不以任意转发头决定可信来源。
-- 跨站iframe可能阻止Strict Cookie，因此托管版提供同源匿名会话能力令牌；JSON导出通过同一请求通道生成文件。
+TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web：web.sqlite保存账号与历史，子目录保存报告和LangGraph检查点，上层usage.sqlite保存用量。SQLite数据写入平台持久目录，不写入镜像或Git。启动前生成最近3日的一致性私有备份；与原库同盘，不保证平台删除或存储损坏后的恢复。账号与具体持久化边界见[账号文档](accounts.md)。
 
-密钥放在创空间Secret；`DASHSCOPE_API_KEY`供模型使用。`ALIPAY_MODELSCOPE_KEY`仅用于运营者本地管理/诊断，不需要交给普通访客，也不应放进前端。
+DASHSCOPE_API_KEY仅供模型后端。ALIPAY_MODELSCOPE_KEY只供本地部署管理，不进入前端或应用公开配置。默认费用估值上限仍为3元/20万tokens，未提高硬件或购买服务。
 
-常用服务端变量：
+## 发布验收
 
-| 变量 | 用途 |
-|---|---|
-| `TRIALTRUST_RUNTIME` | 持久化运行目录 |
-| `TRIALTRUST_ENABLE_LIVE` | 是否开放真实模型模式 |
-| `TRIALTRUST_PUBLIC_ORIGIN` | 明确的公开HTTPS来源 |
-| `TRIALTRUST_STUDIO_URL` | 当前创空间页面地址，保持全屏链接与部署一致 |
-| `TRIALTRUST_ALLOWED_HOSTS` | 独立入口或公共网关的Host白名单 |
-| `TRIALTRUST_BUDGET_CNY` | 每个应用账本的保守估算费用上限 |
-| `TRIALTRUST_TOKEN_LIMIT` | 每个账本的token上限 |
+正常提交和推送魔搭仓库，调用平台部署后，核对公开HTML及app.js/auth.js/style.css/workbench_tools.js与Git对象一致。Running或HTTP200不代表实际交互通过。
 
-## 验收与版本
+使用tools/deployment_smoke.py --managed-docker完成公开门户上下文下的注册登录及完整离线流程；--account-state必须指向runtime中的私有测试账号文件，用于重新部署后验证同一账号与历史。不得把该文件当作公开证据上传。--live才调用模型，本轮不需要。
 
-以下为v0.4历史部署说明。2026年10月16日，平台公开状态和无账号API验收通过。部署代码来自此前魔搭Git提交`f9a2b60ed96c4599d9a5befd79b5fd1c5fc3e68f`，此标识保留在原始验收清单；它不是本GitHub仓库的提交号。GitHub公开仓库从同一应用源文件的v0.4快照开始，后续记录独立版本历史。
-
-```bash
-python tools/deployment_smoke.py
-```
-
-默认检查公开页面所需上下文，不使用所有者SDK密钥或账号登录Cookie；离线检查会创建合成记录并测试审阅/导出。`--live`才调用模型与Embedding；`--owner-gateway`明确切换所有者诊断，不能冒充匿名访问验证。
-
-测试中的审阅标记由自动化发送，不代表真实用户评价。v0.5已在公开门户实际验证桌面、390×844手机布局、取消确认拦截、自助餐170元对照涨价无草稿、Skills事件和审阅保存。云端原生下载尚未捕获文件完成回执；本地下载和云端导出接口已通过，因此新增同会话鉴权的只读JSON查看/复制入口（最终云端已实际展开完整报告）。平台Running和健康接口200均不能单独证明全部交互正常。
-
-## 运行维护
-
-当前应用面向受限演示，为单进程状态模型。长期开放前需验证资源休眠、持久目录、模型额度、错误恢复及访问稳定性。免费资源的可用时长以平台为准，不承诺永久在线；多个独立部署的费用账本不会自动合并。
-
-GitHub CI只运行离线检查，不部署魔搭，也不读取任何模型密钥。
-
-
-v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提交，不强推。Gradio适配另取消外层main额外padding与overflow裁切，保留产品自身footer和手机宽度。新版验收与旧版证据分别记录，不用旧截图证明新部署。
-
-
-## 轻量工作台入口
-
-推荐体验入口为 `https://l666h666better-trialtrust.ms.show/api/workbench`，与Gradio入口共用同一HTML、CSS、JS、匿名会话和费用账本，资源位于独立的`/api/workbench-assets/`，避免Gradio资源路径冲突。
-
-浏览器实测表明：魔搭会将该地址转到官方门户，保留`app_path`，再通过iframe显示，所以不能把接口返回200当作绕过门户的证明。托管版仅允许自身和两个魔搭官方域名嵌入，轻量页面保留同源脚本、样式、连接的严格CSP；独立Docker版仍禁止外部嵌入。会话和Origin校验保持一致。
-
-原Gradio入口和根`/config`继续提供。门户缩放观察与自动化兼容性单独记录，实际显示与点击结果见[新版验证记录](validation-v0.5.md)。
-
-自有`portal_viewport.js`只接收实际父窗口、官方魔搭域名或同源父窗口的iframe-resizer初始化和有界尺寸信息，再用CSS容器查询排版。不会接收任务或执行命令，不发送条件文本、凭据；不加载第三方运行代码。来源、消息长度、尺寸和布局用途有3项Node回归。保留早期被裁切的失败截图，不能用它冒充已通过的手机效果。
-
-
-## v0.6.1 发布入口
-
-此前临时部署仓库为`trialtrust-workbench`。此前`trialtrust`多次重建仍返回旧快照，资源字节校验拦截了这类假阳性，因此建立独立默认CPU部署入口，原空间和匿名记录保留。两处数据不自动迁移；浏览器模板也按站点保存。代码主仓库仍是同一个GitHub项目。
-
-公共网关明确拒绝PATCH和DELETE，会话操作使用同源POST路径`/api/conversations/{id}/rename`与`/api/conversations/{id}/delete`；删除必须传严格布尔确认。标准方法继续供独立服务使用，所有入口共用身份和运行中校验。
-
-发布验收需匹配实际`app.js`、`style.css`、`workbench_tools.js`，并实际测试页面与API。单独Running或HTTP200不足以确认部署正确。详情见[v0.6验证记录](validation-v0.6.md)。
-
-
-## 当前原空间：Docker工作台
-
-2026-10-19原空间切换为官方支持的Docker SDK，免费硬件仍为platform/2v-cpu-8g-mem。使用仓库Dockerfile；默认独立容器运行核心Web入口，只有明确设置TRIALTRUST_MANAGED_STUDIO=1才启用魔搭门户模式。公开Origin、Host白名单、严格CSP、会话归属与确认规则继续保留，不引入任意跨站来源。应用工厂为trialtrust.managed:create_managed_app。
-
-原空间新版三份资源已匹配已验证Git树c8570c1；全新会话的默认手动入口、第三/第四步空状态在实际门户中核验。离线核心验收通过，但会话管理兼容接口被平台异步回退，原有PATCH/DELETE仍遭公共网关403，因此完整迁移不能标记完成。匿名核心验收显式记载跳过的已知失败项，见evals/results/cloud-original-core.json。
-
-临时空间已Stopped且private。其源码Git历史有本地bundle备份；未声称完整备份托管数据库。彻底删除仅支持网页控制台，当前受控浏览器没有所有者管理入口，需所有者在自己的已登录浏览器完成。
+应实际验证：未登录拒绝API、注册/登录/退出、恢复码、账号隔离、重命名/删除、刷新、手机布局，以及重新部署后存储标识和历史保留。当前记录见[账号验证](validation-accounts.md)；此前故障与回退记录保留在[历史发布记录](hosting-review.md)。GitHub CI只测试，不自动部署。

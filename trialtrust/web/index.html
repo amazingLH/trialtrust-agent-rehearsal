@@ -7,10 +7,61 @@
     <link rel="stylesheet" href="/assets/style.css" />
     <script defer src="/assets/portal_viewport.js"></script>
     <script defer src="/assets/workbench_tools.js"></script>
+    <script defer src="/assets/auth.js"></script>
     <script defer src="/assets/app.js"></script>
   </head>
   <body>
-    <div class="trialtrust-responsive"><div class="app-shell">
+    <section id="auth-gate" class="auth-gate" aria-label="试托账号入口">
+      <div class="auth-universe" aria-hidden="true"><div class="auth-nebula"></div><i class="star s1"></i><i class="star s2"></i><i class="star s3"></i><i class="star s4"></i></div>
+      <div class="auth-layout">
+        <div class="auth-story">
+          <a class="auth-brand" href="#"><span>试</span> 试托 <small>TRIALTRUST</small></a>
+          <div class="auth-chip"><i></i> 你的委托彩排舱，已就绪</div>
+          <h1>先在星际小舱试一遍，<br /><em>再放心交给 AI。</em></h1>
+          <p>和小托一起，检查每一步的费用、证据与边界。<br />把探索留给 AI，把决定留给自己。</p>
+          <div class="auth-illustration">
+            <div class="auth-orbit auth-orbit-one"></div><div class="auth-orbit auth-orbit-two"></div>
+            <div class="floating-badge badge-evidence">✦ 证据已就位</div><div class="floating-badge badge-boundary">✓ 授权边界守护中</div>
+            <svg class="space-buddy" viewBox="0 0 360 340" role="img" aria-label="原创太空小托机器人">
+              <defs><linearGradient id="buddy-shell" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d9d3ff"/></linearGradient><linearGradient id="buddy-visor" x2="1" y2="1"><stop stop-color="#2f2766"/><stop offset="1" stop-color="#171c3b"/></linearGradient></defs>
+              <ellipse cx="180" cy="307" rx="88" ry="12" fill="#a995ff" opacity=".13"/>
+              <g class="buddy-float"><path d="M137 85C110 15 139 3 159 77M202 76C222 6 250 21 224 90" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="5"/>
+                <ellipse cx="180" cy="229" rx="65" ry="64" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <path d="M122 219Q63 195 84 235Q101 256 125 246M239 218Q293 184 281 223Q267 250 238 247" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <path d="M138 278Q111 303 150 304L165 283M198 283L216 304Q252 302 225 278" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <rect x="89" y="74" width="182" height="142" rx="67" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <rect x="106" y="100" width="148" height="91" rx="43" fill="url(#buddy-visor)"/>
+                <g class="buddy-eyes" fill="#8ff1db"><ellipse cx="148" cy="141" rx="8" ry="12"/><ellipse cx="211" cy="141" rx="8" ry="12"/></g>
+                <path d="M168 162Q179 171 190 162" fill="none" stroke="#b9aaff" stroke-width="4" stroke-linecap="round"/>
+                <ellipse cx="130" cy="161" rx="10" ry="5" fill="#ffb7d4" opacity=".8"/><ellipse cx="229" cy="161" rx="10" ry="5" fill="#ffb7d4" opacity=".8"/>
+                <circle cx="180" cy="242" r="21" fill="#8060e1"/><path d="M170 241L178 249L192 233" fill="none" stroke="#e6fff5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M107 93Q139 67 177 83" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".7"/>
+              </g>
+            </svg>
+            <span class="auth-planet planet-one"></span><span class="auth-planet planet-two"></span>
+          </div>
+          <div class="auth-principles"><span>◇ 账户隔离</span><span>◈ 历史可续</span><span>✦ 决定在你</span></div>
+        </div>
+        <div class="auth-card">
+          <p class="auth-eyebrow">WELCOME ABOARD / 欢迎登舱</p><h2 id="auth-title">欢迎回来</h2><p id="auth-subtitle">登录后，接着上一次的探索。</p>
+          <div class="auth-tabs" role="group" aria-label="账号操作"><button id="auth-login-tab" type="button" aria-pressed="true">登录</button><button id="auth-register-tab" type="button" aria-pressed="false">注册账号</button></div>
+          <form id="auth-form">
+            <label class="auth-field">用户名<input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_]{3,32}" required placeholder="3—32位字母、数字或下划线" /></label>
+            <label class="auth-field"><span id="auth-password-label">密码</span><div class="password-input"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="10" maxlength="72" required placeholder="至少10个字符" /><button id="auth-show-password" type="button" aria-label="显示密码" aria-pressed="false">显示</button></div></label>
+            <label id="auth-confirm-field" class="auth-field" hidden>确认密码<input id="auth-confirm" type="password" autocomplete="new-password" maxlength="72" /></label>
+            <label id="auth-recovery-field" class="auth-field" hidden>恢复码<input id="auth-recovery" autocomplete="off" maxlength="100" placeholder="注册时保存的恢复码" /></label>
+            <label id="auth-import-field" class="auth-import" hidden><input id="auth-import" type="checkbox" />将此浏览器仍有效的旧匿名记录关联至新账号</label>
+            <p id="auth-error" class="auth-error" role="alert"></p>
+            <button id="auth-submit" class="auth-primary" type="submit" disabled>正在连接彩排舱…</button>
+          </form>
+          <div id="auth-receipt" hidden><h3>请保存你的恢复码</h3><p>这是没有邮箱或短信时找回账号的凭证。只在本次显示，请保存在自己安全的地方，不要发给他人。</p><textarea id="auth-recovery-code" readonly aria-label="本次恢复码" spellcheck="false"></textarea><button id="auth-download-recovery" type="button" class="secondary">下载恢复码</button><button id="auth-enter" type="button" class="auth-primary">我已保存，进入工作台 →</button></div>
+          <div class="auth-footer"><button id="auth-recover-tab" class="auth-text" type="button">忘记密码？使用恢复码</button><span>无需手机 · 无需邮箱</span></div>
+          <p id="auth-browser-note" class="auth-browser-note" hidden>每个浏览器身份只允许注册一个账号；清除数据、无痕或更换浏览器可能绕过此限制，不能据此识别物理设备。已有账号可以在其他设备登录。</p>
+        </div>
+      </div>
+      <p class="auth-bottom">试托 · 先试，再托 <span>用一次可观察的彩排，理解一次委托。</span></p>
+    </section>
+    <div id="authenticated-app" class="trialtrust-responsive" hidden><div class="app-shell">
         <aside id="conversation-sidebar" class="conversation-panel" aria-label="会话管理">
           <div class="sidebar-heading"><span class="eyebrow">会话工作台</span><button id="close-sidebar" class="icon-button" aria-label="关闭会话侧栏">×</button></div>
           <div class="conversation-heading">
@@ -38,9 +89,7 @@
               <div id="history"></div>
             </details>
           </div>
-          <p class="session-note">
-            同一浏览器身份下的会话可返回继续；匿名身份有效期为24小时。清除浏览器数据、更换浏览器或平台重置存储后，可能无法找回记录。
-          </p>
+          <div class="account-bar"><span id="account-name"></span><button id="account-settings" type="button" class="text-button">账号设置</button><button id="account-logout" type="button" class="text-button">退出登录</button></div>
         </aside>
 
       <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="关闭会话侧栏" hidden></button>
@@ -437,7 +486,7 @@
           <div id="skills-catalog"></div>
         </details>
         <footer class="site-footer">
-          <span>试托 v0.6.1 · 合成环境中的委托彩排</span
+          <span>试托 v0.7 · 合成环境中的委托彩排</span
           ><button id="restart-guide" class="text-button">
             查看操作指引 ↻
           </button>
@@ -479,6 +528,7 @@
         </div>
       </form>
     </dialog>
+    <dialog id="account-dialog" aria-labelledby="account-dialog-title"><form id="account-password-form"><div class="dialog-heading"><h2 id="account-dialog-title">修改密码</h2><button id="account-close" type="button" class="icon-button" aria-label="关闭账号设置">×</button></div><label class="auth-field">当前密码<input id="account-old-password" type="password" autocomplete="current-password" maxlength="72" required /></label><label class="auth-field">新密码<input id="account-new-password" type="password" autocomplete="new-password" minlength="10" maxlength="72" required /></label><p>修改成功后，所有登录会话会失效，请使用新密码重新登录。</p><p id="account-error" class="danger-text" role="alert"></p><button id="account-password-submit" type="submit" class="primary">保存新密码</button></form></dialog>
     <dialog id="help-dialog" aria-labelledby="help-title">
       <div class="dialog-heading">
         <h2 id="help-title">第一次怎么用？</h2>

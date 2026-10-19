@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 import json
 
 import pytest
@@ -35,7 +37,7 @@ def test_compiler_blocks_ambiguous_or_unsupported_contracts(text):
 
 def test_compiler_refuses_identifier_and_does_not_store_task_text(tmp_path):
     headers = {"X-TrialTrust-Client": "web"}
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         client.post("/api/session", json={}, headers=headers)
         private = client.post("/api/compile", json={"stand_in_text": "联系13800138000"}, headers=headers)
         assert private.status_code == 422

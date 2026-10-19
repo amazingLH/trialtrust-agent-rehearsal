@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 import json
 import sqlite3
 import time
@@ -30,7 +32,7 @@ def run(client, conversation_id, budget=300):
 
 
 def test_conversations_group_rounds_and_new_one_preserves_history(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         one, two = run(client, first), run(client, first, budget=350)
@@ -45,7 +47,7 @@ def test_conversations_group_rounds_and_new_one_preserves_history(tmp_path):
 
 
 def test_foreign_conversation_cannot_be_listed_or_written(tmp_path):
-    app = create_app(tmp_path / "web", enable_live=False)
+    app = create_app(tmp_path / "web", enable_live=False, require_accounts=False)
     with TestClient(app) as a, TestClient(app) as b:
         initialize(a)
         initialize(b)
@@ -60,7 +62,7 @@ def test_foreign_conversation_cannot_be_listed_or_written(tmp_path):
 
 
 def test_unconfirmed_continuation_does_not_create_a_round(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         run(client, first)
@@ -73,12 +75,12 @@ def test_unconfirmed_continuation_does_not_create_a_round(tmp_path):
 
 def test_browser_identity_survives_app_restart_and_review_stays_attached(tmp_path):
     root = tmp_path / "web"
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         run_id = run(client, first)
         cookies = dict(client.cookies)
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         client.cookies.update(cookies)
         assert client.get("/api/conversations").json()[0]["id"] == first
         result = client.post(f"/api/trials/{run_id}/review", json={"accepted": False}, headers=HEADERS)
@@ -111,7 +113,7 @@ def test_legacy_schema_migration_is_idempotent_and_preserves_reports(tmp_path):
 
 def test_expired_anonymous_identity_does_not_expose_old_history(tmp_path):
     root = tmp_path / "web"
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         run(client, first)
@@ -124,7 +126,7 @@ def test_expired_anonymous_identity_does_not_expose_old_history(tmp_path):
 
 
 def test_conversation_creation_requires_same_origin_and_valid_owner(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         assert client.post("/api/conversations", json={}, headers=HEADERS).status_code == 401
         initialize(client)
         assert client.post("/api/conversations", json={}).status_code == 403
@@ -135,7 +137,7 @@ def test_conversation_creation_requires_same_origin_and_valid_owner(tmp_path):
 
 def test_rename_is_persistent_and_never_overwritten_by_first_run(tmp_path):
     root = tmp_path / "web"
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         assert client.patch(f"/api/conversations/{first}", json={"title": "  新会话  "}, headers=HEADERS).status_code == 200
@@ -143,14 +145,14 @@ def test_rename_is_persistent_and_never_overwritten_by_first_run(tmp_path):
         assert client.get("/api/conversations").json()[0]["title"] == "新会话"
         assert client.patch(f"/api/conversations/{first}", json={"title": "周六聚会预算对照"}, headers=HEADERS).status_code == 200
         cookies = dict(client.cookies)
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         client.cookies.update(cookies)
         assert client.get("/api/conversations").json()[0]["title"] == "周六聚会预算对照"
 
 
 def test_deleted_conversation_and_all_its_rounds_are_inaccessible(tmp_path):
     root = tmp_path / "web"
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         runs = [run(client, first), run(client, first, budget=350)]
@@ -176,7 +178,7 @@ def test_deleted_conversation_and_all_its_rounds_are_inaccessible(tmp_path):
 
 @pytest.mark.parametrize("title", ["", "   ", "x" * 61, "a\nb", "a\x00b", 123, None])
 def test_invalid_conversation_titles_are_rejected(tmp_path, title):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         assert client.patch(f"/api/conversations/{first}", json={"title": title}, headers=HEADERS).status_code == 422
@@ -184,7 +186,7 @@ def test_invalid_conversation_titles_are_rejected(tmp_path, title):
 
 
 def test_conversation_mutations_are_owner_and_origin_scoped(tmp_path):
-    app = create_app(tmp_path / "web", enable_live=False)
+    app = create_app(tmp_path / "web", enable_live=False, require_accounts=False)
     with TestClient(app) as a, TestClient(app) as b:
         initialize(a)
         initialize(b)
@@ -227,7 +229,7 @@ def test_deletion_does_not_reset_daily_run_quota(tmp_path):
 
 
 def test_gateway_compatible_post_actions_preserve_owner_isolation(tmp_path):
-    app = create_app(tmp_path / "web", enable_live=False)
+    app = create_app(tmp_path / "web", enable_live=False, require_accounts=False)
     with TestClient(app) as a, TestClient(app) as b:
         initialize(a)
         initialize(b)
@@ -243,7 +245,7 @@ def test_gateway_compatible_post_actions_preserve_owner_isolation(tmp_path):
 
 
 def test_post_deletion_requires_true_boolean_confirmation(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         for body,status in [({},422),({"confirmed":"true"},422),({"confirmed":False},409)]:
@@ -252,7 +254,7 @@ def test_post_deletion_requires_true_boolean_confirmation(tmp_path):
 
 
 def test_post_deletion_hides_existing_round_and_export(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         first = conversation(client)
         rid=run(client,first)

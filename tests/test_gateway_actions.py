@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 import sqlite3
 from fastapi.testclient import TestClient
 from trialtrust.webapp import create_app
@@ -16,7 +18,7 @@ def body(c,cid,**overrides):
 
 
 def test_gateway_actions_require_typed_explicit_confirmation(tmp_path):
-    with TestClient(create_app(tmp_path,enable_live=False)) as c:
+    with TestClient(create_app(tmp_path,enable_live=False, require_accounts=False)) as c:
         cid=initialize(c);url=f"/api/conversations/{cid}/actions"
         valid=body(c,cid)
         for bad in [{"operation":"delete"},{**valid,"confirmed":"true"},{**valid,"title":"other"},{**valid,"operation":"run"},{**valid,"operation":"rename"},{**valid,"operation":"rename","title":"  "},{**valid,"expected_updated":"1"}]:
@@ -29,7 +31,7 @@ def test_gateway_actions_require_typed_explicit_confirmation(tmp_path):
 
 
 def test_gateway_action_rejects_other_owners_and_cross_origin(tmp_path):
-    app=create_app(tmp_path,enable_live=False)
+    app=create_app(tmp_path,enable_live=False, require_accounts=False)
     with TestClient(app) as owner, TestClient(app) as other:
         cid=initialize(owner);initialize(other);url=f"/api/conversations/{cid}/actions"
         request=body(owner,cid)
@@ -39,7 +41,7 @@ def test_gateway_action_rejects_other_owners_and_cross_origin(tmp_path):
 
 
 def test_stale_dialog_does_not_remove_changed_conversation(tmp_path):
-    with TestClient(create_app(tmp_path,enable_live=False)) as c:
+    with TestClient(create_app(tmp_path,enable_live=False, require_accounts=False)) as c:
         cid=initialize(c);url=f"/api/conversations/{cid}/actions";stale=body(c,cid)
         c.patch(f"/api/conversations/{cid}",json={"title":"更新后的条件"},headers=H).raise_for_status()
         assert c.post(url,json=stale,headers=H).status_code == 409
@@ -47,7 +49,7 @@ def test_stale_dialog_does_not_remove_changed_conversation(tmp_path):
 
 
 def test_gateway_deletion_hides_rounds_and_does_not_allow_old_exports(tmp_path):
-    with TestClient(create_app(tmp_path,enable_live=False)) as c:
+    with TestClient(create_app(tmp_path,enable_live=False, require_accounts=False)) as c:
         cid=initialize(c)
         run=c.post("/api/trials",json={"confirmed":True,"agent":"demo_careful"},headers={**H,"X-TrialTrust-Conversation":cid})
         assert run.status_code == 202
@@ -59,7 +61,7 @@ def test_gateway_deletion_hides_rounds_and_does_not_allow_old_exports(tmp_path):
 
 
 def test_gateway_deletion_refuses_running_conversation(tmp_path):
-    with TestClient(create_app(tmp_path,enable_live=False)) as c:
+    with TestClient(create_app(tmp_path,enable_live=False, require_accounts=False)) as c:
         cid=initialize(c)
         r=c.post("/api/trials",json={"confirmed":True,"agent":"demo_careful"},headers={**H,"X-TrialTrust-Conversation":cid})
         assert r.status_code == 202

@@ -20,7 +20,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, StrictBool, Field, field_validator
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -201,7 +202,7 @@ class Store:
         return run_id
 
 
-def create_app(root: Path | None = None, enable_live: bool | None = None, runner=run_trial):
+def create_app(root: Path | None = None, enable_live: bool | None = None, runner=run_trial, *, require_accounts: bool = True):
     root = root or Path(os.environ.get("TRIALTRUST_RUNTIME", "runtime/web"))
     store = Store(root)
     live_enabled = enable_live if enable_live is not None else os.environ.get("TRIALTRUST_ENABLE_LIVE") == "1"
@@ -216,6 +217,17 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         yield
 
     app = FastAPI(title="试托", lifespan=lifespan, docs_url=None, redoc_url=None)
+    from .accounts import Accounts, register_account_routes
+    accounts = Accounts(store) if require_accounts else None
+    app.state.accounts = accounts
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, exc):
+        if request.url.path.startswith('/api/auth/'):
+            # FastAPI's default validation includes submitted input. Never echo passwords.
+            return JSONResponse({'detail': '请检查填写内容：用户名3—32位字母/数字/下划线；密码至少10个字符、UTF-8不超过72字节，两次密码需一致。'}, status_code=422)
+        from fastapi.exception_handlers import request_validation_exception_handler
+        return await request_validation_exception_handler(request, exc)
     allowed_hosts = [host.strip() for host in os.environ.get("TRIALTRUST_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",") if host.strip()]
     public_origin = os.environ.get("TRIALTRUST_PUBLIC_ORIGIN")
     rejected_hosts = set()
@@ -242,7 +254,12 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             # arbitrary client-supplied X-Forwarded-Host value.
             if origin and origin not in {expected, public_origin}:
                 return Response("不接受跨站请求", status_code=403)
-        response = await call_next(request)
+        public_path = (request.url.path in {'/api/workbench', '/api/session'}
+                       or request.url.path.startswith(('/api/auth/', '/api/workbench-assets/')))
+        if accounts and request.url.path.startswith('/api/') and not public_path and not accounts.current(request):
+            response = JSONResponse({'detail': '请先登录试托账号'}, status_code=401)
+        else:
+            response = await call_next(request)
         if response.status_code == 400 and request.url.hostname not in allowed_hosts and len(rejected_hosts) < 8:
             hostname = request.url.hostname
             if hostname not in rejected_hosts:
@@ -270,6 +287,8 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         return response
 
     def require_owner(request):
+        if accounts:
+            return accounts.require(request)['id']
         token = request.headers.get("x-trialtrust-session") if getattr(app.state, "studio_ui", False) else None
         owner = store.owner(token or request.cookies.get("trialtrust_session"))
         if not owner:
@@ -349,6 +368,12 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
 
     @app.post("/api/session")
     def session(request: Request, response: Response):
+        if accounts:
+            user = accounts.current(request)
+            return {"authenticated": bool(user), "user": user, "auth_required": True,
+                    "live_enabled": live_enabled,
+                    "studio_url": os.environ.get("TRIALTRUST_STUDIO_URL", "https://www.modelscope.cn/studios/L666H666Better/trialtrust"),
+                    "cases": CASE_LABELS, "limit": "仅测试自有合成场景；不连接真实商家或第三方智能体"}
         studio_ui = getattr(app.state, "studio_ui", False)
         token = request.headers.get("x-trialtrust-session") if studio_ui else None
         token = token or request.cookies.get("trialtrust_session")
@@ -512,6 +537,8 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         background_tasks.add_task(work, run_id, RunSpec.model_validate_json(row["spec"]), True, row["kind"])
         return {"id": run_id}
 
+    if accounts:
+        register_account_routes(app, accounts)
     return app
 
 

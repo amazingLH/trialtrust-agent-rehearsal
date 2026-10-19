@@ -10,6 +10,7 @@ numpy==1.26.4
 z3-solver==4.16.0.0
 pytest==8.4.2
 fastapi==0.121.1
+bcrypt==5.0.0
 uvicorn==0.38.0
 gradio==6.2.0
 jsonschema==4.26.0

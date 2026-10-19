@@ -1,9 +1,10 @@
-"""Anonymous public smoke test; optional owner gateway and explicit paid model call."""
+"""Public-portal smoke with disposable app accounts; no owner key unless requested."""
 import argparse
 import json
 from pathlib import Path
 import sys
 import time
+import secrets
 
 import httpx
 
@@ -18,6 +19,8 @@ HOST = "https://l666h666better-trialtrust.ms.show"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--managed-docker", action="store_true", help="Check the managed Docker HTML entry and standard conversation methods")
+    parser.add_argument("--base-url", help="Local HTTP smoke target on 127.0.0.1 or localhost")
+    parser.add_argument("--account-state", type=Path, help="Private disposable smoke credentials; must be under runtime/")
     parser.add_argument("--live", action="store_true", help="Explicitly exercise the real model and embedding; uses studio budget")
     parser.add_argument("--owner-gateway", action="store_true", help="Use authenticated owner API instead of public URL")
     parser.add_argument('--domain', choices=sorted(CATALOG), default='buffet')
@@ -29,13 +32,18 @@ def main():
     host = "https://studio-l666h666better-trialtrust.api-inference.modelscope.net" if args.owner_gateway else HOST
     if args.local_studio:
         host = 'http://127.0.0.1:8781'
-    origin = host if args.local_studio else HOST
+    if args.base_url:
+        from urllib.parse import urlparse
+        if urlparse(args.base_url).hostname not in {'127.0.0.1','localhost'} or args.owner_gateway:
+            parser.error('--base-url only supports the local preview')
+        host=args.base_url
+    origin = host if args.local_studio or args.base_url else HOST
     headers = {"X-TrialTrust-Client": "web", "Origin": origin,
                "User-Agent": "Mozilla/5.0 TrialTrust-public-browser-smoke",
                "Referer": origin + "/", "Accept": "application/json"}
     if args.owner_gateway:
         headers["Authorization"] = "Bearer " + credential("ALIPAY_MODELSCOPE_KEY")
-    elif not args.local_studio:
+    elif not args.local_studio and not args.base_url:
         # Request the normal portal's viewer information. Guests can receive an
         # empty token. No login cookie or owner key is used for this public check.
         response = httpx.get("https://www.modelscope.cn/api/v1/studios/token", timeout=30)
@@ -58,15 +66,52 @@ def main():
         response = client.get("/health")
         response.raise_for_status()
         assert response.json() == {"status": "ok", "synthetic_only": True}
+        assert client.get('/api/conversations').status_code == 401
         session = client.post("/api/session", json={})
         session.raise_for_status()
-        if session.json().get("session_token"):
-            client.headers["X-TrialTrust-Session"] = session.json()["session_token"]
+        assert session.json().get("auth_required") is True
+        state = None
+        if args.account_state:
+            state_path=args.account_state.resolve()
+            state_path.relative_to((ROOT/'runtime').resolve())
+            if state_path.exists():
+                state=json.loads(state_path.read_text(encoding='utf-8'))
+                if state.get('browser_token'):client.headers['X-TrialTrust-Browser']=state['browser_token']
+        bootstrap=client.post('/api/auth/bootstrap',json={});bootstrap.raise_for_status()
+        if bootstrap.json().get('browser_token'):
+            client.headers['X-TrialTrust-Browser']=bootstrap.json()['browser_token']
+        if state is None:
+            state={'username':'smoke_'+secrets.token_hex(6),'password':secrets.token_urlsafe(24)}
+            body={**state,'confirm_password':state['password']}
+            registered=client.post('/api/auth/register',json=body);registered.raise_for_status()
+            state['recovery_code']=registered.json()['recovery_code']
+        signed=client.post('/api/auth/login',json={k:state[k] for k in ['username','password']});signed.raise_for_status()
+        if signed.json().get('account_token'):
+            client.headers['X-TrialTrust-Account']=signed.json()['account_token']
+            state['account_token']=signed.json()['account_token']
+        state['browser_token']=client.headers.get('X-TrialTrust-Browser')
+        storage=client.get('/api/account/storage');storage.raise_for_status()
+        previous=state.get('storage')
+        if previous:
+            assert previous['storage_id']==storage.json()['storage_id'], 'SQLite storage changed across deployment'
+            prior_conversation=state.get('last_conversation')
+            if prior_conversation:
+                assert prior_conversation in {r['id'] for r in client.get('/api/conversations').json()}, 'Conversation was lost'
+        state['storage']=storage.json()
+        if args.account_state:
+            state_path.parent.mkdir(parents=True,exist_ok=True)
+            state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding='utf-8')
+            state_path.chmod(0o600)
         assert len(client.get('/api/catalog').json()['scenarios']) == 12
         assert len(client.get('/api/skills').json()['skills']) == 5
         conv = client.post('/api/conversations', json={})
         conv.raise_for_status()
         conversation_id = conv.json()['id']
+        if args.account_state:
+            state['last_conversation']=conversation_id
+            state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding='utf-8')
+            state_path.chmod(0o600)
+
         client.headers['X-TrialTrust-Conversation'] = conversation_id
         assert any(c['id'] == conversation_id for c in client.get('/api/conversations').json())
         assert client.get('/api/trials', params={'conversation_id': conversation_id}).json() == []

@@ -34,7 +34,9 @@ let sessionToken = readLocal("trialtrust-session");
 let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
+function accountKey(key) { return ["trialtrust-condition-templates","trialtrust-current-conversation"].includes(key) && TrialTrustAuth.user() ? key+":"+TrialTrustAuth.user().id : key; }
 function readLocal(key) {
+  key = accountKey(key);
   // Preserve an existing tab's anonymous identity before adopting a shared one.
   // Older releases stored identities only in sessionStorage.
   try {
@@ -48,6 +50,7 @@ function readLocal(key) {
   }
 }
 function remember(key, value) {
+  key = accountKey(key);
   try {
     localStorage.setItem(key, value);
   } catch {}
@@ -73,7 +76,7 @@ function notice(text = "", target) {
   }
 }
 async function api(path, body, method) {
-  const opts = { headers: { "X-TrialTrust-Client": "web" } };
+  const opts = { headers: { "X-TrialTrust-Client": "web", ...TrialTrustAuth.headers() } };
   if (sessionToken) opts.headers["X-TrialTrust-Session"] = sessionToken;
   if (conversationId)
     opts.headers["X-TrialTrust-Conversation"] = conversationId;
@@ -90,6 +93,7 @@ async function api(path, body, method) {
   } catch {
     throw new Error("服务暂未返回结果，请稍后重试。");
   }
+  if (response.status === 401) { TrialTrustAuth.expire(); throw new Error("登录已失效，请重新登录。"); }
   if (!response.ok)
     throw new Error(
       typeof result.detail === "string"
@@ -1393,6 +1397,7 @@ $("start-tutorial").addEventListener("click", () => {
 $("dismiss-notice").addEventListener("click", () => notice());
 (async () => {
   try {
+    await TrialTrustAuth.ready();
     $("full-screen").hidden = !window.location.hostname.endsWith(".ms.show");
     const config = await api("/api/session", {});
     if (config.session_token) {

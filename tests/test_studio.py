@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 """Deployment-specific integration check, separate from the core-only image."""
 import importlib.util
 
@@ -12,7 +14,7 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
     monkeypatch.setenv("TRIALTRUST_PUBLIC_ORIGIN", "https://trial.example")
     monkeypatch.setenv("TRIALTRUST_ALLOWED_HOSTS", "testserver,trial.example")
     from app import create_studio_app
-    with TestClient(create_studio_app(), base_url="https://trial.example") as client:
+    with TestClient(create_studio_app(require_accounts=False), base_url="https://trial.example") as client:
         response = client.get("/config")
         assert response.status_code == 200
         component = next(c for c in response.json()["components"] if c["type"] == "html")

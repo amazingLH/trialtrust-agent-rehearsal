@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 import json
 import sqlite3
 
@@ -22,7 +24,7 @@ def start(client, **overrides):
 
 
 def test_browser_flow_review_export_and_session_isolation(tmp_path):
-    app = create_app(tmp_path / "web", enable_live=False)
+    app = create_app(tmp_path / "web", enable_live=False, require_accounts=False)
     with TestClient(app) as client:
         session = initialize(client)
         assert "HttpOnly" in session.headers["set-cookie"] and "SameSite=strict" in session.headers["set-cookie"]
@@ -43,7 +45,7 @@ def test_browser_flow_review_export_and_session_isolation(tmp_path):
 
 
 def test_out_of_scope_attempt_and_counterfactual_budget_visible(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         initialize(client)
         careless = start(client, agent="demo_rushed")
         report = client.get(f"/api/trials/{careless}").json()["report"]
@@ -55,7 +57,7 @@ def test_out_of_scope_attempt_and_counterfactual_budget_visible(tmp_path):
 
 
 def test_csrf_and_live_cost_gate(tmp_path):
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         script = client.get("/assets/app.js")
         assert script.status_code == 200 and "javascript" in script.headers["content-type"]
         assert script.headers["x-content-type-options"] == "nosniff"
@@ -69,14 +71,14 @@ def test_csrf_and_live_cost_gate(tmp_path):
 
 def test_interrupted_result_restores_without_duplicate_draft(tmp_path):
     root = tmp_path / "web"
-    app = create_app(root, enable_live=False)
+    app = create_app(root, enable_live=False, require_accounts=False)
     with TestClient(app) as client:
         initialize(client)
         run_id = start(client)
         with sqlite3.connect(root / "web.sqlite") as db:
             db.execute("UPDATE runs SET status='running' WHERE id=?", (run_id,))
         cookies = dict(client.cookies)
-    with TestClient(create_app(root, enable_live=False)) as client:
+    with TestClient(create_app(root, enable_live=False, require_accounts=False)) as client:
         client.cookies.update(cookies)
         assert client.get(f"/api/trials/{run_id}").json()["status"] == "interrupted"
         assert client.post(f"/api/trials/{run_id}/resume", json={}, headers=HEADERS).status_code == 202
@@ -87,7 +89,7 @@ def test_interrupted_result_restores_without_duplicate_draft(tmp_path):
 
 def test_explicit_public_origin_works_behind_host_rewriting_gateway(tmp_path, monkeypatch):
     monkeypatch.setenv("TRIALTRUST_PUBLIC_ORIGIN", "https://trial.example")
-    with TestClient(create_app(tmp_path / "web", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "web", enable_live=False, require_accounts=False)) as client:
         response = client.post("/api/session", json={}, headers={**HEADERS, "Origin": "https://trial.example"})
         assert response.status_code == 200 and "Secure" in response.headers["set-cookie"]
         assert client.post("/api/session", json={}, headers={**HEADERS, "Origin": "https://attacker.example"}).status_code == 403

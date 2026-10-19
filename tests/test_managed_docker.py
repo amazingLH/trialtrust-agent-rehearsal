@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 """Exercise the Docker portal boundary independently of the Gradio SDK."""
 from fastapi.testclient import TestClient
 from trialtrust.managed import create_managed_app
@@ -9,7 +11,7 @@ def test_managed_docker_keeps_origin_host_and_anonymous_session_boundaries(tmp_p
     monkeypatch.setenv("TRIALTRUST_ENABLE_LIVE", "0")
     monkeypatch.setenv("TRIALTRUST_PUBLIC_ORIGIN", "https://trial.example")
     monkeypatch.setenv("TRIALTRUST_ALLOWED_HOSTS", "testserver,trial.example")
-    with TestClient(create_managed_app(), base_url="https://trial.example") as client:
+    with TestClient(create_managed_app(require_accounts=False), base_url="https://trial.example") as client:
         response = client.get("/")
         assert response.status_code == 200
         assert "X-Frame-Options" not in response.headers
@@ -34,7 +36,7 @@ def test_managed_docker_keeps_origin_host_and_anonymous_session_boundaries(tmp_p
 
 def test_standalone_mode_still_refuses_framing_and_header_identity(tmp_path, monkeypatch):
     monkeypatch.setenv("TRIALTRUST_ALLOWED_HOSTS", "testserver")
-    with TestClient(create_app(tmp_path / "standalone", enable_live=False)) as client:
+    with TestClient(create_app(tmp_path / "standalone", enable_live=False, require_accounts=False)) as client:
         response = client.get("/")
         assert response.headers["X-Frame-Options"] == "DENY"
         assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]

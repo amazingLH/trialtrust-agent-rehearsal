@@ -6,16 +6,18 @@
 
 [在线体验](https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&app_path=%2Fapi%2Fworkbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![原空间实际工作台：未运行时第三、第四步常显](assets/v0.6.1/original-cloud-awaiting.png)
+![试托账号入口：原创太空小托与登录注册](assets/v0.7/login-local.png)
 
-当前版本 **v0.6.1**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
+当前版本 **v0.7**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
-> 托管状态（2026-10-19）：公开的 `trialtrust` 已完成会话重命名、确认删除和刷新持久化验收；离线对照、审阅、导出也已通过。会话操作使用带明确确认与版本校验的同源POST接口，保留身份隔离和运行中保护。详见[删除修复验证](docs/validation-history-delete.md)。
+> v0.7新增独立登录注册入口与账号隔离，SQLite运行数据不进入镜像或Git。上线和重启持久化验收进展见[账号验证记录](docs/validation-accounts.md)，旧版本证据保留原版本标记。
 
 当前托管入口为 **`L666H666Better/trialtrust`**，展示名称为“试托·Agent委托前试运行工作台”。
 
-## 工作台能力
+## 账号与工作台能力
 
+- 账号入口：用户名/密码注册、bcrypt哈希、登录退出、密码修改和一次性恢复码；业务接口强制鉴权。
+- SQLite持久化：账号归属的历史记录、同一浏览器注册绑定、启动前私有备份。详情见[账号与存储](docs/accounts.md)。
 - 场景与条件：4类12个合成场景、示例与个人模板、合成费用预览。
 - 试验控制：显式选择执行者、检索方式、自动对照或手动测试，设置改变后重新确认。
 - 证据与比较：实际调用轨迹、结果检查清单、会话内跨轮对照与人工审阅导出。

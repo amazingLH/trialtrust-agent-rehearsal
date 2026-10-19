@@ -1,3 +1,5 @@
+# These regressions exercise the explicitly enabled legacy anonymous migration mode.
+# The deployed factories default to accounts; tests/test_accounts.py covers that boundary.
 import sqlite3
 
 import pytest
@@ -57,7 +59,7 @@ def test_auditor_cannot_invent_fact_values_or_coerce_boolean(tmp_path):
 
 
 def test_web_suite_review_export_and_session_isolation(tmp_path):
-    app = create_app(tmp_path / "web", enable_live=False)
+    app = create_app(tmp_path / "web", enable_live=False, require_accounts=False)
     with TestClient(app) as client:
         client.post("/api/session", json={}, headers=HEADERS)
         response = client.post("/api/suites", json={"confirmed": True}, headers=HEADERS)
