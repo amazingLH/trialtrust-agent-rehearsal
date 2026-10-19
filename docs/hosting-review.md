@@ -1,14 +1,14 @@
 # 托管发布复核记录
 
-## 最新状态（2026-10-19）
+## 当前状态（2026-10-19）
 
-原trialtrust已采用Docker模式恢复新版界面，官方匿名门户中新建会话后，默认“自己选择需求”，第三和第四步标题及等待提示均可见。公开资源与已验证Git树c8570c1一致；离线对照、审阅、导出及未确认拦截通过，证据见evals/results/original-docker-assets.json、cloud-original-core.json。主仓库完整实现本地139项Python、11项Node通过；[应用CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39220093250)通过。
+公开入口为[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)，展示名称“试托·Agent委托前试运行工作台”。Docker源码提交 `d70dbde58da7871dd4bad43b353d80e613783e24` 已部署，三份公开资源与该提交Git对象一致。云端匿名完整接口流程、会话重命名和确认删除通过；实际门户另建测试会话、重命名、删除、刷新后不再出现，原有记录保留。
 
-已知未完成项：公共网关仍拒绝PATCH/DELETE；新增加的带类型、明确确认和归属校验的POST适配器正常提交后，又被平台自动回退（59722a9、9ee8338、118627d、1dd4def、a3d5312）。理由仍为sensitive file content or message，没有更具体说明。本轮没有继续反复提交该被回退接口，已恢复此前实际上线的界面，避免部分回退破坏新旧DOM配合。新适配器保存在GitHub与本地，未冒称云端已可使用。
+本轮采用带类型、明确确认与会话版本校验的同源POST操作，在同一数据库事务中检查版本与归属；保留运行中保护和配额。主仓库应用提交 `701a38e` 的 Windows Python142项、Node11项通过，[GitHub CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39223817073)通过。本轮未调用付费模型，未提高平台资源配置。详细证据见[历史删除修复](validation-history-delete.md)。
 
-临时trialtrust-workbench已停止并设为私有，最终删除尚未完成。官方文档明确不支持通过OpenAPI/SDK删除创空间；受控内置浏览器更多菜单仅有“举报”，用户自己的浏览器登录未使这里出现所有者控件。请所有者在自己的已登录浏览器打开该临时空间，通过空间管理删除；不要误删trialtrust。
+以下为此前发布问题的历史记录，不能据此判断当前功能仍不可用。平台未公开此前回退的具体触发原因；本轮在正常提交、部署后验收，未停用或规避审核。
 
-以下保留此前检查记录，代表各自检查时点。
+## 此前检查记录
 
 日期：2026-10-19。应用代码主仓库不受托管平台自动回退影响。
 
@@ -22,7 +22,7 @@
 
 平台未披露触发内容，不能认定是代码缺陷、密钥泄露或缓存故障。没有为绕过审核重新提交相同代码、强推历史或另建空间。
 
-## 需要空间所有者完成的平台复核
+## 当时的平台复核建议（历史）
 
 进入[创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust-workbench)查看代码回退记录和管理页通知。通过平台提供的支持或复核入口提交以下说明；本项目未代为发送外部消息：
 
@@ -42,7 +42,7 @@ python -m uvicorn trialtrust.webapp:app --host 127.0.0.1 --port 8774
 依赖安装见[复现指南](reproducibility.md)。打开`http://127.0.0.1:8774/`。离线模式不会调用付费模型。使用独立运行目录可避免与其他服务共用SQLite；停止原服务后再用同端口启动。不要将任何服务直接暴露到公网。
 
 
-## 单一入口迁移检查（后续更新）
+## 此前单一入口迁移检查（历史）
 
 维护者已选择保留原`L666H666Better/trialtrust`，展示名称已通过平台API核实为“试托·Agent委托前试运行工作台”。GitHub主页和主要文档已指回此入口。临时`trialtrust-workbench`待完整迁移验收后删除，当前尚未删除。
 

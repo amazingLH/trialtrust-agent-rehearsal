@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-19",
+  "portal": "https://modelscope.cn/studios/L666H666Better/trialtrust",
+  "fixture": "newly_created_disposable_conversation",
+  "renamed_title": "云端删除验证·1645",
+  "rename_persisted": true,
+  "confirmed_delete_removed_from_history": true,
+  "absent_after_browser_reload": true,
+  "preexisting_conversations_preserved": true,
+  "delete_dialog_subtitle_visible": false,
+  "delete_dialog_implementation_note_visible": false,
+  "screenshot": "assets/v0.6.1/delete-dialog-cloud.png",
+  "paid_model_calls": 0
+}
