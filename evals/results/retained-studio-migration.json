@@ -1,0 +1,25 @@
+{
+  "checked_at": "2026-10-19T07:24:11.140426+00:00",
+  "display_name": "试托·Agent委托前试运行工作台",
+  "studio": "L666H666Better/trialtrust",
+  "deployed_application_commit": "5bbc71b",
+  "assets": {
+    "app.js": {
+      "status": 200,
+      "matches_requested_source": false,
+      "sha256": "67f07c043c5529cf04363c8df9a51af9758a9d65e004d78a00e02956b3a817ec"
+    },
+    "style.css": {
+      "status": 200,
+      "matches_requested_source": false,
+      "sha256": "ce77189451a7853b0f7edbf8237aa098e2971c6c2bc6ab7298674351ba2125cb"
+    },
+    "workbench_tools.js": {
+      "status": 404,
+      "matches_requested_source": false,
+      "sha256": "37ec4665a8102d115ffd1ac20dae94c98b4dac64b0c1a68228aa2a531caeb35d"
+    }
+  },
+  "complete_migration": false,
+  "remaining_issue": "previously moderated POST conversation compatibility endpoints remain unavailable"
+}

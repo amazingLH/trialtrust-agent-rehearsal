@@ -19,3 +19,6 @@ Windows完整后端回归135项、Node11项通过（界面最终追加了只显�
 ## 入口迁移
 
 用户最新要求保留原trialtrust，展示名称“试托·Agent委托前试运行工作台”，在原空间完整验收后删除临时trialtrust-workbench。平台此前自动回退事项未凭本地验收关闭，不以重新上传相同被回退代码绕过审核。完整代码保存在GitHub；托管情况需单独核验。
+
+
+手机390×844实际发现旧样式给结果面板保留420px高度，已移除该最小高度并重新截图，两个等待模块保持紧凑，截图见[手机](../assets/v0.6.1/steps-awaiting-mobile.png)。原空间重新发布后的公开资源校验仍失败，详见[迁移校验](../evals/results/retained-studio-migration.json)；当前不得把本地截图当成云端上线证明。完整版本应用提交0a24933的GitHub CI通过。
