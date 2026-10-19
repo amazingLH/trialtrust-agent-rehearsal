@@ -1,5 +1,15 @@
 # 托管发布复核记录
 
+## 最新状态（2026-10-19）
+
+原trialtrust已采用Docker模式恢复新版界面，官方匿名门户中新建会话后，默认“自己选择需求”，第三和第四步标题及等待提示均可见。公开资源与已验证Git树c8570c1一致；离线对照、审阅、导出及未确认拦截通过，证据见evals/results/original-docker-assets.json、cloud-original-core.json。主仓库完整实现本地139项Python、11项Node通过；[应用CI](https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39220093250)通过。
+
+已知未完成项：公共网关仍拒绝PATCH/DELETE；新增加的带类型、明确确认和归属校验的POST适配器正常提交后，又被平台自动回退（59722a9、9ee8338、118627d、1dd4def、a3d5312）。理由仍为sensitive file content or message，没有更具体说明。本轮没有继续反复提交该被回退接口，已恢复此前实际上线的界面，避免部分回退破坏新旧DOM配合。新适配器保存在GitHub与本地，未冒称云端已可使用。
+
+临时trialtrust-workbench已停止并设为私有，最终删除尚未完成。官方文档明确不支持通过OpenAPI/SDK删除创空间；受控内置浏览器更多菜单仅有“举报”，用户自己的浏览器登录未使这里出现所有者控件。请所有者在自己的已登录浏览器打开该临时空间，通过空间管理删除；不要误删trialtrust。
+
+以下保留此前检查记录，代表各自检查时点。
+
 日期：2026-10-19。应用代码主仓库不受托管平台自动回退影响。
 
 ## 已核实的情况

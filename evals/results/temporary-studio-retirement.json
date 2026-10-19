@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-19T08:16:55.238851+00:00",
+  "retained_studio": "L666H666Better/trialtrust",
+  "retained_status": "Running",
+  "temporary_studio": "L666H666Better/trialtrust-workbench",
+  "temporary_status": "Stopped",
+  "temporary_visibility": "private",
+  "source_backup": "local Git bundle; no claim of backing up all hosted user records",
+  "permanently_deleted": false,
+  "deletion_blocker": "web console owner controls unavailable in the controlled browser; user login in their own browser does not expose owner controls here",
+  "verified_after_stop": true
+}

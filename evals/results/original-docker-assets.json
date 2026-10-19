@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-19T08:12:29.038227+00:00",
+  "studio": "L666H666Better/trialtrust",
+  "verified_application_tree": "c8570c1",
+  "assets": {
+    "app.js": {
+      "status": 200,
+      "matches_verified_git_blob": true,
+      "sha256": "b8d9b6ea4d3a0326fcb4db28c77c3c559cc681280ba5eea6be1569a566600a05"
+    },
+    "style.css": {
+      "status": 200,
+      "matches_verified_git_blob": true,
+      "sha256": "c46df129d1c4f995e5939c01a3ab58ba24e5aee2c624f1ec3147ec3e713594b5"
+    },
+    "workbench_tools.js": {
+      "status": 200,
+      "matches_verified_git_blob": true,
+      "sha256": "f85caaabdcb852238ac466d9ba9738cdb4aaafc10803cf1f5c862832cb504187"
+    }
+  },
+  "conversation_management_status": "public gateway rejects standard methods; new typed adapter was moderated and not deployed"
+}

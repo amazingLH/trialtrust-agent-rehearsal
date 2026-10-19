@@ -102,3 +102,12 @@ v0.5继续使用两个独立Git历史；同步应用源文件后分别正常提�
 公共网关明确拒绝PATCH和DELETE，会话操作使用同源POST路径`/api/conversations/{id}/rename`与`/api/conversations/{id}/delete`；删除必须传严格布尔确认。标准方法继续供独立服务使用，所有入口共用身份和运行中校验。
 
 发布验收需匹配实际`app.js`、`style.css`、`workbench_tools.js`，并实际测试页面与API。单独Running或HTTP200不足以确认部署正确。详情见[v0.6验证记录](validation-v0.6.md)。
+
+
+## 当前原空间：Docker工作台
+
+2026-10-19原空间切换为官方支持的Docker SDK，免费硬件仍为platform/2v-cpu-8g-mem。使用仓库Dockerfile；默认独立容器运行核心Web入口，只有明确设置TRIALTRUST_MANAGED_STUDIO=1才启用魔搭门户模式。公开Origin、Host白名单、严格CSP、会话归属与确认规则继续保留，不引入任意跨站来源。应用工厂为trialtrust.managed:create_managed_app。
+
+原空间新版三份资源已匹配已验证Git树c8570c1；全新会话的默认手动入口、第三/第四步空状态在实际门户中核验。离线核心验收通过，但会话管理兼容接口被平台异步回退，原有PATCH/DELETE仍遭公共网关403，因此完整迁移不能标记完成。匿名核心验收显式记载跳过的已知失败项，见evals/results/cloud-original-core.json。
+
+临时空间已Stopped且private。其源码Git历史有本地bundle备份；未声称完整备份托管数据库。彻底删除仅支持网页控制台，当前受控浏览器没有所有者管理入口，需所有者在自己的已登录浏览器完成。

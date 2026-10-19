@@ -6,13 +6,13 @@
 
 [在线体验](https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&app_path=%2Fapi%2Fworkbench) · [魔搭创空间](https://www.modelscope.cn/studios/L666H666Better/trialtrust) · [产品设计](docs/product.md) · [系统架构](docs/architecture.md) · [开发过程](docs/development.md) · [复现指南](docs/reproducibility.md)
 
-![v0.6.1实际工作台：条件设置与合成费用预览](assets/v0.6.1/settings-cloud.png)
+![原空间实际工作台：未运行时第三、第四步常显](assets/v0.6.1/original-cloud-awaiting.png)
 
 当前版本 **v0.6.1**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。截图来自公开魔搭门户；桌面、手机、API与真实模型证据分别记录。
 
-> 发布状态：v0.6.1代码与回归已完成；托管实例当前可体验，但平台随后自动回退了部分源码，稳定重部署待复核。详见[发布复核说明](docs/hosting-review.md)。截图与公开验收为当时记录。
+> 托管状态（2026-10-19）：原`trialtrust`已通过Docker恢复新版界面，并验证离线对照、审阅和导出。云端会话重命名、删除仍受网关方法限制和平台自动回退影响，尚未通过；本地完整代码保留。临时空间已停止并设为私有，最终控制台删除尚待完成。详见[发布状态](docs/hosting-review.md)。
 
-当前指定保留的托管入口为 **`L666H666Better/trialtrust`**，展示名称为“试托·Agent委托前试运行工作台”。临时`trialtrust-workbench`仅用于此前部署排查，待原空间完整迁移验收后删除；两处匿名记录与浏览器模板不会自动迁移。
+当前指定保留的托管入口为 **`L666H666Better/trialtrust`**，展示名称为“试托·Agent委托前试运行工作台”。临时`trialtrust-workbench`仅用于此前部署排查，已停止并设为私有，待所有者完成控制台删除；两处匿名记录与浏览器模板不会自动迁移。
 
 ## 工作台能力
 
