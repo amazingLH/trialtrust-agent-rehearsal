@@ -6,6 +6,7 @@
     <title>试托 · 生活委托的 AI 对照试运行</title>
     <link rel="stylesheet" href="/assets/style.css" />
     <script defer src="/assets/portal_viewport.js"></script>
+    <script defer src="/assets/workbench_tools.js"></script>
     <script defer src="/assets/app.js"></script>
   </head>
   <body>
@@ -99,6 +100,10 @@
             <p>你的彩排搭子 · 小托</p>
           </div>
         </section>
+        <div class="workbench-overview" aria-label="工作台概览">
+          <span><b>12</b> 个合成场景</span><span><b>5</b> 类测试条件</span>
+          <span><b id="template-total">0</b> 个个人模板</span><span><b id="round-total">0</b> 轮会话记录</span>
+        </div>
         <section id="coach" class="coach" aria-label="操作指引">
           <span class="coach-avatar" aria-hidden="true">✦</span>
           <div>
@@ -134,6 +139,12 @@
                   <h2>这次，想先试哪类事情？</h2>
                 </div>
               </div>
+              <div class="task-toolbar">
+                <label class="field">从常用条件开始（可选）<select id="template-select"><option value="">请选择模板</option></select></label>
+                <button id="apply-template" class="secondary">应用模板</button>
+                <button id="remove-template" class="quiet">删除个人模板</button>
+              </div>
+              <p class="micro-note">先选类别与需求，也可应用模板；之后仍需亲自核对并确认。</p>
               <div
                 id="categories"
                 class="categories"
@@ -212,6 +223,7 @@
                   <h2>核对条件，再开始彩排</h2>
                 </div>
               </div>
+              <h3 class="control-stage">① 设置委托条件</h3>
               <div class="form-grid">
                 <label class="field"
                   ><span id="quantity-label">数量</span
@@ -235,30 +247,9 @@
                     value="200"
                 /></label>
               </div>
-              <p id="fee-note" class="data-note">示例费用会显示在这里。</p>
-              <div class="boundary">
-                <b>你授权的只有这三件事</b>
-                <p>查询资料 → 检查方案 → 生成候选草稿</p>
-                <small
-                  >预约、下单和支付均不在授权内；越权尝试会被沙盒拦截。</small
-                >
-              </div>
-              <label class="check-control confirmation" id="confirmation-label"
-                ><input id="confirmed" type="checkbox" /><span
-                  class="checkmark"
-                  aria-hidden="true"
-                  >✓</span
-                ><span
-                  >已核对场景、数量、方式和预算。其他要求尚未进入试验；真实个人资料不会随本次试运行发送。</span
-                ></label
-              >
-              <p
-                id="confirmation-status"
-                class="confirmation-status"
-                aria-live="polite"
-              >
-                尚未确认 · 修改条件后需重新勾选
-              </p>
+              <p id="fee-note" class="micro-note">示例费用会显示在这里。</p>
+              <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
+              <h3 class="control-stage">② 选择执行者与检索方式</h3>
               <label class="field"
                 >由谁来执行彩排？<select id="agent">
                   <option value="demo_careful">
@@ -279,24 +270,54 @@
                 ><span>使用真实向量检索，与关键词混合召回</span></label
               >
               <p id="mode-note" class="muted"></p>
-              <button id="run-suite" class="primary run-button">
-                开始一组对照彩排 ↗
-              </button>
-              <p class="muted centered">
-                先跑原始条件，再改变一个因素，比较两次结果。
-              </p>
-              <details id="single-options" class="advanced">
-                <summary>进阶：自己指定测试条件，单次试运行</summary>
-                <label class="field"
-                  >测试条件<select id="cases">
-                    <option value="baseline">原始条件</option>
-                    <option value="price_change">单价临时上涨</option>
-                    <option value="missing_evidence">现行价目缺失</option>
-                    <option value="injection">资料夹带越权要求</option>
-                    <option value="tool_timeout">首次查询超时</option>
-                  </select></label
-                ><button id="run" class="secondary">运行这次试托 ↗</button>
+              <h3 class="control-stage">③ 选择彩排目标与方式</h3>
+              <label class="field">这次怎样试？<select id="run-method">
+                <option value="paired">Agent 设计一组对照：原始条件 + 一个变化</option>
+                <option value="single">由我指定测试条件：运行一次</option>
+              </select></label>
+              <div id="single-options" class="test-settings" hidden>
+                <label class="field">我要重点检查什么？<select id="cases">
+                  <option value="baseline">原始条件：能否正确完成查询和草稿</option>
+                  <option value="price_change">费用上涨：是否仍守住预算</option>
+                  <option value="missing_evidence">现行价目缺失：是否停止无依据方案</option>
+                  <option value="injection">资料夹带越权要求：是否拒绝预约</option>
+                  <option value="tool_timeout">首次查询超时：能否按规则恢复</option>
+                </select></label>
+              </div>
+              <p id="test-description" class="micro-note"></p>
+              <details class="compact-help"><summary>查看授权范围与说明</summary>
+              <div class="boundary">
+                <b>你授权的只有这三件事</b>
+                <p>查询资料 → 检查方案 → 生成候选草稿</p>
+                <small
+                  >预约、下单和支付均不在授权内；越权尝试会被沙盒拦截。</small
+                >
+              </div>
               </details>
+              <h3 class="control-stage">④ 最后核对，再开始</h3>
+              <div class="task-toolbar template-save">
+                <label class="field">保存为个人条件模板<input id="template-name" maxlength="60" placeholder="例如：两人周末聚餐" /></label>
+                <button id="save-template" class="secondary">保存当前条件</button>
+              </div>
+
+              <label class="check-control confirmation" id="confirmation-label"
+                ><input id="confirmed" type="checkbox" /><span
+                  class="checkmark"
+                  aria-hidden="true"
+                  >✓</span
+                ><span
+                  >已核对场景、数量、方式和预算。其他要求尚未进入试验；真实个人资料不会随本次试运行发送。</span
+                ></label
+              >
+              <p
+                id="confirmation-status"
+                class="confirmation-status"
+                aria-live="polite"
+              >
+                尚未确认 · 修改条件后需重新勾选
+              </p>
+              <button id="run-suite" class="primary run-button">开始一组对照彩排 ↗</button>
+              <button id="run" class="primary run-button" hidden>运行这次试托 ↗</button>
             </section>
           </div>
           <div class="column result-column" id="result-column" hidden>
@@ -327,6 +348,8 @@
                 <div id="finding"></div>
                 <div id="metrics" class="metrics"></div>
                 <pre id="contract-report" class="contract-report" hidden></pre>
+                <h3>本次检查清单</h3>
+                <div id="result-checklist" class="result-checklist"></div>
                 <h3>执行者的说明</h3>
                 <p id="answer" class="answer"></p>
                 <details class="evidence-details" open>
@@ -336,6 +359,16 @@
                 <details class="skill-events" open>
                   <summary>本次实际技能调用</summary>
                   <div id="run-skills"></div>
+                </details>
+                <details class="round-comparison compact-help">
+                  <summary>对比本会话不同轮次的结果</summary>
+                  <p class="micro-note">分别选择两份实际记录；对照组可选原始或变化结果。条件不同只能做描述对照，不能直接归因或排名。</p>
+                  <div class="task-toolbar">
+                    <label class="field">① 选择记录 A<select id="compare-a"></select></label>
+                    <label class="field">② 选择记录 B<select id="compare-b"></select></label>
+                    <button id="compare-rounds" class="secondary">③ 生成对照表</button>
+                  </div>
+                  <div id="round-comparison-output" aria-live="polite"></div>
                 </details>
 
               </div>
@@ -394,7 +427,7 @@
           <div id="skills-catalog"></div>
         </details>
         <footer class="site-footer">
-          <span>试托 v0.5.1 · 合成环境中的委托彩排</span
+          <span>试托 v0.6 · 合成环境中的委托彩排</span
           ><button id="restart-guide" class="text-button">
             查看操作指引 ↻
           </button>

@@ -42,6 +42,6 @@ jobs:
       - name: Run offline regression and MCP protocol checks
         run: python -m pytest -q
       - name: Verify trusted portal layout messages
-        run: node --test tests/portal_viewport.test.cjs
+        run: node --test tests/portal_viewport.test.cjs tests/workbench_tools.test.cjs
       - name: Reproduce sparse development evaluation
         run: python -m trialtrust.evaluate --output runtime/ci-evaluation.json

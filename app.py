@@ -23,7 +23,7 @@ def create_studio_app():
     html = (assets / "index.html").read_text(encoding="utf-8").split("<body>", 1)[1].split("</body>", 1)[0]
     css = (assets / "style.css").read_text(encoding="utf-8").replace(":root", ".trialtrust-root")
     css = re.sub(r"(?<![\w.-])body\s*\{", ".trialtrust-root {", css)
-    javascript = (assets / 'portal_viewport.js').read_text(encoding='utf-8') + '\n' + (assets / "app.js").read_text(encoding="utf-8")
+    javascript = (assets / 'portal_viewport.js').read_text(encoding='utf-8') + '\n' + (assets / 'workbench_tools.js').read_text(encoding='utf-8') + '\n' + (assets / "app.js").read_text(encoding="utf-8")
     javascript = javascript.replace("document.getElementById(id)", "root.querySelector('#' + id)")
     javascript = re.sub(r"document\s*\.\s*querySelectorAll\s*\(", "root.querySelectorAll(", javascript)
     with gr.Blocks(analytics_enabled=False, title="试托 · 委托前试运行") as studio:
