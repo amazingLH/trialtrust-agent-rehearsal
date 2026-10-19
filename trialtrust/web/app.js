@@ -1080,7 +1080,7 @@ document.addEventListener("keydown", (event) => {
   if (!document.body.classList.contains("sidebar-open")) return;
   if (event.key === "Escape") { event.preventDefault(); setSidebar(false); }
   if (event.key === "Tab" && sidebarIsNarrow()) {
-    const focusable = [...$("conversation-sidebar").querySelectorAll("button:not(:disabled), summary")].filter(el => el.getClientRects().length);
+    const focusable = [...$("conversation-sidebar").querySelectorAll("button:not(:disabled), summary")].filter(el => el.checkVisibility());
     const first = focusable[0], last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
