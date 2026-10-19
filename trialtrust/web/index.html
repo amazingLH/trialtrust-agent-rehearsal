@@ -9,8 +9,43 @@
     <script defer src="/assets/app.js"></script>
   </head>
   <body>
-    <div class="trialtrust-responsive">
+    <div class="trialtrust-responsive"><div class="app-shell">
+        <aside id="conversation-sidebar" class="conversation-panel" aria-label="会话管理">
+          <div class="sidebar-heading"><span class="eyebrow">会话工作台</span><button id="close-sidebar" class="icon-button" aria-label="关闭会话侧栏">×</button></div>
+          <div class="conversation-heading">
+            <div>
+              <p class="eyebrow">当前会话</p>
+              <h2 id="conversation-title">正在加载会话…</h2>
+              <p id="conversation-meta" class="muted"></p>
+            </div>
+            <button id="new-conversation" class="secondary">新建会话 +</button>
+            <button id="new-trial" class="text-button">
+              本会话再试一次 ↗
+            </button>
+          </div>
+          <div class="conversation-folders">
+            <details id="conversation-drawer" open>
+              <summary>
+                历史会话 <span id="conversation-count" class="count">0</span>
+              </summary>
+              <div id="conversations" class="conversation-list"></div>
+            </details>
+            <details id="run-drawer">
+              <summary>
+                本会话彩排记录 <span id="history-count" class="count">0</span>
+              </summary>
+              <div id="history"></div>
+            </details>
+          </div>
+          <p class="session-note">
+            同一浏览器身份下的会话可返回继续；匿名身份有效期为24小时。清除浏览器数据、更换浏览器或平台重置存储后，可能无法找回记录。
+          </p>
+        </aside>
+
+      <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="关闭会话侧栏" hidden></button>
+      <div class="app-content">
       <header class="topbar">
+        <button id="toggle-sidebar" class="quiet" aria-label="打开会话侧栏" aria-controls="conversation-sidebar" aria-expanded="false">☰ <span>会话</span></button>
         <a class="brand" href="#"
           ><span class="brand-mark">试</span
           ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
@@ -82,36 +117,6 @@
           >
             ×
           </button>
-        </section>
-        <section class="panel conversation-panel" aria-label="会话工作台">
-          <div class="conversation-heading">
-            <div>
-              <p class="eyebrow">当前会话</p>
-              <h2 id="conversation-title">正在加载会话…</h2>
-              <p id="conversation-meta" class="muted"></p>
-            </div>
-            <button id="new-conversation" class="secondary">新建会话 +</button>
-            <button id="new-trial" class="text-button">
-              本会话再试一次 ↗
-            </button>
-          </div>
-          <div class="conversation-folders">
-            <details id="conversation-drawer">
-              <summary>
-                历史会话 <span id="conversation-count" class="count">0</span>
-              </summary>
-              <div id="conversations" class="conversation-list"></div>
-            </details>
-            <details id="run-drawer">
-              <summary>
-                本会话彩排记录 <span id="history-count" class="count">0</span>
-              </summary>
-              <div id="history"></div>
-            </details>
-          </div>
-          <p class="session-note">
-            同一浏览器身份下的会话可返回继续；匿名身份有效期为24小时。清除浏览器数据、更换浏览器或平台重置存储后，可能无法找回记录。
-          </p>
         </section>
         <nav class="stepper" aria-label="使用顺序">
           <button data-step="1" aria-current="step"><b>01</b> 选事情</button
@@ -396,6 +401,8 @@
             4类12个示例场景；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
           </p>
         </footer>
+      </div>
+      </div>
       </div>
     </div>
     <div

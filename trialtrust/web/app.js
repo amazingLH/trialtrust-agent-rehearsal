@@ -575,6 +575,7 @@ async function switchConversation(id) {
     currentStep = latestRow?.status === "reviewed" ? 4 : 3;
   }
   updateCoach();
+  setSidebar(false);
 }
 async function newConversation(notify = true) {
   if (running) {
@@ -617,6 +618,7 @@ async function history() {
     b.addEventListener("click", async () => {
       invalidateConfirmation();
       await loadRun(row.id);
+      setSidebar(false);
       if (latestRow?.report) goStep(3);
     });
     $("history").append(b);
@@ -1051,6 +1053,42 @@ for (const [id, value] of [
     goStep(2);
     notice("已选择测试条件。请重新确认，再点击单次试运行。");
   });
+function sidebarIsNarrow() {
+  return document.querySelector(".trialtrust-responsive").getBoundingClientRect().width <= 1050;
+}
+function setSidebar(open) {
+  document.body.classList.toggle("sidebar-open", open);
+  $("sidebar-backdrop").hidden = !open;
+  $("toggle-sidebar").setAttribute("aria-expanded", String(open));
+  const mobile = sidebarIsNarrow();
+  $("conversation-sidebar").inert = mobile && !open;
+  document.querySelector(".app-content").inert = mobile && open;
+  if (mobile) $("conversation-sidebar").setAttribute("role", "dialog");
+  else $("conversation-sidebar").removeAttribute("role");
+  if (mobile && open) $("conversation-sidebar").setAttribute("aria-modal", "true");
+  else $("conversation-sidebar").removeAttribute("aria-modal");
+  if (mobile && open) $("close-sidebar").focus();
+  else if (mobile && $("conversation-sidebar").contains(document.activeElement)) $("toggle-sidebar").focus();
+}
+$("toggle-sidebar").addEventListener("click", () => setSidebar(true));
+$("close-sidebar").addEventListener("click", () => setSidebar(false));
+$("sidebar-backdrop").addEventListener("click", () => setSidebar(false));
+document.addEventListener("keydown", (event) => {
+  if (!document.body.classList.contains("sidebar-open")) return;
+  if (event.key === "Escape") { event.preventDefault(); setSidebar(false); }
+  if (event.key === "Tab" && sidebarIsNarrow()) {
+    const focusable = [...$("conversation-sidebar").querySelectorAll("button:not(:disabled), summary")].filter(el => el.getClientRects().length);
+    const first = focusable[0], last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  }
+});
+let sidebarWasNarrow = sidebarIsNarrow();
+new ResizeObserver(() => {
+  const narrow = sidebarIsNarrow();
+  if (narrow !== sidebarWasNarrow) { sidebarWasNarrow = narrow; setSidebar(false); }
+}).observe(document.querySelector(".trialtrust-responsive"));
+setSidebar(false);
 $("new-conversation").addEventListener("click", () =>
   newConversation().catch((e) => notice(e.message)),
 );

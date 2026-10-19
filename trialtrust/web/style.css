@@ -1546,3 +1546,44 @@ dialog::backdrop {
 .conversation-folders:has(> details[open]) {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* A persistent conversation rail; narrow screens use a keyboard-accessible drawer. */
+.app-shell { display: grid; grid-template-columns: 286px minmax(0, 1fr); }
+.app-content { min-width: 0; container-type: inline-size; }
+.conversation-panel {
+  position: sticky; top: 0; align-self: start; height: 100dvh;
+  display: flex; flex-direction: column; overflow-y: auto;
+  margin: 0; padding: 22px 16px; border-right: 1px solid var(--line);
+  background: #f3effa; scrollbar-width: thin;
+}
+.sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.sidebar-heading .eyebrow { margin: 0; font-size: 16px; }
+.conversation-heading { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.conversation-panel .conversation-heading > div { display: block; flex-basis: auto; }
+.conversation-heading h2 { margin: 4px 0; overflow-wrap: anywhere; }
+.conversation-panel .conversation-heading .muted { font-size: 13px; }
+#new-conversation { width: 100%; background: var(--purple); color: white; border-color: var(--purple); }
+#new-trial { text-align: left; }
+.conversation-folders, .conversation-folders:has(> details[open]) { display: flex; flex-direction: column; gap: 18px; margin-top: 24px; }
+.conversation-folders > details { width: 100%; background: transparent; border: 0; border-radius: 0; padding: 0; }
+.conversation-folders summary { padding: 5px 4px; color: var(--muted); }
+.conversation-list, #history { max-height: none; overflow: visible; }
+.conversation-item { flex-direction: column; gap: 2px; padding: 10px 12px; background: transparent; border-color: transparent; margin-top: 5px; }
+.conversation-item b { font-size: 15px; overflow-wrap: anywhere; }
+.conversation-item small { font-size: 12px; }
+.session-note { border-top: 1px solid var(--line); padding-top: 16px; margin-top: auto; font-size: 12px; }
+.conversation-folders { margin-bottom: 24px; }
+#toggle-sidebar, #close-sidebar { display: none; }
+.sidebar-backdrop { position: fixed; inset: 0; border: 0; border-radius: 0; background: #20163266; z-index: 59; padding: 0; }
+@container (max-width: 1050px) {
+  .app-shell { display: block; }
+  .conversation-panel { position: fixed; inset: 0 auto 0 0; width: min(310px, 86vw); height: 100dvh; z-index: 60; transform: translateX(-100%); visibility: hidden; transition: transform .2s ease, visibility .2s; box-shadow: 12px 0 40px #29233f22; }
+  body.sidebar-open .conversation-panel { transform: translateX(0); visibility: visible; }
+  #toggle-sidebar, #close-sidebar { display: inline-flex; align-items: center; justify-content: center; }
+  #toggle-sidebar { gap: 5px; padding: 8px 10px; }
+  .topbar { gap: 10px; }
+}
+@media (max-width: 560px) { #toggle-sidebar span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .conversation-panel { transition: none; } }
+
+body.sidebar-open { overflow: hidden; }
