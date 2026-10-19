@@ -1653,7 +1653,7 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
 
 /* Original CSS/SVG space companion; no external scripts or tracking assets. */
 [hidden] { display:none !important; }
-.auth-gate { min-height:100vh; position:relative; isolation:isolate; overflow:hidden; background:#111429; color:#f1efff; padding:32px clamp(20px,5vw,80px) 20px; }
+.auth-gate { width:100%; max-width:var(--portal-width,100%); container-type:inline-size; min-height:100vh; position:relative; isolation:isolate; overflow:hidden; background:#111429; color:#f1efff; padding:32px 20px 20px; }
 .auth-universe { position:absolute; inset:0; z-index:-1; background:radial-gradient(ellipse at 16% 28%,#43307199,transparent 55%),radial-gradient(ellipse at 87% 80%,#194e5866,transparent 45%); }
 .auth-nebula { position:absolute; width:65vw; height:65vw; left:-25vw; top:20%; border-radius:50%; border:1px solid #ab8bff22; box-shadow:0 0 0 70px #ab8bff06,0 0 0 150px #ab8bff04; }
 .auth-layout { width:min(1160px,100%); margin:0 auto; display:grid; grid-template-columns:1.2fr 1fr; align-items:center; gap:clamp(32px,6vw,90px); min-height:calc(100vh - 110px); }
@@ -1718,3 +1718,19 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
 @keyframes star-pulse {0%,100%{opacity:.25;}50%{opacity:1;}}
 @media(max-width:820px){.auth-gate{padding:24px 20px}.auth-layout{grid-template-columns:1fr;max-width:470px;gap:25px;min-height:0}.auth-brand{margin-bottom:20px}.auth-story h1{font-size:28px;margin:12px 0}.auth-story>p{font-size:13px}.auth-illustration{height:160px;position:absolute;width:160px;right:0;top:45px;opacity:.3;pointer-events:none}.floating-badge,.auth-principles{display:none}.auth-story{position:relative}.auth-story h1,.auth-chip,.auth-story>p{position:relative;z-index:1}.auth-card{padding:26px}.auth-bottom span{display:block;margin:5px 0 0}}
 @media(prefers-reduced-motion:reduce){.buddy-float,.buddy-eyes,.floating-badge,.star{animation:none!important}.auth-primary:hover{transform:none}}
+
+/* The hosted iframe may keep a desktop layout viewport on a phone. Use the
+   verified parent's bounded width, just like the main workbench. */
+:is(html[data-portal-phone="true"], .trialtrust-root[data-portal-phone="true"]) .auth-gate { padding:24px 20px; }
+@container (max-width:820px) {
+  .auth-layout { grid-template-columns:1fr; max-width:470px; gap:25px; min-height:0; }
+  .auth-brand { margin-bottom:20px; }
+  .auth-story { position:relative; }
+  .auth-story h1 { font-size:28px; margin:12px 0; }
+  .auth-story>p { font-size:13px; }
+  .auth-illustration { height:160px; position:absolute; width:160px; right:0; top:45px; opacity:.3; pointer-events:none; }
+  .floating-badge,.auth-principles { display:none; }
+  .auth-story h1,.auth-chip,.auth-story>p { position:relative; z-index:1; }
+  .auth-card { padding:26px; }
+  .auth-bottom span { display:block; margin:5px 0 0; }
+}
