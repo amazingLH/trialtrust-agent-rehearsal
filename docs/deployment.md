@@ -6,10 +6,10 @@
 
 | 环境 | 框架和入口 | 用途 |
 |---|---|---|
-| 魔搭创空间（当前目标） | Docker，Dockerfile | 从master构建项目镜像，启动trialtrust.managed；需验证构建器已切到master |
+| 魔搭创空间 | Gradio 6.2.0，app.py | 使用平台支持的原生启动器；app.py挂载同一FastAPI业务与账号接口 |
 | 自行运行容器 | Dockerfile → python -m trialtrust.managed | 独立部署；锁定Python镜像与依赖，非root用户，端口7860 |
 
-README的deployspec.entry_file与ms_deploy.json和控制台框架必须一致。当前魔搭配置采用Dockerfile；可选原生Gradio入口为app.py，需同时将SDK与版本改为gradio 6.2.0。不能把Docker框架参数交给只支持Gradio的studio-launcher。2026-10-20曾验证原生Gradio入口能启动，但缓存旧分支仍会加载旧源码，不能仅切框架就认定修复。故障详见发布记录；恢复发布需重新核对实际构建源码，配置保存不代表上线成功。
+README的deployspec.entry_file与ms_deploy.json和控制台框架必须一致。魔搭采用app.py；不能把Docker框架参数交给只支持Gradio的studio-launcher。2026-10-20的旧sbuild缓存故障详见发布记录；恢复发布需重新核对实际构建源码，配置保存不代表上线成功。
 
 ```bash
 docker build -t trialtrust:0.7 .
@@ -17,7 +17,7 @@ docker volume create trialtrust-data
 docker run --rm -p 7860:7860 -v trialtrust-data:/mnt/workspace/trialtrust trialtrust:0.7
 ```
 
-两种入口的业务鉴权都在FastAPI中默认开启。/api/workbench提供独立页面以避开Gradio前端资源命名冲突。托管入口设置文件创建权限，固定公共Origin和受信Host，保留跨站iframe会话头兼容。
+Gradio只是托管入口，业务鉴权仍在FastAPI中默认开启。/api/workbench提供独立页面以避开Gradio前端资源命名冲突。托管入口设置文件创建权限，固定公共Origin和受信Host，保留跨站iframe会话头兼容。
 
 ## 数据和密钥
 

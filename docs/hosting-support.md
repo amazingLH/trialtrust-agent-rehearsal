@@ -34,3 +34,7 @@ input branch not equal current branch: git fetch origin master
 处理后需核对构建日志、公开HTML/JS/CSS、未登录业务请求401、旧测试账号登录和同一storage_id/历史保留。只有这些通过，才恢复公开访问。
 
 本材料不含API密钥、密码、恢复码或用户数据，可以转交官方排障；尚未发送给任何第三方。[结构化记录](../evals/results/deployment-recovery-2026-10-20.json)。
+
+## 平台自动审核回退（补充）
+
+远端新增b039a50和f3949aa，自动回退docs/deployment.md和ms_deploy.json，原因文本为sensitive file content or message，未提供具体触发项。已保留并接受这两次回退，没有强推或重交被回退内容。按平台保留的Gradio 6.2.0配置，将入口重新对齐app.py。以上Docker日志是故障发生时的配置；当前保留原生Gradio方案待构建节点正确取到最新源码后再验收。请平台同时说明这两个文件的触发原因与允许的配置更新方式。

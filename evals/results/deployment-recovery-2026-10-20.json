@@ -14,10 +14,15 @@
   "state": {
     "status": "Stopped",
     "visibility": "private",
-    "sdk_type": "docker",
+    "sdk_type": "gradio",
     "hardware": "platform/2v-cpu-8g-mem"
   },
   "new_paid_resources": false,
   "model_calls_for_recovery": 0,
-  "runtime_data_deleted": false
+  "runtime_data_deleted": false,
+  "accepted_platform_reverts": [
+    "b039a50",
+    "f3949aa"
+  ],
+  "review_reason": "sensitive file content or message; no specific trigger disclosed"
 }
