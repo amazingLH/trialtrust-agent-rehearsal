@@ -1,3 +1,8 @@
+---
+deployspec:
+  entry_file: Dockerfile
+---
+
 # TrialTrust Agent Rehearsal · 试托
 
 **把生活事务交给 AI 之前，先用确认过的条件试运行，再看证据、费用和动作决定本次委托边界。**
