@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-10-20T02:25:18.120368+00:00",
+  "ui_code_commit": "1d429c1",
+  "studio_ui_commit": "3c4af6f",
+  "python_regressions_passed": 156,
+  "node_regressions_passed": 11,
+  "github_ci": {
+    "url": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39357299303",
+    "conclusion": "success"
+  },
+  "browser_context": "local HTTP app; isolated test account; not the user account",
+  "browser_observations": {
+    "desktop_quantity_fulfillment_budget_same_row": true,
+    "mobile_390px_controls_inside_viewport": true,
+    "unchecking_blocks_run": true,
+    "editing_requires_confirmation": true,
+    "paired_selection_updates_report_and_finding": true,
+    "one_comparison_audit_after_switch": true,
+    "single_run_hides_pair_and_audit": true,
+    "guide_matches_single_run": true,
+    "history_replay_operational": true,
+    "review_and_json_preview_operational": true,
+    "console_errors": 0
+  },
+  "model_requests_in_ui_checks": 0,
+  "hosted_ui_verified": false,
+  "deployment_blocker": "Managed builder fetches master but stays on an old sbuild branch and builds the Gradio launcher; launcher rejects STUDIO_SDK_TYPE=docker. No platform cleanup or success claimed."
+}
