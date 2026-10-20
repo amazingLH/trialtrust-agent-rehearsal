@@ -1,6 +1,7 @@
 """Gradio-native presentation for ModelScope's managed public frontend.
 
-The standalone FastAPI/Docker entry remains trialtrust.webapp:app.
+Account authentication remains in the shared FastAPI backend.
+The standalone Docker entry is python -m trialtrust.managed.
 """
 import os
 import re
