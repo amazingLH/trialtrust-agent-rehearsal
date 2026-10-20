@@ -1607,6 +1607,16 @@ button.danger-button:hover:not(:disabled) { background: #92293e; }
 .hero-copy { font-size: 15px; }
 .hero-tags { margin-top: 10px; }
 .hero-visual { height: 160px; transform: scale(.78); transform-origin: center; }
+.hero { display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:8px 20px; }
+.hero-intro { min-width:0; }
+.hero .hero-visual { width:220px; min-width:0; justify-self:end; }
+.hero .hero-copy { grid-column:1 / -1; margin:0; line-height:1.7; }
+@container(max-width:560px) { .hero { grid-template-columns:minmax(0,1fr); } }
+.help-example { margin:16px 0 8px; padding:12px 14px; border-radius:12px; background:#f5f1fc; color:#59496d; font-size:14px; line-height:1.8; }
+.help-questions { margin:8px 0 20px; border-top:1px solid var(--line); }
+.help-questions details { padding:10px 0; border-bottom:1px solid var(--line); }
+.help-questions summary { font-size:14px; }
+.help-questions p { margin:8px 0 2px; color:var(--muted); font-size:14px; line-height:1.8; }
 .workbench-overview { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 10px 16px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 12px; background: #ffffffa8; font-size: 14px; color: var(--muted); }
 .workbench-overview b { font-size: 19px; color: var(--purple); margin-right: 5px; }
 .coach { padding: 15px 18px; }
