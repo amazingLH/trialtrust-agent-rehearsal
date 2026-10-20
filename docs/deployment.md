@@ -20,6 +20,8 @@ DASHSCOPE_API_KEY仅供模型后端。ALIPAY_MODELSCOPE_KEY只供本地部署管
 
 ## 发布验收
 
+当前发布分工：开发与测试完成后同步GitHub和魔搭源码，由维护者在魔搭网页控制台手动点击“重新部署”并确认发布。代码同步不等于已经上线；自动化不再触发部署、启停或深度重启。发布后再核对公开HTML/JS/CSS与交互。下面保留已有接口与故障诊断记录供排查。
+
 正常提交和推送魔搭仓库后，先通过官方settings接口明确sdk_type=docker；SDK、镜像变更或restart_check返回需要深度重启时，使用官方管理页的深度重启流程（PUT /api/v1/studio/{owner}/{repo}/reset_restart），重建临时运行环境。普通deploy在本空间曾选到历史Gradio构建分支；明确SDK后单独deploy仍复现，不能当作已解决。应核对构建日志实际使用当前主分支、项目Dockerfile及Python入口。平台将新镜像描述标签自动回退，部署仓库保留该回退历史，没有重复提交标签。
 
 调用平台部署后，核对公开HTML及app.js/auth.js/style.css/workbench_tools.js与Git对象一致。Running或HTTP200不代表实际交互通过。
