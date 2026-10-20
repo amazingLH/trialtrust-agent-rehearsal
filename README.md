@@ -13,6 +13,8 @@ deployspec:
 
 ![试托账号入口：原创太空小托与登录注册](assets/v0.7/login-cloud.png)
 
+> 托管状态（2026-10-20）：平台构建缓存加载旧分支，在线体验暂时暂停；代码、教程和本地验证已更新。详见[排障记录](docs/hosting-support.md)，可按[复现指南](docs/reproducibility.md)本地运行。
+
 当前版本 **v0.7**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。首页截图来自公开魔搭门户；桌面、手机、API与各版真实模型证据分别记录。
 
 > v0.7新增独立登录注册入口与账号隔离，SQLite运行数据不进入镜像或Git。公开登录、账号隔离、云端深度重启数据保留及手机布局已验收；详情见[账号验证记录](docs/validation-accounts.md)，旧版本证据保留原版本标记。

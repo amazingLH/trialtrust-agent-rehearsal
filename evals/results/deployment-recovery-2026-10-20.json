@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-20T02:51:27.481750+00:00",
+  "studio": "L666H666Better/trialtrust",
+  "expected_master": "cb718e26ab290bf9cc2c6caa3369cf611d7fd272",
+  "last_observed_build_commit": "6cb447009de4e95665f7ec3e786e046ff65a220f",
+  "last_build_started": "2026-10-20 10:50:06 Asia/Shanghai",
+  "build_input_branch": "master",
+  "actual_cached_branch": "sbuild-369303-1792374764",
+  "observed_error": "studio-launcher config error: unsupported STUDIO_SDK_TYPE: docker",
+  "native_adapter_control": "Gradio can start, but cached code has no account gate and conversations INSERT expects 5 values while existing table has 6 columns; not published",
+  "native_account_regression": "default authentication and history across app restart passed",
+  "ci": "https://github.com/amazingLH/trialtrust-agent-rehearsal/actions/runs/39360857012",
+  "public_release_verified": false,
+  "state": {
+    "status": "Stopped",
+    "visibility": "private",
+    "sdk_type": "docker",
+    "hardware": "platform/2v-cpu-8g-mem"
+  },
+  "new_paid_resources": false,
+  "model_calls_for_recovery": 0,
+  "runtime_data_deleted": false
+}
