@@ -1,7 +1,4 @@
 FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
-LABEL org.opencontainers.image.title="TrialTrust Agent Rehearsal" \
-      org.opencontainers.image.version="0.7" \
-      org.opencontainers.image.source="https://github.com/amazingLH/trialtrust-agent-rehearsal"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web \

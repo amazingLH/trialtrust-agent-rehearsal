@@ -1,6 +1,6 @@
 ---
 deployspec:
-  entry_file: app.py
+  entry_file: Dockerfile
 ---
 
 # TrialTrust Agent Rehearsal · 试托
@@ -13,7 +13,7 @@ deployspec:
 
 ![试托账号入口：原创太空小托与登录注册](assets/v0.7/login-cloud.png)
 
-> 托管状态（2026-10-20）：平台构建缓存加载旧分支，在线体验暂时暂停；代码、教程和本地验证已更新。详见[排障记录](docs/hosting-support.md)，可按[复现指南](docs/reproducibility.md)本地运行。
+> 托管状态（2026-10-20）：已恢复公开运行。线上6份页面资源与GitHub源码一致，未登录业务接口返回401；原有测试账号、SQLite及历史会话保留，离线对照、审阅和导出已通过。详见[恢复记录](docs/hosting-support.md)。
 
 当前版本 **v0.7**：[四步使用教程](docs/usage.md) · [五项可信 Skills](docs/skills.md)。首页截图来自公开魔搭门户；桌面、手机、API与各版真实模型证据分别记录。
 

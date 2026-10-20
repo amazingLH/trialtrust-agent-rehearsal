@@ -6,10 +6,10 @@
 
 | 环境 | 框架和入口 | 用途 |
 |---|---|---|
-| 魔搭创空间 | Gradio 6.2.0，app.py | 使用平台支持的原生启动器；app.py挂载同一FastAPI业务与账号接口 |
+| 魔搭创空间（当前） | Docker，Dockerfile | 从master构建项目镜像，启动trialtrust.managed，监听7860 |
 | 自行运行容器 | Dockerfile → python -m trialtrust.managed | 独立部署；锁定Python镜像与依赖，非root用户，端口7860 |
 
-README的deployspec.entry_file与ms_deploy.json和控制台框架必须一致。魔搭采用app.py；不能把Docker框架参数交给只支持Gradio的studio-launcher。2026-10-20的旧sbuild缓存故障详见发布记录；恢复发布需重新核对实际构建源码，配置保存不代表上线成功。
+README的deployspec.entry_file与ms_deploy.json和控制台框架必须一致。当前魔搭采用Dockerfile；app.py保留为可选Gradio入口。不能把Docker框架参数交给只支持Gradio的studio-launcher。2026-10-20的旧sbuild缓存故障详见发布记录；恢复发布需重新核对实际构建源码，配置保存不代表上线成功。
 
 ```bash
 docker build -t trialtrust:0.7 .
@@ -17,7 +17,7 @@ docker volume create trialtrust-data
 docker run --rm -p 7860:7860 -v trialtrust-data:/mnt/workspace/trialtrust trialtrust:0.7
 ```
 
-Gradio只是托管入口，业务鉴权仍在FastAPI中默认开启。/api/workbench提供独立页面以避开Gradio前端资源命名冲突。托管入口设置文件创建权限，固定公共Origin和受信Host，保留跨站iframe会话头兼容。
+Docker和可选Gradio入口共用FastAPI业务，账号鉴权默认开启。/api/workbench提供独立页面以避开Gradio前端资源命名冲突。托管入口设置文件创建权限，固定公共Origin和受信Host，保留跨站iframe会话头兼容。
 
 ## 数据和密钥
 
@@ -31,6 +31,16 @@ DASHSCOPE_API_KEY仅供模型后端；ALIPAY_MODELSCOPE_KEY仅用于本地部署
 
 发布后必须验证公开HTML/JS/CSS与Git对象匹配、未登录拒绝业务接口、测试账号登录、历史保留、一次离线完整流程及真实浏览器手机布局。必要时在私有验收期间验证账号边界，通过后恢复公开访问。不能用所有者凭据访问结果冒充匿名公开验证。
 
-原生Gradio用tools/deployment_smoke.py（不加--managed-docker），直接Docker入口才加该参数。--account-state必须指向runtime内的私有测试账号文件，以比较storage_id和旧会话；--live才调用真实模型。本轮修复无需付费模型调用。
+当前Docker入口验收使用tools/deployment_smoke.py --managed-docker；可选原生Gradio入口不加该参数。--account-state必须指向runtime内的私有测试账号文件，以比较storage_id和旧会话；--live才调用真实模型。本轮修复无需付费模型调用。
 
 当前与历史证据分别见[账号验证](validation-accounts.md)、[紧凑流程验证](validation-workflow-ui.md)和[发布记录](hosting-review.md)。
+
+## 版本核验
+
+2026-10-20已恢复公开运行，恢复前的旧工作区故障及当前验收见[恢复记录](hosting-support.md)。使用官方OpenAPI：POST https://modelscope.cn/openapi/v1/studios/L666H666Better/trialtrust/deploy，凭据仅从本机环境读取。构建成功后需等待启动完成，再核对页面；不要在构建成功时立即重复重建。
+
+```bash
+python tools/check_hosted_source.py --revision HEAD --output runtime/public-source.json
+```
+
+该只读工具对比Git对象中的6份HTML/JS/CSS并检查未登录401；版本不符时退出码非零。公开检查不发送所有者凭据；--private-owner仅供私有检查，不代表已公开。源码一致后再运行完整账号和离线流程验收，测试账号状态始终保存在被Git忽略的runtime内。

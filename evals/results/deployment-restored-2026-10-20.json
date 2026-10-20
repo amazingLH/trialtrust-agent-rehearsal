@@ -1,0 +1,98 @@
+{
+  "checked_at": "2026-10-20T07:13:25.066760+00:00",
+  "studio": "L666H666Better/trialtrust",
+  "status": "Running",
+  "visibility": "public",
+  "sdk_type": "docker",
+  "hardware": "platform/2v-cpu-8g-mem",
+  "application_source_github_revision": "1e4c0c0675fee8ae9f93da7ce52d7b0eb272b837",
+  "application_source_modelscope_revision": "0c50004fa507e12d30d7e7f7cafb6354fa5ac5aa",
+  "build_started_at": "2026-10-20 15:06:53 Asia/Shanghai",
+  "build_finished_at": "2026-10-20 15:07:07 Asia/Shanghai",
+  "build_input_branch": "master",
+  "build_worktree_branch": "master",
+  "public_source_verification": {
+    "checked_at": "2026-10-20T07:11:26.010627+00:00",
+    "expected_revision": "1e4c0c0675fee8ae9f93da7ce52d7b0eb272b837",
+    "host": "https://l666h666better-trialtrust.ms.show",
+    "access_context": "public_guest",
+    "owner_credentials_used": false,
+    "assets": {
+      "index.html": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "06ae90eb4de43ecd4de8a27914bc5b4a04cca24efe5ef5d2d7e1e2017a92c31e",
+        "actual_sha256": "06ae90eb4de43ecd4de8a27914bc5b4a04cca24efe5ef5d2d7e1e2017a92c31e"
+      },
+      "app.js": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "207965cd976ee093a2874a208aa1bb62dead1321e46d1e2384f00e85920d2243",
+        "actual_sha256": "207965cd976ee093a2874a208aa1bb62dead1321e46d1e2384f00e85920d2243"
+      },
+      "style.css": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "7f100483861053f9f661dd424d5b07902fcd7443aff06a3551d3c002a0217ad0",
+        "actual_sha256": "7f100483861053f9f661dd424d5b07902fcd7443aff06a3551d3c002a0217ad0"
+      },
+      "auth.js": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "adcfed47d259a872336397a169f06212a91e6343e8fb978e77ea1ff25d651107",
+        "actual_sha256": "adcfed47d259a872336397a169f06212a91e6343e8fb978e77ea1ff25d651107"
+      },
+      "workbench_tools.js": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "f85caaabdcb852238ac466d9ba9738cdb4aaafc10803cf1f5c862832cb504187",
+        "actual_sha256": "f85caaabdcb852238ac466d9ba9738cdb4aaafc10803cf1f5c862832cb504187"
+      },
+      "portal_viewport.js": {
+        "http": 200,
+        "matches_git": true,
+        "expected_sha256": "1047b48283e26e8ab554045e153211dd3680aa55ccda0c5a8d7467d5e7a4aecc",
+        "actual_sha256": "1047b48283e26e8ab554045e153211dd3680aa55ccda0c5a8d7467d5e7a4aecc"
+      }
+    },
+    "account_gate_present": true,
+    "unauthenticated_conversations_http": 401,
+    "source_and_auth_gate_passed": true,
+    "public_source_verified": true,
+    "full_functional_acceptance": false,
+    "writes_or_model_calls": 0
+  },
+  "public_offline_smoke": {
+    "owner_gateway": false,
+    "live": false,
+    "human_reviewed": true,
+    "review_decision_source": "automated_smoke_not_human_user",
+    "real_world_side_effects": 0,
+    "checks": [
+      "12_catalog_scenarios",
+      "5_trusted_skills",
+      "unreviewed_analysis_blocked",
+      "unsupported_request_not_mapped",
+      "unchecked_before_and_after_run_blocked",
+      "paired_run_review_export",
+      "owner_scoped_conversations",
+      "new_conversation_preserves_history",
+      "rename_and_delete_own_spare_conversation"
+    ]
+  },
+  "retention": {
+    "same_storage_id_as_before_recovery": true,
+    "previous_conversation_retained": true,
+    "startup_backup_exists": true
+  },
+  "local_tests": {
+    "python_passed": 160,
+    "node_passed": 11,
+    "evidence_integrity": "passed"
+  },
+  "paid_model_calls_for_recovery": 0,
+  "runtime_database_deleted": false,
+  "new_studio_created": false,
+  "platform_internal_cache_bug_fixed": false,
+  "browser_ui_retested_this_recovery": false
+}
