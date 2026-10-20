@@ -189,7 +189,7 @@
                 </div>
               </div>
               <div class="demand-paths" role="group" aria-label="选择需求填写方式">
-                <button id="manual-demand" class="secondary" aria-pressed="true" aria-controls="manual-demand-fields">自己选择需求</button>
+                <button id="manual-demand" class="secondary" aria-pressed="true" aria-controls="manual-demand-fields manual-domain-field">自己选择需求</button>
                 <button id="template-demand" class="secondary" aria-pressed="false" aria-controls="template-demand-fields">使用条件模板</button>
               </div>
               <p class="micro-note">两种方式选一种即可。模板会同时填好需求和第二步条件，无需重复选择。</p>
@@ -206,37 +206,40 @@
                 class="categories"
                 aria-label="需求类别"
               ></div>
-              <label class="field"
-                >具体想做什么<select id="domain">
+              </div>
+              <div class="demand-selection-row">
+              <label id="manual-domain-field" class="field demand-domain-field"
+                ><span>具体想做什么</span><select id="domain" aria-describedby="scenario-note">
                   <option value="">请先选择一个类别</option>
                 </select></label
               >
-              </div>
               <p id="selected-demand" class="selection-summary" aria-live="polite">当前需求：尚未选择</p>
-              <p id="scenario-description" class="muted">
-                选择后会显示这个示例能核验的条件。
-              </p>
-              <p id="data-notice" class="data-note">
-                示例价格、服务和规则均为合成资料，非实时商家信息。
+              </div>
+              <p id="scenario-note" class="scenario-note">
+                <span id="scenario-description">选好后，这里会说明能帮你检查什么。</span>
+                <span id="data-notice">价格和规则都是演示用的，不代表真实商家信息。</span>
               </p>
               <details class="custom-request">
                 <summary>没有合适选项？写下自己的需求 ↗</summary>
-                <p class="muted">
-                  先在本机替换明显个人资料，再由你检查。未支持的需求会变成待补充清单，不会被强行当成某个示例。
+                <p id="custom-request-help" class="muted">
+                  先在浏览器里隐藏手机号、邮箱和证件号，不上传原文；姓名、地址请自己删除。检查后再分析，暂不支持的需求会提示你补充信息，不会直接套用示例。
                 </p>
-                <label class="field"
-                  >你的需求<textarea
+                <label class="field custom-request-label" for="private-task">你的需求</label>
+                <div class="custom-request-row">
+                  <textarea
                     id="private-task"
-                    rows="3"
+                    rows="2"
                     maxlength="1200"
+                    aria-describedby="custom-request-help"
                     placeholder="例如：2人到店吃自助餐，总预算200元。请勿填真实姓名、电话、地址。"
-                  ></textarea></label
-                ><button id="prepare-stand-in" class="secondary">
-                  ① 本地生成替身文本
+                  ></textarea>
+                <button id="prepare-stand-in" class="secondary">
+                  ① 隐去手机号等信息
                 </button>
+                </div>
                 <div id="stand-in-stage" hidden>
                   <label class="field"
-                    >检查并编辑替身文本<textarea
+                    >检查处理后的文字<textarea
                       id="stand-in"
                       rows="3"
                       maxlength="1200"
@@ -249,7 +252,7 @@
                       aria-hidden="true"
                       >✓</span
                     ><span
-                      >已检查并去除个人资料，同意发送这段替身文本进行分析。</span
+                      >我已检查，确认这段文字不含个人信息，同意发送并分析。</span
                     ></label
                   ><label class="check-control"
                     ><input id="analyze-live" type="checkbox" /><span

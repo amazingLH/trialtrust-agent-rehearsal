@@ -225,7 +225,7 @@ function domainFields(reset = false) {
     opt.value = "";
     $("fulfillment").append(opt);
     $("scenario-description").textContent =
-      "选择后会显示这个示例能核验的条件。";
+      "选好后，这里会说明能帮你检查什么。";
     $("quantity-label").textContent = "数量";
     $("fee-note").textContent = "示例费用会显示在这里。";
     return;
@@ -239,7 +239,7 @@ function domainFields(reset = false) {
   if (reset) $("quantity").value = 2;
   $("quantity-label").textContent = `数量（${s.unit}，1—8）`;
   $("scenario-description").textContent =
-    s.description + "。地点、日期和特殊需求未纳入当前条件。";
+    s.description + "；地点、日期等要求还需你自己确认。";
   feeNote();
   updateCoach();
 }
@@ -330,9 +330,9 @@ function prepareStandIn() {
   }
   const counts = { phone: 0, id: 0, email: 0 };
   const rules = [
-    ["id", /(?<!\d)\d{17}[0-9Xx](?!\d)/g, "[证件替身]"],
-    ["phone", /(?<!\d)1[3-9]\d{9}(?!\d)/g, "[手机号替身]"],
-    ["email", /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[邮箱替身]"],
+    ["id", /(?<!\d)\d{17}[0-9Xx](?!\d)/g, "[已隐藏证件号]"],
+    ["phone", /(?<!\d)1[3-9]\d{9}(?!\d)/g, "[已隐藏手机号]"],
+    ["email", /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[已隐藏邮箱]"],
   ];
   for (const [kind, pattern, replacement] of rules)
     value = value.replace(pattern, () => {
@@ -345,7 +345,7 @@ function prepareStandIn() {
   $("compile-result").replaceChildren();
   analysisResult = null;
   $("redaction-note").textContent =
-    `已在本机替换手机号${counts.phone}处、证件${counts.id}处、邮箱${counts.email}处。姓名、地址和间接身份描述仍需手动删除；这不是完全匿名化。`;
+    `已在浏览器中隐藏手机号${counts.phone}处、证件号${counts.id}处、邮箱${counts.email}处。仍可能漏掉个人信息，请自行删除姓名、地址等内容。`;
 }
 function downloadJSON(value, name) {
   const url = URL.createObjectURL(
@@ -362,7 +362,7 @@ function downloadJSON(value, name) {
 async function compileStandIn() {
   if (running || analyzing) return;
   if (!$("text-reviewed").checked) {
-    notice("请先检查替身文本，并勾选同意发送进行分析。", "text-reviewed");
+    notice("请先检查处理后的文字，并勾选同意发送进行分析。", "text-reviewed");
     return;
   }
   notice();
@@ -586,6 +586,7 @@ function setDemandPath(path) {
   const template = path === "template";
   $("template-demand-fields").hidden = !template;
   $("manual-demand-fields").hidden = template;
+  $("manual-domain-field").hidden = template;
   $("manual-demand").setAttribute("aria-pressed", String(!template));
   $("template-demand").setAttribute("aria-pressed", String(template));
 }
