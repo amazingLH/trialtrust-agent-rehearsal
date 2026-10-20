@@ -1,6 +1,6 @@
 ---
 deployspec:
-  entry_file: Dockerfile
+  entry_file: app.py
 ---
 
 # TrialTrust Agent Rehearsal · 试托

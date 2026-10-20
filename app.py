@@ -8,6 +8,7 @@ from pathlib import Path
 
 os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 if os.name != "nt":
+    os.umask(0o077)
     os.environ.setdefault("TRIALTRUST_RUNTIME", "/mnt/workspace/trialtrust/web")
 
 

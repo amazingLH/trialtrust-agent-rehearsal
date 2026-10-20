@@ -52,3 +52,31 @@ def test_managed_gradio_config_and_core_session_remain_connected(tmp_path, monke
         assert client.get('/api/conversations', headers=capability).json()[0]['id'] == conversation.json()['id']
         assert client.get('/api/trials', params={'conversation_id': conversation.json()['id']}, headers=capability).json() == []
         assert client.post("/api/session", json={}, headers={**headers, "Origin": "https://other.invalid"}).status_code == 403
+
+
+@pytest.mark.skipif(importlib.util.find_spec("gradio") is None, reason="Studio optional dependency")
+def test_native_gradio_defaults_to_accounts_and_retains_account_history(tmp_path, monkeypatch):
+    monkeypatch.setenv("TRIALTRUST_RUNTIME", str(tmp_path / "web"))
+    monkeypatch.setenv("TRIALTRUST_ENABLE_LIVE", "0")
+    monkeypatch.setenv("TRIALTRUST_PUBLIC_ORIGIN", "https://trial.example")
+    monkeypatch.setenv("TRIALTRUST_ALLOWED_HOSTS", "testserver,trial.example")
+    from app import create_studio_app
+    headers = {"X-TrialTrust-Client": "web", "Origin": "https://trial.example"}
+    with TestClient(create_studio_app(), base_url="https://trial.example") as client:
+        assert client.get("/api/conversations").status_code == 401
+        assert client.post("/api/session", json={}, headers=headers).json()["auth_required"]
+        assert client.get("/api/workbench").status_code == 200
+        assert client.post("/api/auth/bootstrap", json={}, headers=headers).status_code == 200
+        registered = client.post("/api/auth/register", json={"username":"native_studio_test", "password":"Native-test-only-92751", "confirm_password":"Native-test-only-92751"}, headers=headers)
+        assert registered.status_code == 201
+        conversation = client.post("/api/conversations", json={}, headers=headers)
+        assert conversation.status_code == 201
+        conversation_id = conversation.json()["id"]
+        storage_id = client.get("/api/account/storage").json()["storage_id"]
+        assert client.post("/api/auth/logout",json={},headers=headers).status_code == 200
+        assert client.get("/api/conversations").status_code == 401
+    with TestClient(create_studio_app(), base_url="https://trial.example") as client:
+        assert client.get("/api/conversations").status_code == 401
+        assert client.post("/api/auth/login", json={"username":"native_studio_test", "password":"Native-test-only-92751"}, headers=headers).status_code == 200
+        assert client.get("/api/account/storage").json()["storage_id"] == storage_id
+        assert conversation_id in {row["id"] for row in client.get("/api/conversations").json()}

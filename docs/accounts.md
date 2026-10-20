@@ -28,7 +28,7 @@
 
 ## SQLite怎样在魔搭运行
 
-当前Docker使用TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web。账号、哈希、登录会话、浏览器绑定及历史元数据在web.sqlite；各轮报告/检查点在同一运行目录下，费用账本在上层usage.sqlite。Dockerfile只复制源码与依赖，不复制运行目录；目录不是镜像的一部分。
+魔搭原生托管与独立Docker入口都使用TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web。账号、哈希、登录会话、浏览器绑定及历史元数据在web.sqlite；各轮报告/检查点在同一运行目录下，费用账本在上层usage.sqlite。Dockerfile只复制源码与依赖，不复制运行目录；目录不是镜像的一部分。
 
 魔搭提供的/mnt/workspace用于持久化。仍需对具体空间验证重新部署后的账号、会话与数据标识，不能仅凭路径保证。最新实测见[账号验证](validation-accounts.md)。容器的进程标识应变化，数据库存储标识及历史应保持。
 

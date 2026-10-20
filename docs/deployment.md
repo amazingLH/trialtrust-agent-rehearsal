@@ -1,8 +1,15 @@
-# Docker部署与SQLite持久化
+# 魔搭托管、Docker与SQLite持久化
 
-当前唯一维护入口：[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)，名称“试托·Agent委托前试运行工作台”。GitHub记录开发与CI；魔搭独立Git仓库负责构建发布，推送GitHub不会自动更新魔搭。
+唯一维护空间：[trialtrust](https://www.modelscope.cn/studios/L666H666Better/trialtrust)。GitHub记录开发与CI，魔搭仓库负责源码发布，推送GitHub不会自动更新魔搭。
 
-## 构建与启动
+## 两种启动方式
+
+| 环境 | 框架和入口 | 用途 |
+|---|---|---|
+| 魔搭创空间 | Gradio 6.2.0，app.py | 使用平台支持的原生启动器；app.py挂载同一FastAPI业务与账号接口 |
+| 自行运行容器 | Dockerfile → python -m trialtrust.managed | 独立部署；锁定Python镜像与依赖，非root用户，端口7860 |
+
+README的deployspec.entry_file与ms_deploy.json和控制台框架必须一致。魔搭采用app.py；不能把Docker框架参数交给只支持Gradio的studio-launcher。2026-10-20的旧sbuild缓存故障详见发布记录；恢复发布需重新核对实际构建源码，配置保存不代表上线成功。
 
 ```bash
 docker build -t trialtrust:0.7 .
@@ -10,22 +17,20 @@ docker volume create trialtrust-data
 docker run --rm -p 7860:7860 -v trialtrust-data:/mnt/workspace/trialtrust trialtrust:0.7
 ```
 
-Dockerfile锁定Python镜像与依赖，使用非root用户，监听0.0.0.0:7860。生产入口trialtrust.managed默认账号鉴权；TRIALTRUST_MANAGED_STUDIO=1启用魔搭iframe适配，公共Origin及允许Host由托管Secret配置。ms_deploy.json记录Docker与免费CPU资源，不创建第二个空间。
+Gradio只是托管入口，业务鉴权仍在FastAPI中默认开启。/api/workbench提供独立页面以避开Gradio前端资源命名冲突。托管入口设置文件创建权限，固定公共Origin和受信Host，保留跨站iframe会话头兼容。
 
 ## 数据和密钥
 
-TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web：web.sqlite保存账号与历史，子目录保存报告和LangGraph检查点，上层usage.sqlite保存用量。SQLite数据写入平台持久目录，不写入镜像或Git。启动前生成最近3日的一致性私有备份；与原库同盘，不保证平台删除或存储损坏后的恢复。账号与具体持久化边界见[账号文档](accounts.md)。
+两种入口均使用TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web。web.sqlite保存账号和历史，子目录保存报告及检查点，上层usage.sqlite保存用量；这些文件不写入镜像或Git。启动前生成最近3日的一致性私有备份，与原库同盘。删除、转移创空间前另行备份，不保证平台删除或存储损坏后的恢复。
 
-DASHSCOPE_API_KEY仅供模型后端。ALIPAY_MODELSCOPE_KEY只供本地部署管理，不进入前端或应用公开配置。默认费用估值上限仍为3元/20万tokens，未提高硬件或购买服务。
+DASHSCOPE_API_KEY仅供模型后端；ALIPAY_MODELSCOPE_KEY仅用于本地部署管理，不进入前端、源码和日志。资源仍为免费CPU，默认3元/20万tokens保守闸门不变。
 
-## 发布验收
+## 发布与验收
 
-当前发布分工：开发与测试完成后同步GitHub和魔搭源码，由维护者在魔搭网页控制台手动点击“重新部署”并确认发布。代码同步不等于已经上线；自动化不再触发部署、启停或深度重启。发布后再核对公开HTML/JS/CSS与交互。下面保留已有接口与故障诊断记录供排查。
+开发流程负责修改、测试、源码同步、部署和实际验收；维护者无需手动反复尝试发布。GitHub CI只测试，不直接自动部署。正常推送魔搭master后确认SDK与入口一致，再调用平台发布流程，不强推、不创建备用空间、不删除运行数据。
 
-正常提交和推送魔搭仓库后，先通过官方settings接口明确sdk_type=docker；SDK、镜像变更或restart_check返回需要深度重启时，使用官方管理页的深度重启流程（PUT /api/v1/studio/{owner}/{repo}/reset_restart），重建临时运行环境。普通deploy在本空间曾选到历史Gradio构建分支；明确SDK后单独deploy仍复现，不能当作已解决。应核对构建日志实际使用当前主分支、项目Dockerfile及Python入口。平台将新镜像描述标签自动回退，部署仓库保留该回退历史，没有重复提交标签。
+发布后必须验证公开HTML/JS/CSS与Git对象匹配、未登录拒绝业务接口、测试账号登录、历史保留、一次离线完整流程及真实浏览器手机布局。必要时在私有验收期间验证账号边界，通过后恢复公开访问。不能用所有者凭据访问结果冒充匿名公开验证。
 
-调用平台部署后，核对公开HTML及app.js/auth.js/style.css/workbench_tools.js与Git对象一致。Running或HTTP200不代表实际交互通过。
+原生Gradio用tools/deployment_smoke.py（不加--managed-docker），直接Docker入口才加该参数。--account-state必须指向runtime内的私有测试账号文件，以比较storage_id和旧会话；--live才调用真实模型。本轮修复无需付费模型调用。
 
-使用tools/deployment_smoke.py --managed-docker完成公开门户上下文下的注册登录及完整离线流程；--account-state必须指向runtime中的私有测试账号文件，用于重新部署后验证同一账号与历史。不得把该文件当作公开证据上传。--live才调用模型，本轮不需要。
-
-应实际验证：未登录拒绝API、注册/登录/退出、恢复码、账号隔离、重命名/删除、刷新、手机布局，以及重新部署后存储标识和历史保留。当前记录见[账号验证](validation-accounts.md)；此前故障与回退记录保留在[历史发布记录](hosting-review.md)。GitHub CI只测试，不自动部署。
+当前与历史证据分别见[账号验证](validation-accounts.md)、[紧凑流程验证](validation-workflow-ui.md)和[发布记录](hosting-review.md)。

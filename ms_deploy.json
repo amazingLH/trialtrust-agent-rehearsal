@@ -1,6 +1,7 @@
 {
   "$schema": "https://modelscope.cn/api/v1/studios/deploy_schema.json",
-  "sdk_type": "docker",
+  "sdk_type": "gradio",
   "resource_configuration": "platform/2v-cpu-8g-mem",
-  "port": 7860
+  "port": 7860,
+  "sdk_version": "6.2.0"
 }
