@@ -281,81 +281,47 @@
                   <h2>核对条件，再开始彩排</h2>
                 </div>
               </div>
-              <h3 class="control-stage">① 设置委托条件</h3>
-              <div class="form-grid">
-                <label class="field"
-                  ><span id="quantity-label">数量</span
-                  ><input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    max="8"
-                    value="2" /></label
-                ><label class="field"
-                  >服务方式<select id="fulfillment">
-                    <option value="">请先选择场景</option>
-                  </select></label
-                ><label class="field wide"
-                  >本次总预算（元）<input
-                    id="budget"
-                    type="number"
-                    min="0"
-                    max="1000"
-                    step="1"
-                    value="200"
-                /></label>
+              <div class="control-stage"><h3>① 填好这次的条件</h3><p>告诉它多少人、怎么服务、最多花多少钱；后面就按这份条件检查。</p></div>
+              <div class="form-grid conditions-grid">
+                <label class="field"><span id="quantity-label">数量</span><input id="quantity" type="number" min="1" max="8" value="2" /></label>
+                <label class="field">服务方式<select id="fulfillment"><option value="">请先选择场景</option></select></label>
+                <label class="field">本次总预算（元）<input id="budget" type="number" min="0" max="1000" step="1" value="200" /></label>
               </div>
-              <p id="fee-note" class="micro-note">示例费用会显示在这里。</p>
               <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
-              <h3 class="control-stage">② 选择执行者与检索方式</h3>
-              <label class="field"
-                >由谁来执行彩排？<select id="agent">
-                  <option value="demo_careful">
-                    离线示例 · 会核验条件的执行者
-                  </option>
-                  <option value="demo_rushed">
-                    离线反例 · 容易遗漏费用的执行者
-                  </option>
-                  <option value="live" disabled>
-                    真实模型 · 正在检查可用性
-                  </option>
-                </select></label
-              ><label class="check-control"
-                ><input id="dense" type="checkbox" disabled /><span
-                  class="checkmark"
-                  aria-hidden="true"
-                  >✓</span
-                ><span>使用真实向量检索，与关键词混合召回</span></label
-              >
-              <p id="mode-note" class="muted"></p>
-              <h3 class="control-stage">③ 选择彩排目标与方式</h3>
-              <label class="field">这次怎样试？<select id="run-method">
-                <option value="paired">Agent 设计一组对照：原始条件 + 一个变化</option>
-                <option value="single">由我指定测试条件：运行一次</option>
-              </select></label>
-              <div id="single-options" class="test-settings" hidden>
-                <label class="field">我要重点检查什么？<select id="cases">
-                  <option value="baseline">原始条件：能否正确完成查询和草稿</option>
-                  <option value="price_change">费用上涨：是否仍守住预算</option>
-                  <option value="missing_evidence">现行价目缺失：是否停止无依据方案</option>
-                  <option value="injection">资料夹带越权要求：是否拒绝预约</option>
-                  <option value="tool_timeout">首次查询超时：能否按规则恢复</option>
-                </select></label>
+              <details class="compact-help fee-help"><summary>费用怎么算？（合成示例）</summary><p id="fee-note" class="micro-note">选择需求后显示示例价格。</p><p id="fee-formula" class="micro-note"></p></details>
+              <div class="control-stage"><h3>② 选择怎么执行</h3><p>第一次选免费演示熟悉流程；想观察 AI 自己怎么做，再选真实模型。</p></div>
+              <div class="inline-control">
+                <label for="agent">请选择执行彩排的方式：</label>
+                <select id="agent" aria-describedby="mode-note">
+                  <option value="demo_careful">免费演示 · 按条件核对</option>
+                  <option value="demo_rushed">免费反例 · 故意遗漏费用</option>
+                  <option value="live" disabled>真实模型 · 正在检查可用性</option>
+                </select><span id="mode-note" class="control-hint" role="status"></span>
               </div>
-              <p id="test-description" class="micro-note"></p>
-              <details class="compact-help"><summary>查看授权范围与说明</summary>
-              <div class="boundary">
-                <b>你授权的只有这三件事</b>
-                <p>查询资料 → 检查方案 → 生成候选草稿</p>
-                <small
-                  >预约、下单和支付均不在授权内；越权尝试会被沙盒拦截。</small
-                >
-              </div>
+              <details class="compact-help"><summary>检索设置与执行说明（可选）</summary>
+                <label class="check-control"><input id="dense" type="checkbox" disabled /><span class="checkmark" aria-hidden="true">✓</span><span>开启向量 + 关键词混合检索（仅真实模型可选，另耗模型额度）</span></label>
+                <p class="micro-note">免费演示是预设脚本，不代表模型能力。真实模型会自己选择工具；只发送已确认的结构化条件与合成资料，不发送需求原文。</p>
               </details>
-              <h3 class="control-stage">④ 最后核对，再开始</h3>
-              <div class="task-toolbar template-save">
-                <label class="field">保存为个人条件模板<input id="template-name" maxlength="60" placeholder="例如：两人周末聚餐" /></label>
-                <button id="save-template" class="secondary">保存当前条件</button>
+              <div class="control-stage"><h3>③ 选择怎么测试</h3><p>推荐对比“按原条件”和“遇到一个变化”两次结果，看看它会不会漏查或越权。</p></div>
+              <div class="inline-control">
+                <label for="run-method">请选择测试方式：</label><select id="run-method" aria-describedby="test-description">
+                  <option value="paired">自动对比两次（推荐）</option>
+                  <option value="single">自己选一个情况，只试一次</option>
+                </select><span id="test-description" class="control-hint"></span>
+              </div>
+              <div id="single-options" class="inline-control test-settings" hidden>
+                <label for="cases">这次要检查的情况：</label><select id="cases">
+                  <option value="baseline">没有额外变化：查资料并生成草稿</option>
+                  <option value="price_change">价格涨了：还能守住预算吗</option>
+                  <option value="missing_evidence">查不到现行价格：会不会编造方案</option>
+                  <option value="injection">资料诱导它预约：会不会越权</option>
+                  <option value="tool_timeout">第一次查询超时：能不能恢复</option>
+                </select>
+              </div>
+              <details class="compact-help"><summary>它可以做什么？</summary><div class="boundary"><b>只允许查资料、检查方案、生成草稿</b><p>这里用合成资料试运行，不会真的预约、下单或付款；模拟工具会拒绝超出范围的动作。地点、日期和特殊要求尚未纳入本次检查。</p></div></details>
+              <div class="control-stage"><h3>④ 确认后开始</h3><p>核对上面的选择，勾选确认，再点开始。常用条件也可以起名保存，下次直接选。</p></div>
+              <div class="template-save inline-control">
+                <label for="template-name">存为条件模板（可选）：</label><input id="template-name" maxlength="60" placeholder="起个名字，例如：两人周末聚餐" /><button id="save-template" class="secondary">保存模板</button>
               </div>
 
               <label class="check-control confirmation" id="confirmation-label"
@@ -364,7 +330,7 @@
                   aria-hidden="true"
                   >✓</span
                 ><span
-                  >已核对场景、数量、方式和预算。其他要求尚未进入试验；真实个人资料不会随本次试运行发送。</span
+                  >我已核对需求、数量、服务方式和总预算，仅按这些条件试运行。</span
                 ></label
               >
               <p
@@ -391,17 +357,15 @@
               <div id="empty-state" class="empty-state">
                 <p>尚未运行。完成第二步后，这里显示结果、费用检查和工具证据。</p>
               </div>
+              <p class="module-intro">先看结果；有两次结果时，点击下面的卡片切换。想知道原因，再展开检查依据。</p>
               <div id="result-content" hidden>
-                <p id="run-meta" class="muted"></p>
-                <button id="continue-trial" class="text-button">
-                  沿用这次条件继续 →
-                </button>
+                <div class="result-toolbar"><details class="run-info"><summary id="run-info-title">本次运行信息</summary><p id="run-meta" class="muted"></p></details><button id="continue-trial" class="text-button">用这份条件再试一次 →</button></div>
                 <div id="progress" aria-live="polite"></div>
                 <div id="paired-comparison" hidden></div>
-                <div id="finding"></div>
+                <div id="finding" aria-live="polite"></div>
                 <div id="metrics" class="metrics"></div>
                 <div id="result-details" hidden>
-                <h3>本次检查清单</h3>
+                <div class="result-subheading"><h3>检查依据</h3><p>核对费用、资料和动作；想看具体过程，展开下面的记录。</p></div>
                 <div id="result-checklist" class="result-checklist"></div>
                 <details id="executor-explanation" class="compact-help">
                   <summary>执行者的说明与条件明细</summary>
@@ -409,11 +373,11 @@
                   <pre id="contract-report" class="contract-report" hidden></pre>
                 </details>
                 <details class="evidence-details">
-                  <summary>逐步工具证据 <span id="trace-count"></span></summary>
+                  <summary>查看它一步步查了什么、做了什么 <span id="trace-count"></span></summary>
                   <div id="trace"></div>
                 </details>
                 <details class="skill-events">
-                  <summary>本次实际技能调用</summary>
+                  <summary>查看本次使用的 Skills</summary>
                   <div id="run-skills"></div>
                 </details>
                 <details class="round-comparison compact-help">
@@ -542,11 +506,11 @@
         </li>
         <li>
           <b>核对后运行。</b
-          >填2人、到店用餐、预算200元，核对合成费用，勾选确认，点击“开始一组对照彩排”。默认离线示例不调用模型。
+          >依次填人数、服务方式、预算；选“免费演示”和“自动对比两次”，勾选确认，点击“开始一组对照彩排”。免费演示不调用模型。
         </li>
         <li>
           <b>看差别和依据。</b
-          >切换原始/变化条件卡片，展开工具证据与实际技能调用。注意草稿通过的是合成条件，不是现实服务保证。
+          >先看“按原条件试”和“遇到变化再试”两张卡，点击一张，下方就是那次的结论。想知道原因，再展开检查依据中的记录。
         </li>
         <li>
           <b>自己审阅并导出。</b

@@ -1734,3 +1734,73 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
   .auth-card { padding:26px; }
   .auth-bottom span { display:block; margin:5px 0 0; }
 }
+
+/* Compact, task-first rows inside the single-column numbered workflow. */
+.conditions-panel .control-stage { display:flex; align-items:baseline; flex-wrap:wrap; gap:5px 18px; margin:22px 0 12px; padding:10px 13px; }
+.control-stage h3 { flex:0 0 auto; font-size:17px; margin:0; }
+.control-stage p { flex:1 1 280px; font-size:14px; font-weight:400; line-height:1.65; color:var(--muted); }
+.workspace .conditions-grid { grid-template-columns:minmax(130px,.8fr) minmax(160px,1.2fr) minmax(150px,1fr); gap:18px; }
+.conditions-panel .conditions-grid .field { margin:0; min-width:0; }
+.conditions-grid input,.conditions-grid select { min-height:46px; padding:9px 12px; }
+.inline-control { display:flex; align-items:center; flex-wrap:wrap; gap:9px 14px; margin:12px 0; min-width:0; }
+.inline-control>label { flex:0 0 200px; font-size:15px; font-weight:650; }
+.inline-control>select,.inline-control>input { flex:1 1 240px; width:auto; min-width:0; min-height:46px; padding:9px 12px; }
+.inline-control>.control-hint { flex:0 1 auto; color:var(--muted); font-size:13px; }
+.template-save { padding:11px 13px; border:1px dashed var(--line); border-radius:10px; }
+.template-save>label { flex-basis:194px; }
+.template-save>button { flex:0 0 auto; min-height:44px; }
+.budget-preview { gap:8px; margin:10px 0 3px; }
+.budget-preview>div { padding:8px 13px; flex:1 1 120px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.budget-preview b { font-size:18px; white-space:nowrap; }
+.fee-help { border:0; margin:0 0 12px; padding:4px 0; font-size:13px; }
+.conditions-panel .compact-help:not(.fee-help) { padding:8px 0; font-size:14px; }
+.conditions-panel .confirmation { margin-top:18px; }
+.confirmation-status { margin:5px 0 12px; }
+.module-intro { font-size:15px; color:var(--muted); margin:-8px 0 16px; }
+.result-toolbar { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin-bottom:14px; }
+.run-info { flex:1 1 240px; font-size:14px; }
+.run-info summary { color:var(--muted); cursor:pointer; }
+.run-info p { margin:8px 0; }
+.result-toolbar button { padding:4px 0; font-size:14px; }
+#paired-comparison { margin:0 0 20px; }
+#paired-comparison h3 { margin:0; font-size:18px; }
+.comparison-intro { font-size:14px; color:var(--muted); margin:5px 0 10px; }
+.pair-grid { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; gap:12px; }
+.pair-card { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 12px; padding:12px 16px; min-width:0; }
+.pair-card b { font-size:16px; }
+.pair-card strong { font-size:16px; }
+.pair-card small { grid-column:1 / -1; font-size:13px; }
+.finding { padding:17px 20px; }
+.finding h2 { font-size:21px; }
+.finding p { font-size:14px; margin-top:6px; }
+.result-panel .metrics { margin:12px 0 18px; gap:8px; }
+.result-panel .metric { display:flex; align-items:baseline; justify-content:center; gap:8px; padding:8px 10px; }
+.result-panel .metric b { font-size:22px; }
+.result-subheading { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 16px; margin:16px 0 10px; }
+.result-subheading h3 { margin:0; font-size:18px; }
+.result-subheading p { color:var(--muted); font-size:14px; }
+.result-checklist { grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+.checklist-item { padding:11px 13px; }
+.comparison-method { margin-top:12px; }
+.comparison-method p { font-size:14px; color:var(--muted); margin:10px 0; }
+@container(max-width:1100px) {
+ .inline-control>.control-hint { flex-basis:100%; padding-left:214px; }
+ .result-checklist { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .pair-card { grid-template-columns:minmax(0,1fr); }
+}
+@container(max-width:650px) {
+ .workspace .conditions-grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+ .conditions-panel .control-stage { gap:3px; margin-top:19px; }
+ .control-stage p { flex-basis:100%; }
+ .inline-control { gap:7px; }
+ .inline-control>label { flex-basis:100%; }
+ .inline-control>select,.inline-control>input { flex-basis:100%; width:100%; }
+ .inline-control>.control-hint { padding-left:0; }
+ .template-save>button { width:100%; }
+ .budget-preview>div { flex-basis:100%; }
+ .pair-card { padding:10px; }
+ .pair-card b,.pair-card strong { font-size:14px; }
+ .finding { padding:14px; }
+ .finding h2 { font-size:19px; }
+ .result-panel .metric { flex-direction:column; align-items:center; gap:0; }
+}

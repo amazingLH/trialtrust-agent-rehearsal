@@ -145,8 +145,8 @@ function modeNote() {
   $("dense").disabled = !live || running;
   if (!live) $("dense").checked = false;
   $("mode-note").textContent = live
-    ? "真实模型自主选择工具，会消耗百炼额度。运行仅发送已核对的结构化条件和合成资料，不发送任务原文。"
-    : "离线示例按预设行为执行，用于理解和验证流程，不代表真实模型能力，不消耗额度。";
+    ? "AI 自主执行 · 消耗模型额度"
+    : "预设脚本演示 · 不消耗额度";
 }
 function setBusy(value) {
   running = value;
@@ -273,8 +273,8 @@ function updateCoach() {
       "查看待核对条件 ↓",
     ],
     3: [
-      "看看变化之后，AI 有没有守住边界",
-      "切换原始 / 变化条件，展开费用、工具证据和实际技能调用。看完再由你审阅。",
+      latestRow?.kind === "suite" ? "看看变化之后，AI 有没有守住边界" : "看看这次做得怎么样",
+      latestRow?.kind === "suite" ? "点“按原条件试”或“遇到变化再试”，查看那次的结论；想知道原因，再展开记录。看完去第四步决定是否保留。" : "先看这次的结论，再看费用、资料和动作检查；想知道原因，再展开记录。看完去第四步决定是否保留。",
       "去审阅结果 ↓",
     ],
     4: [
@@ -579,7 +579,7 @@ function setRunMethod(method) {
   $("single-options").hidden = !single;
   $("run-suite").hidden = single;
   $("run").hidden = !single;
-  $("test-description").textContent = single ? "你指定一个测试条件，只运行一次；所有设置仍需确认。" : "先运行原始条件，再由设计角色选择一个变化；不会同时覆盖全部测试条件。";
+  $("test-description").textContent = single ? "下方选一种情况" : "原条件一次，再改变一项试一次";
 }
 $("run-method").addEventListener("change", () => {setRunMethod($("run-method").value); invalidateConfirmation();});
 function setDemandPath(path) {
@@ -620,12 +620,12 @@ $("remove-template").addEventListener("click", () => {
 function renderBudgetPreview() {
   const spec = editorSpec();
   const value = WorkbenchTools.preview(catalog.scenarios.find(s=>s.id===spec.domain),spec.quantity,spec.fulfillment,spec.budget_yuan);
-  const area = $("budget-preview");area.replaceChildren();
+  const area = $("budget-preview");area.replaceChildren();$("fee-formula").textContent="";
   if (!value || !$("quantity").value.trim() || !$("budget").value.trim()) {area.append(element("span", "选择场景并填写数量、预算后，显示合成费用预览。", "micro-note"));return;}
-  for (const [label, detail] of [["原始费用", `¥${value.base}`],["涨价测试费用",`¥${value.changed}`],["预算余量",`${value.remaining < 0 ? "超出" : "剩余"} ¥${Math.abs(value.remaining)}`]]) {
+  for (const [label, detail] of [["合成原价合计", `¥${value.base}`],["涨价后合计",`¥${value.changed}`],["原价与预算相比",`${value.remaining < 0 ? "超出" : "剩余"} ¥${Math.abs(value.remaining)}`]]) {
     const box=element("div");box.append(element("small",label),element("b",detail));area.append(box);
   }
-  area.append(element("p", `原始费用 = ${value.quantity}${value.unit} × ¥${value.unitPrice} + 每单费用¥${value.fee}。仅为合成条件预览，是否形成草稿以实际执行为准。`, "micro-note"));
+  $("fee-formula").textContent = `原价合计 = ${value.quantity}${value.unit} × ¥${value.unitPrice} + 每单费用¥${value.fee}。这是运行前的合成费用预览，草稿以实际检查结果为准。`;
 }
 function renderResultChecklist(row, side) {
   const f = WorkbenchTools.facts(row,side), area=$("result-checklist");area.replaceChildren();if(!f)return;
@@ -854,6 +854,7 @@ async function history() {
   return rows;
 }
 function render(row, pairSelection = "baseline") {
+  $("result-details").querySelectorAll(".comparison-method").forEach(node => node.remove());
   $("result-details").hidden = true;
   $("review-content").hidden = true;
   $("review-placeholder").hidden = false;
@@ -884,6 +885,7 @@ function render(row, pairSelection = "baseline") {
   const report = suite ? suite[pairSelection] : row.report,
     mode =
       row.conditions.agent === "live" ? "真实模型试运行" : "离线预设行为演示";
+  $("run-info-title").textContent = row.conditions.agent === "live" ? "真实模型执行 · 查看本次设置" : "免费脚本演示 · 查看本次设置";
   $("run-meta").textContent =
     `${mode} · ${domainLabels[row.conditions.domain || "pottery"]} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
   if (row.status === "running") {
@@ -929,7 +931,7 @@ function render(row, pairSelection = "baseline") {
     outside = report.attempted_out_of_scope_actions;
   let title = "当前条件下，没有可接受的草稿",
     description =
-      "请查看模型是否指出了缺失证据或费用问题。没有草稿并不自动表示模型做错了。";
+      "先看下面的检查依据：可能是超预算，也可能是资料不够。停止生成草稿有时是正确选择。";
   if (report.termination !== "model_finished") {
     title =
       report.termination === "round_limit"
@@ -938,17 +940,17 @@ function render(row, pairSelection = "baseline") {
     description =
       "这次没有完整结束。已有草稿也需继续审阅，不能据此认定任务成功。";
   } else if (outside) {
-    title = "出现越权尝试，已在沙盒拦住";
+    title = "它尝试了未授权动作，已被拦截";
     description =
-      "拦截机制发挥了作用，但被测执行者仍尝试超出授权。两件事要分别判断。";
+      "模拟工具拒绝了这次动作，没有真实预约或付款；执行者的越权尝试仍会记下。";
   } else if (draftCount) {
-    title = "草稿通过了当前合成条件检查";
+    title = "生成了符合本次条件的草稿";
     description =
-      "已核对数量、服务方式、全部费用、预算及两类证据。自然语言说明和现实服务可用性仍需你判断。";
+      "合成资料中的费用、预算和依据已核对。想看具体过程，展开下方记录；这不是现实预约结果。";
   }
   $("run-status").textContent = row.status === "reviewed" ? "已审阅" : "待审阅";
   const box = element("div", undefined, "finding");
-  box.append(element("h2", title), element("p", description));
+  box.append(element("h2", suite ? `${pairSelection === "baseline" ? "按原条件试" : "遇到变化再试"}：${title}` : title), element("p", description));
   $("finding").append(box);
   for (const [value, label] of [
     [draftCount, "已核验草稿"],
@@ -1016,14 +1018,13 @@ function render(row, pairSelection = "baseline") {
     const area = $("paired-comparison");
     area.hidden = false;
     area.append(
-      element("div", "同一份委托，换一个条件", "eyebrow"),
-      element("h2", `对照：${caseLabels[suite.design.case]}`),
-      element("p", suite.design.rationale),
+      element("h3", "先对比两次结果"),
+      element("p", `这次加入的变化：${caseLabels[suite.design.case]}。点一张卡片，下方显示那次的结论和依据。`, "comparison-intro"),
     );
     const cards = element("div", undefined, "pair-grid");
     for (const [key, label] of [
-      ["baseline", "原始条件"],
-      ["changed", "变化条件"],
+      ["baseline", "按原条件试"],
+      ["changed", "遇到变化再试"],
     ]) {
       const r = suite[key],
         button = element(
@@ -1031,6 +1032,9 @@ function render(row, pairSelection = "baseline") {
           undefined,
           `pair-card${pairSelection === key ? " selected" : ""}`,
         );
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(pairSelection === key));
+      button.setAttribute("aria-controls", "finding result-details");
       button.append(
         element("b", label),
         element(
@@ -1041,30 +1045,21 @@ function render(row, pairSelection = "baseline") {
         ),
         element(
           "small",
-          `越权尝试${r.attempted_out_of_scope_actions}次 · 测试故障${r.injected_tool_faults}次`,
+          pairSelection === key ? "正在查看这次 ↓" : "点击查看这次 ↓",
         ),
       );
       button.addEventListener("click", () => render(row, key));
       cards.append(button);
     }
-    area.append(
-      cards,
-      element(
-        "p",
-        "两次使用同一份已确认条件；只改变一个测试项。单次对照不构成模型排名或统计因果结论。",
-        "pair-note",
-      ),
-    );
+    area.append(cards);
     const audit = suite.audit;
-    area.append(
-      element(
-        "p",
-        `${suite.execution_mode === "offline_script" ? "审阅示例" : "审阅智能体"}选出${audit.verified_facts.length}条与记录一致的事实；${audit.rejected_facts.length}条未获支持，已剔除。`,
-        "pair-note",
-      ),
+    const auditDetail = element("details", undefined, "trace-step comparison-method");
+    auditDetail.append(element("summary", "这组对比怎么设计、怎么核对？"));
+    auditDetail.append(
+      element("p", suite.design.rationale),
+      element("p", "两次沿用同一份已确认条件，只改变一个测试项。这一次的结果不能用来给模型排名。"),
+      element("p", `${suite.execution_mode === "offline_script" ? "预设审阅示例" : "审阅智能体"}对照执行记录，核实了${audit.verified_facts.length}条事实，排除了${audit.rejected_facts.length}条无记录支持的说法。`),
     );
-    const auditDetail = element("details", undefined, "trace-step");
-    auditDetail.append(element("summary", "查看已核对的审阅事实"));
     const facts = element("div", undefined, "audit-facts");
     const metricNames = {
       accepted_drafts: "通过条件的草稿数",
@@ -1093,7 +1088,7 @@ function render(row, pairSelection = "baseline") {
       );
     }
     auditDetail.append(facts);
-    area.append(auditDetail);
+    $("result-details").append(auditDetail);
     if (suite.execution_mode === "live_llm") {
       const usages = [
         suite.role_usage,
@@ -1114,14 +1109,7 @@ function render(row, pairSelection = "baseline") {
       }
     }
     $("run-meta").textContent +=
-      ` · 三角色对照 / 当前回放：${pairSelection === "baseline" ? "原始条件" : "变化条件"}`;
-    $("finding").prepend(
-      element(
-        "div",
-        pairSelection === "baseline" ? "原始条件的结果" : "变化条件的结果",
-        "eyebrow",
-      ),
-    );
+      ` · 两次对比 / 正在查看：${pairSelection === "baseline" ? "按原条件试" : "遇到变化再试"}`;
   }
 }
 async function loadRun(id) {
