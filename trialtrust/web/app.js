@@ -1415,38 +1415,39 @@ $("coach-next").addEventListener("click", () =>
 );
 // The help map only explains the workflow; it never edits or runs a task.
 const helpModules = [
-      {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'明确你想让AI试办哪件事，避免一开始就理解错任务。',output:'选定本次具体需求，交给第二步填写条件。',steps:[
+      {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
         {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'自己选择需求时，先点类别，例如“美食聚会”，再在“具体想做什么”中选“自助餐聚会”。核对“当前需求”显示正确，再点“选好了，下一步核对条件”。'},
         {name:'分析自己写的需求（可选）',why:'把一段话整理成可检查的条件，并找出还不支持或缺少的要求。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看提取结果和未纳入的要求；可以采用时，再点“采用这4项条件”。'}
       ]},
-      {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'固定花费上限和允许做的事，选好执行方式与检查情况，再启动试运行。',output:'生成一次结果，或生成“原情况／变化后”的两份对照结果。',steps:[
+      {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量、服务方式和总预算。看下方费用预览；需要改变单价或每单费用时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价，再加只收一次的每单费用，就是总费用。改预算只会改变是否超支。'},
         {name:'选择执行方式',why:'决定先熟悉操作，还是观察真实AI自己如何查资料、检查方案。',how:'第一次选“免费演示 · 按条件核对”，不消耗模型额度。想观察AI真实决策时再选“真实模型”。可选的混合检索会同时查关键词与意思相近的资料，额外消耗模型额度。'},
         {name:'选择试运行的情况',why:'检查事情发生变化时，AI是否仍能算对费用、查到依据并遵守你的限制。',how:'推荐选对比两次：先按原情况运行，再改变一项情况运行。免费演示比较服务单价变化前后；真实模型会从单价变化、缺少价目、诱导越权、查询超时中选一项。只想检查某一项时，选单次运行，再选具体情况。'},
         {name:'确认并开始',why:'确保运行的是你核对过的设置，避免填错条件就开始。',how:'核对以上设置，勾选确认，再点“开始一组对照彩排”或单次运行按钮。常用时可先保存模板：保存需求、数量、方式、预算、模拟价格、执行方式和检查设置；下次从第一步的“使用条件模板”选用。'}
       ]},
-      {n:'03',name:'看结果与检查依据',title:'它做了什么，依据在哪？',purpose:'判断AI有没有算对、查全、守住限制，并找到支持结论的记录。',output:'知道本次哪里符合要求、哪里有问题、哪些信息还需要补充。',steps:[
+      {n:'03',name:'看结果与检查依据',title:'它做了什么，依据在哪？',purpose:'检查费用算得对不对、资料有没有依据、动作有没有超出你的允许范围。',problem:'AI回答得流畅，不代表它查过资料或算对了钱。把结果和费用依据、查询记录放在一起看，找出漏项、超支或不该做的动作。',output:'知道本次哪里符合要求、哪里有问题、哪些信息还需要补充。',steps:[
         {name:'先看结论与两次差异',why:'先弄清是否形成可检查的方案，以及变化前后结果为什么不同。',how:'对照运行完成后，分别点“按原条件试”和“遇到变化再试”两张卡。看总费用、是否有方案草稿，以及停止原因。没有草稿可能是在超预算或缺资料时正确停止，并不一定是报错。'},
         {name:'核对费用与资料',why:'避免只看AI说得好不好听，要确认费用、当前价目和退改规则是否有依据。',how:'查看“检查依据”里的费用、价格、退改规则和未授权操作检查。想看本次实际使用的设置，展开“AI的说明与本次实际使用的条件”。这里的方案草稿还没有实际执行。'},
         {name:'回看具体过程',why:'查清它究竟查询了什么、依据是什么，以及有没有尝试不该做的动作。',how:'展开“查看它一步步查了什么、做了什么”，逐项看查询、费用检查与生成草稿的记录。有需要再看本次使用的技能，或选本会话两份记录生成对照表。'}
       ]},
-      {n:'04',name:'审阅与保存记录',title:'这份结果，你愿意保留吗？',purpose:'由你判断本次表现是否符合要求，留下可回看的审阅记录，再决定是否调整重试。',output:'留下你的判断和完整过程，方便之后回看、对照或继续试运行。',steps:[
+      {n:'04',name:'审阅与保存记录',title:'这份结果，你愿意保留吗？',purpose:'由你判断这次结果是否符合要求，记下判断，保存过程，必要时改条件再试。',problem:'看过一次容易忘记当时用了什么条件、哪里出了问题。保存结果和你的判断，之后就能回看或比较；这里的“保留”不会替你预约或付款。',output:'留下你的判断和完整过程，方便之后回看、对照或继续试运行。',steps:[
         {name:'给本次结果一个判断',why:'把最后的判断留给你，AI生成方案不等于你已经认可。',how:'看完第三步后，符合要求就点“保留结果”，还需要改进就点“暂不接受”。两种选择都会保留试运行与审阅记录，不会同意真实预约或付款。'},
         {name:'回看或导出记录',why:'以后能找到当时的条件、过程与判断，不必凭印象比较。',how:'同一账号登录后，从左侧“历史会话”找回记录。需要保存文件时点“下载完整记录 JSON”；下载不成功可查看并复制完整JSON。不需要文件也能正常使用。'},
         {name:'调整后再试（可选）',why:'验证改过预算、价格或检查情况后，AI的表现是否有所变化。',how:'点“用这份条件再试一次”，回到第二步修改设置，重新勾选确认，再开始。新的试运行会形成另一条记录，之后可以与旧记录对照。'}
       ]}
     ];
-let helpOrigin = 0, helpSelected = 0, helpMapOpen = true;
+let helpSelected = 0;
 function renderHelpSteps(index) {
   helpSelected = index;
-  $("help-map-modules").querySelectorAll("button").forEach((button,i) => {
-    button.classList.toggle("is-browsed", i === index);
+  $("help-module-cards").querySelectorAll("button").forEach((button,i) => {
+    button.classList.toggle("is-current", i === index);
     button.setAttribute("aria-pressed", String(i === index));
   });
   const module = helpModules[index];
-  $("help-map-location").textContent = `当前所在：${helpModules[helpOrigin].n} ${helpModules[helpOrigin].name}`;
+  $("help-map-location").textContent = `正在查看：${module.n} ${module.name}`;
   $("help-substeps-title").textContent = `${module.n} ${module.name} · 小步骤`;
+  $("help-module-problem").textContent = `这一步帮你解决：${module.problem}`;
   const list = $("help-substeps-list"); list.replaceChildren();
   module.steps.forEach((step,i) => {
     const section=element("section",undefined,"help-substep");
@@ -1459,37 +1460,27 @@ function renderHelpSteps(index) {
   $("help-substeps-output").textContent = `完成后：${module.output}`;
 }
 function renderHelpMap() {
-  $("help-step-map").hidden=!helpMapOpen;
-  $("help-layout").classList.toggle("map-closed",!helpMapOpen);
-  const cards=$("help-module-cards"), nav=$("help-map-modules"); cards.replaceChildren();nav.replaceChildren();
+  const cards=$("help-module-cards"); cards.replaceChildren();
   helpModules.forEach((module,i) => {
-    const card=element("section",undefined,"help-module"+(helpMapOpen && i===helpOrigin ? " is-current" : ""));
-    const heading=element("div",undefined,"help-module-heading"), title=element("div");
-    title.append(element("small",`${module.n} · ${module.name}`),element("h3",module.title));
-    const locate=element("button","当前步骤定位 ›","secondary help-locate");locate.type="button";
-    locate.setAttribute("aria-label",`${module.n} 当前步骤定位`);locate.setAttribute("aria-expanded",String(helpMapOpen && i===helpOrigin));locate.setAttribute("aria-controls","help-step-map");
-    locate.addEventListener("click",()=>{helpOrigin=i;helpSelected=i;helpMapOpen=true;renderHelpMap();$("help-module-cards").querySelectorAll("button")[i].focus({preventScroll:true});});
-    heading.append(title,locate);card.append(heading,element("p",`这一步的目的：${module.purpose}`),element("p",`完成后：${module.output}`,"help-output"));cards.append(card);
-    const button=element("button",undefined,"help-map-module"+(i===helpOrigin ? " is-current" : ""));button.type="button";
-    button.setAttribute("aria-label",`${module.n} ${module.name}${i===helpOrigin ? " 当前模块" : ""}`);
-    const label=element("span",undefined,"help-map-module-title");label.append(element("b",`${module.n} ${module.name}`));
-    if(i===helpOrigin)label.append(element("span","当前","help-current-badge"));else label.append(element("span","›"));
-    button.append(label,element("span",module.purpose,"help-map-module-purpose"));
-    button.addEventListener("click",()=>renderHelpSteps(i));
-    button.addEventListener("pointerenter",event=>{if(event.pointerType==="mouse" && helpSelected!==i)renderHelpSteps(i);});
-    button.addEventListener("keydown",event=>{
+    const card=element("button",undefined,"help-module");card.type="button";
+    card.setAttribute("aria-label",`${module.n} ${module.name}`);
+    card.setAttribute("aria-controls","help-step-map");
+    const heading=element("span",undefined,"help-module-heading");
+    heading.append(element("small",`${module.n} · ${module.name}`),element("strong",module.title));
+    card.append(heading,element("span",`作用与目的：${module.purpose}`,"help-module-purpose"),element("span",`完成后：${module.output}`,"help-output"));
+    card.addEventListener("click",()=>renderHelpSteps(i));
+    card.addEventListener("keydown",event=>{
       if(!["ArrowDown","ArrowUp","Home","End"].includes(event.key))return;
       event.preventDefault();
       const next=event.key==="Home" ? 0 : event.key==="End" ? 3 : (i+(event.key==="ArrowDown" ? 1 : 3))%4;
-      renderHelpSteps(next);nav.querySelectorAll("button")[next].focus();
+      renderHelpSteps(next);cards.querySelectorAll("button")[next].focus({preventScroll:true});
     });
-    nav.append(button);
+    cards.append(card);
   });
   renderHelpSteps(helpSelected);
 }
-$("close-help-map").addEventListener("click",()=>{helpMapOpen=false;renderHelpMap();$("help-module-cards").querySelectorAll("button")[helpOrigin].focus({preventScroll:true});});
 $("help").addEventListener("click", () => {
-  helpOrigin=Math.max(0,Math.min(3,currentStep-1));helpSelected=helpOrigin;helpMapOpen=true;
+  helpSelected=Math.max(0,Math.min(3,currentStep-1));
   renderHelpMap();$("help-dialog").showModal();$("help-dialog").scrollTop=0;
 });
 $("close-help").addEventListener("click", () => $("help-dialog").close());

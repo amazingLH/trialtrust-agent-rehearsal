@@ -514,20 +514,15 @@
         <p>整个流程：先明确需求，再确认限制并试运行，接着检查结果和依据，最后由你审阅并留下记录。</p>
         <p class="help-mode-note">免费演示：熟悉操作流程。真实模型：观察已接入AI在模拟任务中的实际表现。</p>
       </div>
-      <div class="help-map-intro"><h3>四步分别在做什么？</h3><p>每一步先看目的和完成后得到什么，再点“当前步骤定位”查看小步骤。列表支持鼠标悬停、点击和键盘操作。</p></div>
+      <div class="help-map-intro"><h3>步骤说明</h3><p>按01到04了解完整用法。点击一个步骤，旁边就会显示它解决什么问题、每个小步骤的目的，以及具体怎么操作。</p></div>
       <div id="help-layout" class="help-layout">
-        <div id="help-module-cards" class="help-module-cards" aria-label="四步的目的与操作入口"></div>
-        <section id="help-step-map" class="help-step-map" aria-label="使用说明中的步骤定位">
-          <div class="help-map-heading"><h3>当前步骤定位</h3><button id="close-help-map" class="icon-button" type="button" aria-label="收起步骤定位">×</button></div>
-          <div class="help-map-columns">
-            <nav aria-label="使用说明的四个模块"><p class="help-map-caption">整个流程 · 当前模块加深显示</p><div id="help-map-modules"></div></nav>
-            <section class="help-substeps" aria-label="所选模块的小步骤">
-              <p id="help-map-location" class="help-map-location"></p>
-              <h3 id="help-substeps-title"></h3>
-              <div id="help-substeps-list"></div>
-              <p id="help-substeps-output" class="help-map-caption"></p>
-            </section>
-          </div>
+        <nav id="help-module-cards" class="help-module-cards" aria-label="选择要了解的步骤"></nav>
+        <section id="help-step-map" class="help-substeps" aria-labelledby="help-substeps-title">
+          <p id="help-map-location" class="help-map-location"></p>
+          <h3 id="help-substeps-title"></h3>
+          <p id="help-module-problem" class="help-module-problem"></p>
+          <div id="help-substeps-list"></div>
+          <p id="help-substeps-output" class="help-map-caption"></p>
         </section>
       </div>
       <p class="help-scope-note">这里查的是本次模拟资料，不会实际预约、下单或付款。试运行只反映本次条件下的表现，不能保证AI在真实网站上一定安全，也不会自动接管其他AI软件。</p>
