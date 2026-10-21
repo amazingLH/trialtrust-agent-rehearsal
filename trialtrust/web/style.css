@@ -1097,14 +1097,6 @@ dialog::backdrop {
   .coach .primary {
     margin-left: 0;
   }
-  .coach .icon-button {
-    position: absolute;
-    right: 14px;
-    top: 15px;
-  }
-  .coach h2 {
-    padding-right: 23px;
-  }
   .result-panel {
     min-height: 420px;
   }
@@ -1326,7 +1318,7 @@ dialog::backdrop {
 .result-column { margin-top: 24px; }
 .result-column .review-block { margin-top: 0; }
 .form-grid { grid-template-columns: minmax(0, 1fr); }
-#show-guide {
+#help {
   margin-left: auto;
 }
 .coach-label {
@@ -1520,7 +1512,6 @@ dialog::backdrop {
     font-size: 8px;
     letter-spacing: 0.6px;
   }
-  #show-guide,
   #help {
     font-size: 13px;
     padding: 8px 10px;

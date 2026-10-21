@@ -261,11 +261,6 @@ function editorPricing() {
   const values = ["unit-price", "changed-price", "order-fee"].map(id => $(id).value.trim() === "" ? NaN : Number($(id).value));
   return {unit_price:values[0],changed_unit_price:values[1],order_fee:values[2]};
 }
-function showGuide(value = true) {
-  $("coach").hidden = !value;
-  $("show-guide").setAttribute("aria-expanded", String(value));
-  updateCoach();
-}
 function updateCoach() {
   const texts = {
     1: [
@@ -1398,12 +1393,6 @@ $("export").addEventListener("click", async (event) => {
     notice(error.message);
   }
 });
-$("show-guide").addEventListener("click", () => showGuide($("coach").hidden));
-$("close-guide").addEventListener("click", () => showGuide(false));
-$("restart-guide").addEventListener("click", () => {
-  showGuide();
-  scrollToSection("coach");
-});
 $("to-conditions").addEventListener("click", () => goStep(2));
 document
   .querySelectorAll("[data-step]")
@@ -1486,7 +1475,6 @@ $("help").addEventListener("click", () => {
 $("close-help").addEventListener("click", () => $("help-dialog").close());
 $("start-tutorial").addEventListener("click", () => {
   $("help-dialog").close();
-  showGuide();
   scrollToSection("coach");
 });
 $("dismiss-notice").addEventListener("click", () => notice());
