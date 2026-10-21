@@ -4,6 +4,7 @@ from typing import Literal
 Domain = Literal['pottery', 'cleaning', 'museum', 'garden', 'aquarium', 'buffet', 'teatime', 'picnic', 'citywalk', 'daytrip', 'hotel', 'organizing']
 Fulfillment = Literal['pickup', 'shipping', 'onsite', 'entry', 'dine_in', 'meetup', 'stay']
 FULFILLMENTS = {'pickup':'到店自取','shipping':'作品邮寄','onsite':'上门服务','entry':'到场入园','dine_in':'到店用餐','meetup':'集合出行','stay':'入住体验'}
+MAX_BUDGET_YUAN = 1_000_000
 CATEGORIES = [{'id':'attractions','label':'景点探索','icon':'⌂'}, {'id':'food','label':'美食聚会','icon':'◡'}, {'id':'travel','label':'旅行出行','icon':'✦'}, {'id':'life','label':'生活服务','icon':'♡'}]
 
 def item(category, label, unit, price, changed, fee, modes, keywords, description):
@@ -28,4 +29,4 @@ CATALOG = {
 def public_catalog():
     return {'version':'owned-catalog-v1','categories':CATEGORIES,
             'scenarios':[{'id':key,**value} for key,value in CATALOG.items()],
-            'fulfillments':FULFILLMENTS,'data_notice':'价格和规则都是演示用的，不代表真实商家信息。'}
+            'fulfillments':FULFILLMENTS,'limits':{'budget_yuan':MAX_BUDGET_YUAN}}

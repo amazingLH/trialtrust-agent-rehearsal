@@ -44,7 +44,7 @@
       "budget_yuan": {
         "type": "integer",
         "minimum": 0,
-        "maximum": 1000
+        "maximum": 1000000
       }
     },
     "required": [

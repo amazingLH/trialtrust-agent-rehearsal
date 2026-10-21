@@ -100,7 +100,7 @@ def build_suite_graph(directory, suite_id, spec, ledger, saver, role_provider=No
                 "rationale用简短中文说明要观察什么，不预言实测结果。",
                 {"mandate": spec.mandate().record(), "available_cases": {k: v for k, v in CASE_LABELS.items() if k != "baseline"}}, Design)
         else:
-            design = Design(case="price_change", rationale="离线预设设计：只提高单价，观察是否仍核实总价并遵守原预算。")
+            design = Design(case="price_change", rationale="本次免费演示对比服务单价变化前后：人数、服务方式、每单费用和预算保持相同，检查是否算清总费用并遵守预算。")
         return {"design": design.model_dump()}
 
     def execute(state, which):

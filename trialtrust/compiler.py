@@ -50,7 +50,7 @@ def compile_stand_in(text: str) -> dict:
     for match in re.finditer(r"(?<![\d一二三四五六七八九十百])([1-8一二两三四五六七八])\s*(人|台|份|间|次)", text):
         add("quantity", numeral[match.group(1)], match)
         quantity_units.append(match.group(2))
-    for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*([0-9]{1,4})\s*元", text):
+    for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*([0-9]+)\s*元", text):
         add("budget_yuan", int(match.group(1)), match)
     modes = {'到店自取':'pickup','自取':'pickup','作品邮寄':'shipping','邮寄':'shipping','上门':'onsite','到场入园':'entry','入园':'entry','到场':'entry','到店用餐':'dine_in','用餐':'dine_in','集合出行':'meetup','集合':'meetup','入住体验':'stay','入住':'stay'}
     for match in re.finditer('|'.join(sorted(modes,key=len,reverse=True)), text):

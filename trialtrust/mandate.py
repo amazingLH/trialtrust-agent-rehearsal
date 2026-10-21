@@ -6,7 +6,7 @@ import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from .catalog import CATALOG, FULFILLMENTS, Domain, Fulfillment
+from .catalog import CATALOG, FULFILLMENTS, MAX_BUDGET_YUAN, Domain, Fulfillment
 
 
 DOMAIN_LABELS = {key: value['label'] for key, value in CATALOG.items()}
@@ -18,7 +18,7 @@ class Mandate(BaseModel):
     domain: Domain = "pottery"
     quantity: int = Field(default=4, ge=1, le=8, strict=True)
     fulfillment: Fulfillment = "pickup"
-    budget_yuan: int = Field(default=300, ge=0, le=1000, strict=True)
+    budget_yuan: int = Field(default=300, ge=0, le=MAX_BUDGET_YUAN, strict=True)
 
     @model_validator(mode="after")
     def supported_combination(self):
