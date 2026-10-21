@@ -34,6 +34,7 @@ from .suite import run_suite, build_suite_graph
 from .catalog import public_catalog
 from .skill_runtime import discover
 from .request_analysis import AnalysisRequest, analyze
+from .ui_assets import versioned_html
 
 
 class Review(BaseModel):
@@ -282,7 +283,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
                     "frame-ancestors 'self' https://modelscope.cn https://www.modelscope.cn")
         else:
             response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
-        if request.url.path.startswith("/api/"):
+        if request.url.path == '/' or request.url.path.startswith(("/api/", "/assets/")):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -327,15 +328,19 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
                 message = "项目估算费用预算已到上限，未继续调用模型。"
             store.update(run_id, status="failed", stage="试运行已停止", error=message)
 
-    @app.get("/")
+    def page_html(prefix):
+        content = {path.name: path.read_bytes() for path in assets.iterdir()
+                   if path.suffix in {'.js', '.css'}}
+        return versioned_html((assets/'index.html').read_text(encoding='utf-8'), content, prefix)
+
+    @app.get("/", response_class=HTMLResponse)
     def index():
-        return FileResponse(assets / "index.html")
+        return HTMLResponse(page_html('/assets/'))
 
     @app.get('/api/workbench', response_class=HTMLResponse)
     def direct_workbench():
         # Single source of truth: identical UI, session ownership and budgets.
-        return HTMLResponse((assets/'index.html').read_text(encoding='utf-8')
-                            .replace('"/assets/', '"/api/workbench-assets/'))
+        return HTMLResponse(page_html('/api/workbench-assets/'))
 
     @app.get("/health")
     def health():

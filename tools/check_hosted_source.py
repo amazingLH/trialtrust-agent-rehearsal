@@ -9,6 +9,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from trialtrust.ui_assets import versioned_html
 HOST = "https://l666h666better-trialtrust.ms.show"
 TOKEN_ENDPOINT = "https://www.modelscope.cn/api/v1/studios/token"
 ASSETS = ("index.html", "app.js", "style.css", "auth.js",
@@ -30,8 +32,8 @@ def git_assets(revision: str) -> tuple[str, dict[str, bytes]]:
     assets = {name: subprocess.check_output(
         ["git", "show", resolved + ":trialtrust/web/" + name], cwd=ROOT)
         for name in ASSETS}
-    assets["index.html"] = assets["index.html"].replace(
-        b'"/assets/', b'"/api/workbench-assets/')
+    assets["index.html"] = versioned_html(assets["index.html"].decode('utf-8'),
+                                         assets, '/api/workbench-assets/').encode('utf-8')
     return resolved, assets
 
 
@@ -50,10 +52,13 @@ def check(client: httpx.Client, revision: str, expected: dict[str, bytes],
         headers["X-Studio-Token"] = viewer
     results = {}
     auth_gate = False
+    links = {name.decode(): url.decode() for url, name in re.findall(
+        rb'(?:src|href)="(/api/workbench-assets/([^"?]+)(?:\?[^" ]+)?)"', expected.get('index.html', b''))}
     for name, body in expected.items():
-        path = "/api/workbench" if name == "index.html" else "/api/workbench-assets/" + name
+        path = "/api/workbench" if name == "index.html" else links.get(name, "/api/workbench-assets/" + name)
         response = client.get(HOST + path, headers=headers)
         results[name] = {"http": response.status_code,
+                         "requested_path": path,
                          "matches_git": response.status_code == 200 and response.content == body,
                          "expected_sha256": hashlib.sha256(body).hexdigest(),
                          "actual_sha256": hashlib.sha256(response.content).hexdigest()}
