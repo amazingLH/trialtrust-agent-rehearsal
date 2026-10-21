@@ -505,32 +505,32 @@
     <dialog id="account-dialog" aria-labelledby="account-dialog-title"><form id="account-password-form"><div class="dialog-heading"><h2 id="account-dialog-title">修改密码</h2><button id="account-close" type="button" class="icon-button" aria-label="关闭账号设置">×</button></div><label class="auth-field">当前密码<input id="account-old-password" type="password" autocomplete="current-password" maxlength="72" required /></label><label class="auth-field">新密码<input id="account-new-password" type="password" autocomplete="new-password" minlength="10" maxlength="72" required /></label><p>修改成功后，所有登录会话会失效，请使用新密码重新登录。</p><p id="account-error" class="danger-text" role="alert"></p><button id="account-password-submit" type="submit" class="primary">保存新密码</button></form></dialog>
     <dialog id="help-dialog" aria-labelledby="help-title">
       <div class="dialog-heading">
-        <h2 id="help-title">第一次用？跟着例子走</h2>
-        <button id="close-help" class="icon-button" aria-label="关闭帮助">
-          ×
-        </button>
+        <h2 id="help-title">先试着让AI办事，看清问题，再决定怎么用。</h2>
+        <button id="close-help" class="icon-button" aria-label="关闭帮助">×</button>
       </div>
-      <p class="help-example">先体验一次：<b>2个人吃自助餐，总预算190元。</b>下面用的是演示价格，不会真的订位或付款。</p>
-      <ol class="help-steps">
-        <li>
-          <b>选要试的事情。</b>在“01 选择需求”里，保留“自己选择需求”，点“美食聚会”，再选“自助餐聚会”，然后点“选好了，下一步核对条件”。
-        </li>
-        <li>
-          <b>填好条件，免费试一次。</b>人数填“2”，选“到店用餐”，预算填“190”。费用预览会按你的填写重算；展开“查看费用明细 / 调整这次的模拟价格”还可修改单价和每单费用。执行方式选“免费演示 · 按条件核对”，试运行方式选对比两次，再勾选确认、点“开始一组对照彩排”。
-        </li>
-        <li>
-          <b>看看两次有什么不同。</b>使用默认模拟价格时，2人自助餐的餐费是2×80元，再加10元每单费用，共170元；单价变为100元后，共210元，超出190元预算，就不生成草稿。你改过数量或价格，结果也会跟着变。点两张卡切换，原因在“检查依据”和具体记录里。
-        </li>
-        <li>
-          <b>给这次结果一个判断。</b>在第四步，觉得符合要求就点“保留结果”，觉得还需改进就点“暂不接受”；记录都会留在历史会话里。想保存文件，再点“下载完整记录 JSON”，不懂JSON也不影响使用。修改条件后，重新勾选确认就能再试。
-        </li>
-      </ol>
-      <div class="help-questions">
-        <details><summary>这是在正式用AI之前，先检查它吗？</summary><p>是，目的是提前发现AI是否漏算费用、超出预算或尝试你没允许的操作。选择真实模型时会真的调用AI，但查的是本次模拟资料，不会操作真实商家。结果只反映这次试运行，不能当作真实操作的安全保证，也不会自动接管其他AI软件。</p></details>
-        <details><summary>“免费演示”和“真实模型”有什么区别？</summary><p>免费演示方便新用户熟悉操作，不消耗模型额度；真实模型由AI自己决定查什么、怎么做，会消耗模型额度。两种方式都使用你确认的条件和本次模拟价格。</p></details>
-        <details><summary>选项里没有我的需求怎么办？</summary><p>在第一步展开“没有合适选项？写下自己的需求”，写好后点“① 隐去手机号等信息”，再自己删掉遗漏的姓名、地址。检查后再同意分析；暂不支持的需求会提示你补充信息，不会直接套用示例。</p></details>
-        <details><summary>下次怎么找到这次的记录？</summary><p>登录同一个账号，从左侧“历史会话”找回。手机上先点左上角“☰ 会话”。这里保留的是试运行记录，不是实际订单。</p></details>
+      <div class="help-purpose">
+        <h3>这个工具解决什么问题？</h3>
+        <p>提前观察AI会不会漏算费用、超过预算、缺少依据，或尝试你没允许的操作，帮助你找到需要人工把关的地方。</p>
+        <p>整个流程：先明确需求，再确认限制并试运行，接着检查结果和依据，最后由你审阅并留下记录。</p>
+        <p class="help-mode-note">免费演示：熟悉操作流程。真实模型：观察已接入AI在模拟任务中的实际表现。</p>
       </div>
+      <div class="help-map-intro"><h3>四步分别在做什么？</h3><p>每一步先看目的和完成后得到什么，再点“当前步骤定位”查看小步骤。列表支持鼠标悬停、点击和键盘操作。</p></div>
+      <div id="help-layout" class="help-layout">
+        <div id="help-module-cards" class="help-module-cards" aria-label="四步的目的与操作入口"></div>
+        <section id="help-step-map" class="help-step-map" aria-label="使用说明中的步骤定位">
+          <div class="help-map-heading"><h3>当前步骤定位</h3><button id="close-help-map" class="icon-button" type="button" aria-label="收起步骤定位">×</button></div>
+          <div class="help-map-columns">
+            <nav aria-label="使用说明的四个模块"><p class="help-map-caption">整个流程 · 当前模块加深显示</p><div id="help-map-modules"></div></nav>
+            <section class="help-substeps" aria-label="所选模块的小步骤">
+              <p id="help-map-location" class="help-map-location"></p>
+              <h3 id="help-substeps-title"></h3>
+              <div id="help-substeps-list"></div>
+              <p id="help-substeps-output" class="help-map-caption"></p>
+            </section>
+          </div>
+        </section>
+      </div>
+      <p class="help-scope-note">这里查的是本次模拟资料，不会实际预约、下单或付款。试运行只反映本次条件下的表现，不能保证AI在真实网站上一定安全，也不会自动接管其他AI软件。</p>
       <button id="start-tutorial" class="primary">回到页面，查看操作指引 →</button>
     </dialog>
   </body>
