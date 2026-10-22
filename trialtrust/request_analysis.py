@@ -71,7 +71,7 @@ def _base_fields(text,compiled):
         if goal: known['task_name']=goal[:100]
     for key,pattern in {'location':r'(?:地点|城市|区域)[：:]\s*([^，。；;\n]+)',
                         'time':r'(?:完成时间|时间)[：:]\s*([^，。；;\n]+)',
-                        'details':r'(?:具体要求|鞋类|材质|服务内容)[：:]\s*([^，。；;\n]+)',
+                        'details':r'(?:具体要求|鞋类|材质|服务内容)[：:]\s*([^。；;\n]+)',
                         'fulfillment':r'(?:服务方式|取送方式)[：:]\s*([^，。；;\n]+)'}.items():
         match=re.search(pattern,text)
         if match and not PLACEHOLDER.search(match.group(1)): known[key]=match.group(1).strip()
@@ -121,7 +121,9 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                     evidence.append({'field':item.field,'value':value,'text':item.quote,'start':body.text.index(item.quote),'end':body.text.index(item.quote)+len(item.quote)})
             for key,values in model_values.items():
                 if key in {'location','time','details'}:
-                    known[key]='；'.join(dict.fromkeys(values))
+                    prior=known.get(key)
+                    retained=[prior] if prior and not any(prior in value for value in values) else []
+                    known[key]='；'.join(dict.fromkeys(retained+[value for value in values if not prior or value not in prior or value==prior]))
                 elif len(set(values))==1 and (key not in {'budget_yuan','quantity'} or key not in known): known[key]=values[0]
             if any(m.field=='task_name' for m in brief.missing) and 'task_name' not in model_values and not compiled['proposal']:
                 known.pop('task_name',None)

@@ -133,3 +133,12 @@ def test_missing_question_supplies_unit_and_example_uses_task_hint():
     assert '【填写数量】双' in result['rewrite_example']
     assert '【填写：鞋子类型、材质和清洗要求】' in result['rewrite_example']
     assert all(m['field']!='unit' for m in result['missing_fields'])
+
+
+@pytest.mark.parametrize('use_model',[False,True])
+def test_comma_separated_labeled_details_are_never_dropped(use_model):
+    text='刷鞋，预算350；数量：2双；具体要求：运动鞋基础清洗，不漂白；服务方式：到店送洗'
+    model=Response([field('details','运动鞋基础清洗','运动鞋基础清洗')]) if use_model else None
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=use_model),model)
+    assert result['can_rehearse']
+    assert any('运动鞋基础清洗，不漂白' in value for value in result['proposal']['custom_task']['context'])
