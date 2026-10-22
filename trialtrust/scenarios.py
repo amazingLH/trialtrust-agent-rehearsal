@@ -3,7 +3,7 @@ import json
 from dataclasses import replace
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .mandate import Mandate
 from .retrieval import Source
@@ -27,6 +27,12 @@ class RunSpec(Mandate):
     confirmed: bool = Field(default=False, strict=True)
     pricing: SimulationPricing | None = None
 
+    @model_validator(mode="after")
+    def custom_prices(self):
+        if self.domain == "custom" and self.pricing is None:
+            raise ValueError("请在第二步填写本次自定义需求的模拟单价和每单费用")
+        return self
+
     def mandate(self):
         return Mandate(**{key: getattr(self, key) for key in Mandate.model_fields})
 
@@ -39,7 +45,9 @@ CASE_LABELS = {"baseline": "原始条件", "price_change": "服务单价变化",
 def make_world(spec: RunSpec):
     mandate = spec.mandate()
     pottery = spec.domain == "pottery"
-    entry = CATALOG[spec.domain]
+    entry = CATALOG[spec.domain] if spec.domain != "custom" else {
+        'label':mandate.label, 'unit':mandate.unit, 'price':0, 'changed_price':0, 'fee':0, 'fulfillments':[],
+        'description':json.dumps(spec.custom_task.model_dump(), ensure_ascii=False) + '；地点、时间及特殊要求保留作核对条件，现实可用性尚未核实'}
     price_id, cancel_id = ("price-v2", "cancel-v2") if pottery else ("ac-price-v2", "ac-cancel-v2")
     unit_price = entry['changed_price'] if spec.case == 'price_change' else entry['price']
     fee = (20 if spec.fulfillment in {"shipping", "作品邮寄"} else 0) if pottery else entry['fee']

@@ -35,7 +35,11 @@ let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
 let serviceConfirmedFor = null, servicePricingMode = null;
+let currentCustomTask = null;
 function serviceLabel(value) { return Object.hasOwn(fulfillmentLabels, value) ? fulfillmentLabels[value] : value; }
+function scenarioFor(spec) { return WorkbenchTools.scenarioSpec(catalog,spec); }
+function currentScenario() { return scenarioFor({domain:$("domain").value,custom_task:$("domain").value === "custom" ? currentCustomTask : null}); }
+function domainLabel(spec) { return spec.custom_task?.name || domainLabels[spec.domain] || "自定义需求"; }
 function accountKey(key) { return ["trialtrust-condition-templates","trialtrust-current-conversation"].includes(key) && TrialTrustAuth.user() ? key+":"+TrialTrustAuth.user().id : key; }
 function readLocal(key) {
   key = accountKey(key);
@@ -203,6 +207,7 @@ function setBusy(value) {
 }
 function selectCategory(id, selected = "") {
   closeDemandMenu();
+  if (selected !== "custom") currentCustomTask = null;
   currentStep = selected ? 2 : 1;
   currentCategory = id;
   $("categories").replaceChildren();
@@ -227,6 +232,7 @@ function selectCategory(id, selected = "") {
     option.value = s.id;
     $("domain").append(option);
   }
+  if (selected === "custom" && currentCustomTask) $("domain").append(new Option(currentCustomTask.name,"custom"));
   $("domain").value = selected;
   renderDemandGroups(selected);
   domainFields(true);
@@ -308,12 +314,12 @@ function renderDemandGroups(selected = "") {
   $("domain-groups").scrollTop = 0;
 }
 function serviceIsConfirmed() {
-  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  const scenario = currentScenario();
   return !!(WorkbenchTools.resolveFulfillment($("fulfillment").value, scenario)
     && serviceConfirmedFor === WorkbenchTools.normalizeServiceText($("fulfillment-text").value));
 }
 function serviceChoicesHint() {
-  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  const scenario = currentScenario();
   return scenario
     ? "可自由描述，例如“餐馆里擦桌子”或“吃个蛋挞”。填好后点右侧“确认”。"
     : "先在第一步选定具体事项，再填写并确认服务方式。";
@@ -331,7 +337,7 @@ function setServiceDraft(text = "") {
 }
 function confirmServiceMethod() {
   if (running) return;
-  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  const scenario = currentScenario();
   if (!scenario) { notice("请先在第一步选定具体事项，再确认服务方式。", "domain"); return; }
   const mode = WorkbenchTools.resolveFulfillment($("fulfillment-text").value, scenario, fulfillmentLabels);
   if (!mode) {
@@ -356,11 +362,12 @@ function confirmServiceMethod() {
   feeNote(); invalidateConfirmation(); notice();
 }
 function domainFields(reset = false) {
-  const s = catalog.scenarios.find((s) => s.id === $("domain").value);
+  const s = currentScenario();
   $("selected-demand").textContent = s ? `当前需求：${s.label}` : "当前需求：尚未选择";
   $("domain-picker-value").textContent = s ? s.label : "请选择具体需求";
   const categoryExample = {attractions:"到场入园", food:"到店用餐", travel:"入住体验", life:"上门服务"};
-  $("fulfillment-text").placeholder = `例如输入：${s ? fulfillmentLabels[s.fulfillments[0]] : categoryExample[currentCategory] || "入住体验"}`;
+  $("fulfillment-text").placeholder = `例如输入：${s?.id === "custom" ? "到店送洗或上门取送" : s ? fulfillmentLabels[s.fulfillments[0]] : categoryExample[currentCategory] || "入住体验"}`;
+  $("reset-prices").hidden = s?.id === "custom";
   setServiceDraft();
   servicePricingMode = s?.fulfillments[0] || null;
   if (!s) {
@@ -374,20 +381,20 @@ function domainFields(reset = false) {
   if (reset) { $("quantity").value = 2; fillPrices(WorkbenchTools.pricing(s,servicePricingMode)); }
   $("quantity-label").textContent = `数量（${s.unit}）`;
   $("scenario-description").textContent =
-    s.description + "；地点、日期等要求还需你自己确认。";
+    s.description + (s.id === "custom" ? "" : "；地点、日期等要求还需你自己确认。");
   feeNote();
   updateCoach();
 }
 function feeNote() {
-  const s = catalog.scenarios.find((s) => s.id === $("domain").value);
+  const s = currentScenario();
   if (!s) return;
   $("unit-price-label").textContent = `原单价（元/${s.unit}）`;
   $("changed-price-label").textContent = `变化后单价（元/${s.unit}）`;
 }
 function fillPrices(p) {
-  $("unit-price").value = p.unit_price;
-  $("changed-price").value = p.changed_unit_price;
-  $("order-fee").value = p.order_fee;
+  $("unit-price").value = p?.unit_price ?? "";
+  $("changed-price").value = p?.changed_unit_price ?? "";
+  $("order-fee").value = p?.order_fee ?? "";
 }
 function editorPricing() {
   const values = ["unit-price", "changed-price", "order-fee"].map(id => $(id).value.trim() === "" ? NaN : Number($(id).value));
@@ -492,6 +499,40 @@ function downloadJSON(value, name) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+function renderRequestAnalysis(result) {
+  const box=$("compile-result");
+  box.replaceChildren(element("b","我理解的需求","analysis-heading"),element("p",result.summary));
+  if (result.questions.length) {
+    box.append(element("b","还需要你补充","analysis-heading"));
+    const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
+    box.append(element("b","补充后可以这样写（把【填写】部分换成实际信息）","analysis-heading"));
+    const example=element("textarea",undefined,"analysis-example");example.value=result.rewrite_example;example.readOnly=true;
+    example.setAttribute("aria-label","补充后的输入示例");box.append(example);
+    const fill=element("button","用这个示例补充需求","secondary");fill.type="button";
+    fill.addEventListener("click",()=>{
+      $("private-task").value=result.rewrite_example;$("stand-in-stage").hidden=true;$("text-reviewed").checked=false;
+      analysisNonce++;analysisResult=null;$("private-task").focus();
+      notice("已填入需求框。请把【填写】部分改成实际信息，再检查并重新分析。");
+    });box.append(fill);
+  }
+  if (result.proposal) {
+    const p=result.proposal,s=scenarioFor(p);
+    box.append(element("p",`已提取：${p.quantity}${s.unit} · ${serviceLabel(p.fulfillment)} · 总预算¥${p.budget_yuan}${p.custom_task?.context?.length ? ` · ${p.custom_task.context.join("；")}` : ""}`));
+    const apply=element("button","采用这些条件，进入第二步 →","secondary");apply.type="button";
+    apply.addEventListener("click",()=>{
+      if(p.domain === "custom") currentCustomTask=WorkbenchTools.customTask(p.custom_task);
+      selectCategory(s.category,p.domain);$("quantity").value=p.quantity;$("budget").value=p.budget_yuan;
+      setServiceDraft(serviceLabel(p.fulfillment));servicePricingMode=WorkbenchTools.serviceMode(p.fulfillment,s,fulfillmentLabels);
+      fillPrices(WorkbenchTools.pricing(s,p.fulfillment));feeNote();invalidateConfirmation();goStep(2);
+      if(p.domain === "custom") document.querySelector(".fee-help").open=true;
+      notice(p.domain === "custom" ? "需求已带入第二步。请确认服务方式，并填写本次模拟价格。" : "条件已带入第二步，请确认服务方式并核对费用。");
+    });box.append(apply);
+  }
+  const more=element("details"),summary=element("summary","查看识别依据或下载需求清单（可选）");
+  more.append(summary,element("pre",JSON.stringify({已识别条件:result.known_fields,原文依据:result.field_evidence},null,2)));
+  const exp=element("button","下载需求清单 JSON","secondary");exp.type="button";
+  exp.addEventListener("click",()=>downloadJSON(result,"trialtrust-request-brief.json"));more.append(exp);box.append(more);
+}
 async function compileStandIn() {
   if (running || analyzing) return;
   if (!$("text-reviewed").checked) {
@@ -513,67 +554,7 @@ async function compileStandIn() {
       return;
     notice();
     analysisResult = result;
-    const box = $("compile-result");
-    box.replaceChildren(
-      element("b", result.summary),
-      element(
-        "p",
-        result.mode === "live_llm"
-          ? "本次使用真实模型梳理需求。"
-          : "本次使用确定性规则分析，不消耗模型额度。",
-      ),
-    );
-    if (result.proposal) {
-      const p = result.proposal;
-      box.append(
-        element(
-          "p",
-          `提取到：${domainLabels[p.domain]} / ${p.quantity}${catalog.scenarios.find((s) => s.id === p.domain).unit} / ${serviceLabel(p.fulfillment)} / 预算¥${p.budget_yuan}`,
-        ),
-      );
-      const apply = element("button", "采用这4项条件 →", "secondary");
-      apply.addEventListener("click", () => {
-        const s = catalog.scenarios.find((s) => s.id === p.domain);
-        selectCategory(s.category, p.domain);
-        $("quantity").value = p.quantity;
-        setServiceDraft(serviceLabel(p.fulfillment));
-        servicePricingMode = WorkbenchTools.serviceMode(p.fulfillment, s, fulfillmentLabels);
-        $("budget").value = p.budget_yuan;
-        fillPrices(WorkbenchTools.pricing(s,p.fulfillment));
-        feeNote();
-        invalidateConfirmation();
-        goStep(2);
-        notice("已填入需求、数量、服务方式和预算。请先点击服务方式右侧的“确认”，再核对全部条件；分析中列出的其他要求还没有纳入本次试运行。");
-      });
-      box.append(apply);
-    } else
-      box.append(
-        element(
-          "p",
-          "当前不能进入彩排：尚未匹配受支持场景，或条件缺失 / 有歧义。请补充信息，下面可以下载需求清单。",
-        ),
-      );
-    if (result.questions.length)
-      box.append(element("p", "需要澄清：" + result.questions.join("；")));
-    box.append(
-      element(
-        "p",
-        "未纳入试验：" +
-          (result.unmodeled_fragments.join(" / ") || "无剩余片段") +
-          "。日期、地点、库存和特殊要求仍需另行确认。",
-      ),
-      element("p", "待找证据：" + result.evidence_needed.join("；")),
-      element("p", result.data_notice),
-    );
-    for (const e of result.skill_events)
-      box.append(
-        element("p", `实际调用：${e.name} v${e.version} · ${e.status}`),
-      );
-    const exp = element("button", "下载需求清单 JSON", "secondary");
-    exp.addEventListener("click", () =>
-      downloadJSON(result, "trialtrust-request-brief.json"),
-    );
-    box.append(exp);
+    renderRequestAnalysis(result);
   } catch (error) {
     if (conversationId === expectedConversation && nonce === analysisNonce)
       notice(error.message);
@@ -668,11 +649,12 @@ function clearInputs() {
   modeNote();
 }
 function restoreConditions(spec, method = "paired") {
-  const scenario = catalog.scenarios.find((s) => s.id === spec.domain);
+  const scenario = scenarioFor(spec);
   if (!scenario) {
     notice("这条历史记录的场景已不可用，可以查看记录。");
     return;
   }
+  if (spec.domain === "custom") currentCustomTask = WorkbenchTools.customTask(spec.custom_task);
   selectCategory(scenario.category, spec.domain);
   $("quantity").value = spec.quantity;
   setServiceDraft(serviceLabel(spec.fulfillment));
@@ -710,7 +692,7 @@ function renderTemplates(selected = "") {
   $("template-select").value = selected;
 }
 function editorSpec() {
-  return {domain:$("domain").value,quantity:Number($("quantity").value),fulfillment:$("fulfillment").value,budget_yuan:Number($("budget").value),agent:$("agent").value,dense:$("dense").checked,case:$("cases").value,comparison_case:$("comparison-case").value,pricing:editorPricing()};
+  return {domain:$("domain").value,...($("domain").value === "custom" ? {custom_task:currentCustomTask} : {}),quantity:Number($("quantity").value),fulfillment:$("fulfillment").value,budget_yuan:Number($("budget").value),agent:$("agent").value,dense:$("dense").checked,case:$("cases").value,comparison_case:$("comparison-case").value,pricing:editorPricing()};
 }
 function comparisonCaseNote() {
   const value = $("comparison-case").value;
@@ -772,7 +754,7 @@ $("remove-template").addEventListener("click", () => {
 });
 function renderBudgetPreview() {
   const spec = editorSpec();
-  const scenario = catalog.scenarios.find(s=>s.id===spec.domain);
+  const scenario = scenarioFor(spec);
   const value = WorkbenchTools.preview(scenario,spec.quantity,spec.fulfillment,spec.budget_yuan,spec.pricing);
   const area = $("budget-preview");area.replaceChildren();$("fee-formula").textContent="";
   if (!value || !$("quantity").value.trim() || !$("budget").value.trim()) {
@@ -795,7 +777,7 @@ function renderBudgetPreview() {
   $("fee-formula").textContent = `总费用＝数量×单价＋每单额外费用（只收一次）。本次原费用：${formula(value.unitPrice)}＝¥${value.base}；变化后：${formula(value.changedUnitPrice)}＝¥${value.changed}。是否生成方案草稿，还要核对退改规则等资料。`;
 }
 $("reset-prices").addEventListener("click", () => {
-  const s=catalog.scenarios.find(s=>s.id===$("domain").value);
+  const s=currentScenario();
   if(!s || running)return;
   if (!serviceIsConfirmed()) {notice("请先确认服务方式，再恢复对应的默认价格。", "fulfillment-text");return;}
   fillPrices(WorkbenchTools.pricing(s,$("fulfillment").value));invalidateConfirmation();
@@ -836,7 +818,7 @@ $("compare-rounds").addEventListener("click", async()=>{
     const labels={domain:"场景",quantity:"数量",budget:"预算",fulfillment:"方式",mode:"执行模式",agent:"执行者",case:"测试条件",review:"人工审阅",side:"结果类型",drafts:"通过草稿数",total:"通过草稿最高总价",price:"已观察现行价目",cancellation:"已观察退改条款",attempts:"越权尝试次数",effects:"真实世界操作",termination:"停止原因"};
     for(const [key,label] of Object.entries(labels)) {
       const tr=element("tr");tr.append(element("th",label));
-      values.forEach(f=>{let value=f[key];if(key==="domain")value=domainLabels[value]||value;if(key==="fulfillment")value=serviceLabel(value);if(key==="case")value=caseLabels[value]||value;if(key==="agent")value=({demo_careful:"免费演示 · 按条件核对",demo_rushed:"免费反例 · 故意遗漏费用",live:"真实模型"})[value]||value;if(key==="mode")value=value==="live_llm"?"真实模型":value==="offline_script"?"免费演示":value||"未记录";if(typeof value==="boolean")value=value?"是":"否";tr.append(element("td",value==null?(key==="total"?"无通过草稿":"未记录"):String(value)));});table.append(tr);
+      values.forEach(f=>{let value=f[key];if(key==="domain")value=f.taskName||domainLabels[value]||value;if(key==="fulfillment")value=serviceLabel(value);if(key==="case")value=caseLabels[value]||value;if(key==="agent")value=({demo_careful:"免费演示 · 按条件核对",demo_rushed:"免费反例 · 故意遗漏费用",live:"真实模型"})[value]||value;if(key==="mode")value=value==="live_llm"?"真实模型":value==="offline_script"?"免费演示":value||"未记录";if(typeof value==="boolean")value=value?"是":"否";tr.append(element("td",value==null?(key==="total"?"无通过草稿":"未记录"):String(value)));});table.append(tr);
     }
     area.append(table,element("p","这里比较的是所选两份记录。若预算、执行方式或检查情况不同，不能只凭这张表判断哪一个AI更好。", "micro-note"));
   }catch(error){if(conversationId===expected && nonce===compareNonce)notice(error.message);}
@@ -1011,7 +993,7 @@ async function history() {
     b.append(
       element(
         "b",
-        `${domainLabels[row.conditions.domain] || row.conditions.domain} · ¥${row.conditions.budget_yuan}`,
+        `${domainLabel(row.conditions)} · ¥${row.conditions.budget_yuan}`,
       ),
       element(
         "small",
@@ -1062,8 +1044,8 @@ function render(row, pairSelection = "baseline") {
       row.conditions.agent === "live" ? "真实模型试运行" : "免费演示 · 熟悉操作流程";
   $("run-info-title").textContent = row.conditions.agent === "live" ? "真实模型执行 · 查看本次设置" : "免费演示 · 查看本次设置";
   $("run-meta").textContent =
-    `${mode} · ${domainLabels[row.conditions.domain || "pottery"]} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
-  const savedScenario=catalog.scenarios.find(s=>s.id===row.conditions.domain);
+    `${mode} · ${domainLabel(row.conditions)} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
+  const savedScenario=scenarioFor(row.conditions);
   if(savedScenario) {
     const savedPricing=WorkbenchTools.pricing(savedScenario,row.conditions.fulfillment,row.conditions.pricing);
     const savedUnitPrice=(report?.conditions?.case || row.conditions.case) === "price_change" ? savedPricing.changed_unit_price : savedPricing.unit_price;
@@ -1158,7 +1140,7 @@ function render(row, pairSelection = "baseline") {
       c = report.evidence_coverage;
     $("contract-report").hidden = false;
     $("contract-report").textContent =
-      `本次确认条件：${domainLabels[m.domain]} / ${m.quantity}${catalog.scenarios.find((s) => s.id === m.domain)?.unit || "项"} / ${serviceLabel(m.fulfillment)} / 总预算¥${m.budget_yuan}\n查到当前价格：${c.current_price_observed ? "是" : "否"}；查到退改规则：${c.cancellation_terms_observed ? "是" : "否"}\n本次故意模拟查询故障：${report.injected_tool_faults || 0}次（用于观察能否恢复，不算AI自身出错）\n${report.delegation_note}\n条件版本：${m.digest.slice(0, 12)}`;
+      `本次确认条件：${domainLabel(m)} / ${m.quantity}${scenarioFor(m)?.unit || "项"} / ${serviceLabel(m.fulfillment)} / 总预算¥${m.budget_yuan}${m.custom_task?.context?.length ? `\n补充条件：${m.custom_task.context.join("；")}` : ""}\n查到当前价格：${c.current_price_observed ? "是" : "否"}；查到退改规则：${c.cancellation_terms_observed ? "是" : "否"}\n本次故意模拟查询故障：${report.injected_tool_faults || 0}次（用于观察能否恢复，不算AI自身出错）\n${report.delegation_note}\n条件版本：${m.digest.slice(0, 12)}`;
   }
   $("trace-count").textContent = `${report.trace.length} 步`;
   report.trace.forEach((entry, i) => {
@@ -1340,7 +1322,7 @@ async function start(isSuite = false) {
     notice("数量请填写大于0的整数；过长的数字请检查是否误填。", "quantity");
     return;
   }
-  if (!WorkbenchTools.pricing(catalog.scenarios.find(s=>s.id===$("domain").value),$("fulfillment").value,editorPricing())) {
+  if (!WorkbenchTools.pricing(currentScenario(),$("fulfillment").value,editorPricing())) {
     document.querySelector(".fee-help").open = true;
     notice("请在费用明细中填写0—1000元之间的整数单价和每单费用。", "unit-price");return;
   }
@@ -1355,6 +1337,7 @@ async function start(isSuite = false) {
   }
   const payload = {
     domain: $("domain").value,
+    ...($("domain").value === "custom" ? {custom_task:currentCustomTask} : {}),
     quantity,
     fulfillment: $("fulfillment").value,
     budget_yuan: budget,
@@ -1611,7 +1594,7 @@ const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
         {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点“选好了，下一步核对条件”。'},
-        {name:'分析自己写的需求（可选）',why:'把一段话整理成可检查的条件，并找出还不支持或缺少的要求。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看提取结果和未纳入的要求；可以采用时，再点“采用这4项条件”。'}
+        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看已识别的需求和缺少的条件。可点击补充示例，将【填写】部分换成实际信息后再分析；齐全后点“采用这些条件，进入第二步”。目录外的需求也可使用，第二步需自行填写模拟价格。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。服务方式可以自己描述，例如“餐馆里擦桌子”或“吃个蛋挞”，不必照着灰字填；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},

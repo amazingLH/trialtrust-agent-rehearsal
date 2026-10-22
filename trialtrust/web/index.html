@@ -214,7 +214,7 @@
               <details class="custom-request">
                 <summary>没有合适选项？写下自己的需求 ↗</summary>
                 <p id="custom-request-help" class="muted">
-                  先在浏览器里隐藏手机号、邮箱和证件号，不上传原文；姓名、地址请自己删除。检查后再分析，暂不支持的需求会提示你补充信息，不会直接套用示例。
+                  直接写你想办的事，不限上面的选项。分析后会保留已知条件，只问缺少的信息，并给出补充示例。请勿填写姓名、电话或详细住址。
                 </p>
                 <label class="field custom-request-label" for="private-task">你的需求</label>
                 <div class="custom-request-row">
@@ -223,7 +223,7 @@
                     rows="2"
                     maxlength="1200"
                     aria-describedby="custom-request-help"
-                    placeholder="例如：2人到店吃自助餐，总预算200元。请勿填真实姓名、电话、地址。"
+                    placeholder="例如：找个刷鞋的店，预算350。也可以写任何其他需求。"
                   ></textarea>
                 <button id="prepare-stand-in" class="secondary">
                   ① 隐去手机号等信息
@@ -252,7 +252,7 @@
                       aria-hidden="true"
                       >✓</span
                     ><span
-                      >同时请真实模型梳理需求（会消耗模型额度）</span
+                      >使用大模型理解自定义需求（推荐，会消耗模型额度）</span
                     ></label
                   ><button id="compile" class="secondary">
                     ② 分析需求与缺失条件
@@ -297,7 +297,7 @@
               <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
               <details class="compact-help fee-help"><summary>查看费用明细 / 调整这次的模拟价格</summary>
                 <p id="fee-note" class="micro-note">先选择具体需求，再查看本次费用。</p>
-                <p class="micro-note">下面是供AI查证的模拟价目，可自行修改；数量和价格改变后会重算，服务方式需点击“确认”后才参与计算。开始运行后也使用这份价目。每项支持0—1000元整数。切换具体需求会恢复默认价格；服务方式可自由描述；自定义描述沿用当前价目，请按需要调整。填写自取、邮寄等常用方式时，会带入相应的默认每单费用。</p>
+                <p class="micro-note">下面是供AI查证的模拟价目，可自行修改；数量和价格改变后会重算，服务方式需点击“确认”后才参与计算。开始运行后也使用这份价目。每项支持0—1000元整数。切换目录事项会恢复默认价格；自定义事项需自行填写模拟价格；服务方式可自由描述；自定义描述沿用当前价目，请按需要调整。填写自取、邮寄等常用方式时，会带入相应的默认每单费用。</p>
                 <div class="form-grid conditions-grid pricing-grid">
                   <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" max="1000" step="1" /></label>
                   <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" max="1000" step="1" /></label>
@@ -344,7 +344,7 @@
                   <option value="tool_timeout">第一次查询超时：能不能恢复</option>
                 </select>
               </div>
-              <details class="compact-help"><summary>这次允许AI做什么？</summary><div class="boundary"><b>查模拟资料、核对费用和退改规则、生成供你检查的方案草稿</b><p>不会真的预约、下单或付款。地点、日期和特殊要求尚未纳入本次检查。试运行通过只说明这次表现符合条件，不能保证AI在真实网站上也安全。</p></div></details>
+              <details class="compact-help"><summary>这次允许AI做什么？</summary><div class="boundary"><b>查模拟资料、核对费用和退改规则、生成供你检查的方案草稿</b><p>不会真的预约、下单或付款。自定义需求中确认的地点、时间和具体要求会保留；真实店铺和可服务时间需另行核实。试运行通过只说明这次表现符合条件，不能保证AI在真实网站上也安全。</p></div></details>
               <div class="control-stage"><h3>④ 确认后开始</h3><p>核对上面的选择，勾选确认，再点开始。也可把这套设置存为模板：包括第一步的具体需求，以及第二步的数量、服务方式、预算、模拟价格、执行方式和试运行情况。</p></div>
               <div class="template-save inline-control">
                 <label for="template-name">存为条件模板（可选）：</label><input id="template-name" maxlength="60" placeholder="起个名字，例如：两人周末聚餐" /><button id="save-template" class="secondary">保存模板</button>
@@ -480,7 +480,7 @@
           <span>试托 v0.7 · 把事情交给AI之前，先在模拟环境里试一遍</span
           >
           <p>
-            <span id="catalog-summary">4大类、30个子分类、291个具体事项</span>；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
+            <span id="catalog-summary">4大类、30个子分类、291个具体事项</span>；也可填写目录外的需求，补齐条件后试运行。现实价格、日期、地点与库存需另行核实。
           </p>
         </footer>
       </div>

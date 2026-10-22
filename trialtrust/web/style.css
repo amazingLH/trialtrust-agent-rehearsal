@@ -914,6 +914,10 @@ details > div {
 .analysis-result button {
   margin: 10px 8px 0 0;
 }
+.analysis-result .analysis-heading { display:block; margin:12px 0 4px; font-size:15px; }
+.analysis-result ul { margin:5px 0 12px; padding-left:22px; }
+.analysis-result .analysis-example { width:100%; min-height:100px; margin:7px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font:inherit; line-height:1.75; resize:vertical; background:#faf8ff; }
+.analysis-result details { margin-top:15px; font-size:12px; color:var(--muted); }
 .site-footer {
   display: flex;
   flex-wrap: wrap;

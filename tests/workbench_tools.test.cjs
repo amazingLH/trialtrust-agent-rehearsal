@@ -114,3 +114,17 @@ test('templates preserve the explicitly selected comparison and reject unsupport
  assert.equal(W.readTemplates(JSON.stringify([t]),catalog)[0].spec.comparison_case,'missing_evidence');
  assert.equal(W.cleanTemplate({...template,spec:{...template.spec,comparison_case:'baseline'}},catalog),null);
 });
+
+test('custom scenarios have their own name and unit and never borrow catalog prices',()=>{
+ const spec={...template.spec,domain:'custom',custom_task:{name:'刷鞋',unit:'双',context:['地点：测试城区','不要漂白']},pricing:{unit_price:100,changed_unit_price:200,order_fee:10},budget_yuan:350};
+ const scenario=W.scenarioSpec(catalog,spec);
+ assert.equal(scenario.label,'刷鞋');assert.equal(scenario.unit,'双');
+ assert.equal(W.pricing(scenario,spec.fulfillment),null);
+ const saved=W.cleanTemplate({...template,spec},catalog);
+ assert.deepEqual(saved.spec.custom_task,spec.custom_task);
+ assert.deepEqual(W.readTemplates(JSON.stringify([saved]),catalog),[saved]);
+ assert.equal(W.preview(scenario,2,'到店送洗',350,spec.pricing).changed,410);
+ assert.equal(W.cleanTemplate({...template,spec:{...spec,pricing:undefined}},catalog),null);
+ assert.equal(W.cleanTemplate({...template,spec:{...spec,custom_task:null}},catalog),null);
+ assert.match(W.recordLabel({conditions:spec},1,'changed',{}),/刷鞋/);
+});

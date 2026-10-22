@@ -50,10 +50,11 @@ def test_trusted_skills_refuse_unknown_and_ungranted_execution():
     assert len(event['input_digest'])==len(event['output_digest'])==64
 
 @pytest.mark.parametrize('text', ['帮我比较三家宠物托管，预算300元','2人到店用餐，总预算200元','2人去自助餐和博物馆，到场，总预算200元','2台自助餐，到店用餐，总预算200元'])
-def test_unsupported_or_ambiguous_text_never_silently_maps_to_a_domain(text):
+def test_unknown_or_ambiguous_text_never_silently_maps_to_a_catalog_example(text):
     result=analyze(AnalysisRequest(text=text,reviewed=True))
-    assert not result['can_rehearse'] and result['proposal'] is None
-    assert result['questions'] and result['evidence_needed']
+    assert result['proposal'] is None or result['proposal']['domain']=='custom'
+    if result['proposal'] is None: assert result['questions']
+    assert result['evidence_needed']
     assert result['skill_events'][0]['skill_id']=='request-analysis'
 
 

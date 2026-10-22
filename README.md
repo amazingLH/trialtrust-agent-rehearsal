@@ -83,7 +83,7 @@ flowchart LR
 | 状态与恢复 | LangGraph、SQLite Checkpointer、人审Interrupt、父图恢复时复用子图 | [cli.py](trialtrust/cli.py)、[suite.py](trialtrust/suite.py) |
 | MCP | 可独立连接的两个只读stdio工具；主网页内部工具调用不经过该服务 | [mcp_server.py](trialtrust/mcp_server.py) |
 | 应用内 Skills | 可信白名单、按需说明加载、JSON Schema、权限闸门、调用摘要与检查点恢复 | [skill_runtime.py](trialtrust/skill_runtime.py)、[技能说明](docs/skills.md) |
-| 分层需求目录 | 景点、美食、旅行、生活分别有6、7、8、9个子分类，共291个可试运行的具体事项；未知文字只形成澄清清单 | [catalog.py](trialtrust/catalog.py)、[catalog_groups.py](trialtrust/catalog_groups.py)、[request_analysis.py](trialtrust/request_analysis.py) |
+| 分层需求目录 | 景点、美食、旅行、生活分别有6、7、8、9个子分类，共291个具体事项；也可直接写目录外的需求，补齐条件后进入自定义试运行 | [catalog.py](trialtrust/catalog.py)、[catalog_groups.py](trialtrust/catalog_groups.py)、[request_analysis.py](trialtrust/request_analysis.py) |
 | 服务与预算 | FastAPI、Gradio托管适配、匿名会话归属、同源校验、请求前费用预留 | [webapp.py](trialtrust/webapp.py)、[app.py](app.py) |
 
 完整能力清单与尚未实现的部分见[架构文档](docs/architecture.md)。v0.5已实现应用内可信 Skills 运行时；尚无A2A、神经重排或任意第三方Agent接入。Skills 与只读 MCP 的不同职责见技能文档。
@@ -132,7 +132,7 @@ python tools/verify_evidence.py
 
 ## 当前边界
 
-支持景点、美食、旅行、生活四类共十二个自有合成场景，不连接真实商家、预约、支付或通讯。自定义需求可使用规则或显式开启真实模型梳理；仅明确映射到目录且四项字段齐全时才能采用为试验条件。时间、地址、机型等额外要求会作为未建模内容展示。格式替换不能保证完全匿名化。
+目录覆盖景点、美食、旅行、生活四类共291个事项，也接受目录外的自定义需求。开启大模型分析后，会从原话中整理想做的事、数量、服务方式和预算，只追问缺少的条件，并给出可补填的输入示例；补齐后可进入第二步，自行填写本次模拟价格。地点、时间和具体要求随条件保留，供AI查阅，但不核验真实商家、库存或可预约时间，也不执行预约、支付或通讯。格式替换不能保证完全匿名化。
 
 检索对语料不支持的问题仍可能返回文档，尚无可靠的无答案校准。单次成对执行不能证明统计因果、模型排名或整体安全；额外角色是否改善质量也尚未完成对照验证。应用为单进程设计，免费托管需要持续维护。
 

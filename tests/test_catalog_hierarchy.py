@@ -18,7 +18,7 @@ def test_hierarchy_has_varied_group_counts_and_distinct_executable_leaves():
         'attractions': 58, 'food': 67, 'travel': 77, 'life': 89}
     assert len(CATALOG) == len({s['label'] for s in CATALOG.values()}) == 291
     assert len({g['id'] for g in GROUPS}) == 30
-    assert set(get_args(Domain)) == set(CATALOG)
+    assert set(get_args(Domain)) == set(CATALOG) | {'custom'}
     group_ids = {g['id'] for g in GROUPS}
     assert all(s['group'] in group_ids for s in CATALOG.values())
     assert all(g['category'] in {c['id'] for c in CATEGORIES} for g in GROUPS)
@@ -41,7 +41,7 @@ def test_old_record_ids_prices_and_delivery_modes_are_preserved():
 def test_skill_schemas_allow_the_entire_catalog_and_keep_unknown_domains_closed():
     for name in ('mandate-review', 'evidence-retrieval'):
         fields = load(name)['input_schema']['properties']
-        assert set(fields['domain']['enum']) == set(CATALOG)
+        assert set(fields['domain']['enum']) == set(CATALOG) | {'custom'}
         if 'fulfillment' in fields:
             assert fields['fulfillment'] == {'type':'string','minLength':1,'maxLength':500}
             assert 'maximum' not in fields['quantity']

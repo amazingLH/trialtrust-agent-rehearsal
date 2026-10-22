@@ -41,7 +41,8 @@ for group in GROUPS:
         CATALOG[key]['keywords'] = list(dict.fromkeys([label, *CATALOG[key]['keywords']]))
 
 # The same closed set validates API contracts, the MCP schema and saved conditions.
-Domain = Literal[tuple(CATALOG)]
+CatalogDomain = Literal[tuple(CATALOG)]
+Domain = Literal[tuple([*CATALOG, 'custom'])]
 
 
 def public_catalog():

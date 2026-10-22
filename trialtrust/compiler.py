@@ -30,7 +30,7 @@ def has_recognizable_identifier(text):
 def compile_stand_in(text: str) -> dict:
     if has_recognizable_identifier(text):
         raise ValueError("替身仍含可识别的手机号、邮箱或身份证格式，请先在本地替换")
-    fields: dict[str, list] = {name: [] for name in Mandate.model_fields}
+    fields: dict[str, list] = {name: [] for name in ("domain", "quantity", "fulfillment", "budget_yuan")}
     spans, issues = [], []
     numeral = dict(zip("一二三四五六七八九", range(1, 10))) | {"两": 2, "十": 10}
 
@@ -51,7 +51,7 @@ def compile_stand_in(text: str) -> dict:
         token = match.group(1)
         add("quantity", int(token) if token.isascii() else numeral[token], match)
         quantity_units.append(match.group(2))
-    for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*([0-9]+)\s*元", text):
+    for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*[¥￥]?\s*([0-9]+)(?:\s*元)?(?![\d.])", text):
         add("budget_yuan", int(match.group(1)), match)
     modes = {'到店自取':'pickup','自取':'pickup','作品邮寄':'shipping','邮寄':'shipping','上门':'onsite','到场入园':'entry','入园':'entry','到场':'entry','到店用餐':'dine_in','用餐':'dine_in','集合出行':'meetup','集合':'meetup','入住体验':'stay','入住':'stay','到店体验':'visit','乘车出行':'ride','乘车':'ride','到店租还':'rental'}
     for match in re.finditer('|'.join(sorted(modes,key=len,reverse=True)), text):
@@ -81,7 +81,7 @@ def compile_stand_in(text: str) -> dict:
             issues.append({'field':'quantity','reason':'unsupported_quantity_unit'})
     if not issues:
         try:
-            proposal = Mandate(**chosen).model_dump()
+            proposal = Mandate(**chosen).model_dump(exclude_none=True)
         except ValidationError:
             issues.append({"field": "combination", "reason": "unsupported_combination"})
     return {"compiler": "explicit_rules_v1", "proposal": proposal, "field_evidence": spans,

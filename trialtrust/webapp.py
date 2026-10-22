@@ -197,7 +197,7 @@ class Store:
             now = time.time()
             db.execute("INSERT INTO runs(id,owner,spec,status,stage,created,kind,conversation_id) VALUES (?,?,?,?,?,?,?,?)",
                        (run_id, owner, spec.model_dump_json(), "running", "正在准备合成条件", now, kind, conversation_id))
-            title = next(s["label"] for s in public_catalog()["scenarios"] if s["id"] == spec.domain)
+            title = spec.mandate().label
             db.execute("UPDATE conversations SET updated=?,title=CASE WHEN title='新会话' AND updated=created THEN ? ELSE title END WHERE id=? AND owner=?",
                        (now, title, conversation_id, owner))
         return run_id

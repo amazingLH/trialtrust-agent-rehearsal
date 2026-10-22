@@ -1,7 +1,7 @@
 {
   "id": "request-analysis",
   "name": "自定义需求拆解",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "分析手动需求，找出已知条件、遗漏信息和下一步；可选真实模型。",
   "capabilities": [
     "analyze_text",

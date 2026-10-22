@@ -100,7 +100,7 @@ class TrialWorld:
 
     def execute(self, name: str, args: dict, index) -> dict:
         if not self.skill_events:
-            _, event = invoke('mandate-review',self.mandate.model_dump(),lambda payload, instructions:self.mandate.record(),
+            _, event = invoke('mandate-review',self.mandate.model_dump(exclude_none=True,mode='json'),lambda payload, instructions:self.mandate.record(),
                               granted={'read_conditions'},required={'read_conditions'})
             self.skill_events.append(event)
         if name not in self.allowed_actions:
