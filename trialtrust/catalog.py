@@ -1,9 +1,9 @@
 """Versioned owned examples; the catalog is not a live merchant directory."""
 from typing import Literal
+from .catalog_groups import GROUPS
 
-Domain = Literal['pottery', 'cleaning', 'museum', 'garden', 'aquarium', 'buffet', 'teatime', 'picnic', 'citywalk', 'daytrip', 'hotel', 'organizing']
-Fulfillment = Literal['pickup', 'shipping', 'onsite', 'entry', 'dine_in', 'meetup', 'stay']
-FULFILLMENTS = {'pickup':'到店自取','shipping':'作品邮寄','onsite':'上门服务','entry':'到场入园','dine_in':'到店用餐','meetup':'集合出行','stay':'入住体验'}
+Fulfillment = Literal['pickup', 'shipping', 'onsite', 'entry', 'dine_in', 'meetup', 'stay', 'visit', 'ride', 'rental']
+FULFILLMENTS = {'pickup':'到店自取','shipping':'作品邮寄','onsite':'上门服务','entry':'到场入园','dine_in':'到店用餐','meetup':'集合出行','stay':'入住体验','visit':'到店体验','ride':'乘车出行','rental':'到店租还'}
 MAX_BUDGET_YUAN = 1_000_000
 CATEGORIES = [{'id':'attractions','label':'景点探索','icon':'⌂'}, {'id':'food','label':'美食聚会','icon':'◡'}, {'id':'travel','label':'旅行出行','icon':'✦'}, {'id':'life','label':'生活服务','icon':'♡'}]
 
@@ -26,7 +26,26 @@ CATALOG = {
  'organizing':item('life','收纳整理','次',120,160,20,['onsite'],['收纳','整理服务'],'按服务次数算费用，加上每单上门费'),
 }
 
+# Preserve the original IDs and prices so saved templates and records still work.
+legacy_by_label = {entry['label']: key for key, entry in CATALOG.items()}
+for group in GROUPS:
+    for slot, label in enumerate(group['choices'], 1):
+        key = legacy_by_label.get(label, f'{group["id"]}-{slot:02d}')
+        if key not in CATALOG:
+            price = group['price'] + ((slot - 1) % 4) * 5
+            CATALOG[key] = item(group['category'], label, group['unit'], price,
+                                price + group['delta'], group['fee'], group['fulfillments'],
+                                [label], group['description'])
+        CATALOG[key]['group'] = group['id']
+        CATALOG[key]['keywords'] = list(dict.fromkeys([label, *CATALOG[key]['keywords']]))
+
+# The same closed set validates API contracts, the MCP schema and saved conditions.
+Domain = Literal[tuple(CATALOG)]
+
+
 def public_catalog():
-    return {'version':'owned-catalog-v1','categories':CATEGORIES,
+    return {'version':'owned-catalog-v2','categories':CATEGORIES,
+            'groups':[{key: group[key] for key in ('id','category','label')} |
+                      {'count':len(group['choices'])} for group in GROUPS],
             'scenarios':[{'id':key,**value} for key,value in CATALOG.items()],
             'fulfillments':FULFILLMENTS,'limits':{'budget_yuan':MAX_BUDGET_YUAN}}

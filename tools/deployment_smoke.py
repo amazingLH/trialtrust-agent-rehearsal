@@ -57,11 +57,11 @@ def main():
             response.raise_for_status()
             component = next(c for c in response.json()["components"] if c["type"] == "html")
             assert 'id="run-suite"' in component["props"]["value"]
-            assert 'id="show-guide"' in component['props']['value']
+            assert 'id="coach"' in component['props']['value']
             assert 'confirmedFor' in component['props']['js_on_load']
         direct = client.get('/api/workbench')
         direct.raise_for_status()
-        assert 'id="show-guide"' in direct.text and '/api/workbench-assets/app.js' in direct.text
+        assert 'id="coach"' in direct.text and 'id="domain-picker"' in direct.text and '/api/workbench-assets/app.js' in direct.text
         assert client.get('/api/workbench-assets/app.js').status_code == 200
         response = client.get("/health")
         response.raise_for_status()
@@ -102,7 +102,7 @@ def main():
             state_path.parent.mkdir(parents=True,exist_ok=True)
             state_path.write_text(json.dumps(state,ensure_ascii=False,indent=2),encoding='utf-8')
             state_path.chmod(0o600)
-        assert len(client.get('/api/catalog').json()['scenarios']) == 12
+        assert len(client.get('/api/catalog').json()['scenarios']) == len(CATALOG)
         assert len(client.get('/api/skills').json()['skills']) == 5
         conv = client.post('/api/conversations', json={})
         conv.raise_for_status()
@@ -173,7 +173,7 @@ def main():
         report["smoke_test_context"] = {"annotation_source": "test_client",
             "review_decision_source": "automated_smoke_not_human_user",
             "owner_gateway": args.owner_gateway, "live": args.live,'local_studio':args.local_studio,
-            'managed_docker':args.managed_docker,'conversation_methods':'typed_confirmed_actions' if args.managed_docker else 'confirmed_post','version':'v0.6.1','checks':['12_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','rename_and_delete_own_spare_conversation']}
+            'managed_docker':args.managed_docker,'conversation_methods':'typed_confirmed_actions' if args.managed_docker else 'confirmed_post','version':'v0.6.1','checks':[f'{len(CATALOG)}_catalog_scenarios','5_trusted_skills','unreviewed_analysis_blocked','unsupported_request_not_mapped','unchecked_before_and_after_run_blocked','paired_run_review_export','owner_scoped_conversations','new_conversation_preserves_history','rename_and_delete_own_spare_conversation']}
         report['custom_analysis_check'] = analysis.json()
         assert report['skill_events'][0]['skill_id'] == 'pair-audit'
         assert report['baseline']['skill_events'][0]['skill_id'] == 'mandate-review'

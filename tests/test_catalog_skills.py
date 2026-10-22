@@ -79,7 +79,7 @@ def test_analysis_model_cannot_create_unsupported_rehearsal():
 def test_new_endpoints_and_confirmed_false_after_prior_success(tmp_path):
     headers={'X-TrialTrust-Client':'web'}
     with TestClient(create_app(tmp_path/'web',enable_live=False, require_accounts=False)) as client:
-        assert len(client.get('/api/catalog').json()['scenarios'])==12
+        assert len(client.get('/api/catalog').json()['scenarios'])==len(CATALOG)
         assert len(client.get('/api/skills').json()['skills'])==5
         body={'text':'2人到店用餐吃自助餐，总预算200元','reviewed':True,'use_model':False}
         assert client.post('/api/analyze',headers=headers,json=body).status_code==401

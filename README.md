@@ -46,7 +46,7 @@ deployspec:
 
 - 账号入口：用户名/密码注册、bcrypt哈希、登录退出、密码修改和一次性恢复码；业务接口强制鉴权。
 - SQLite持久化：账号归属的历史记录、同一浏览器注册绑定、启动前私有备份。详情见[账号与存储](docs/accounts.md)。
-- 场景与条件：4类12个合成场景、示例与个人模板、合成费用预览。
+- 场景与条件：4大类、30个子分类、291个具体事项，支持两级菜单选择、示例与个人模板、模拟费用预览。
 - 试验控制：显式选择执行者、检索方式、自动对照或手动测试，设置改变后重新确认。
 - 证据与比较：实际调用轨迹、结果检查清单、会话内跨轮对照与人工审阅导出。
 - 会话管理：新建、继续、持久化重命名和带确认的逻辑删除。
@@ -83,7 +83,7 @@ flowchart LR
 | 状态与恢复 | LangGraph、SQLite Checkpointer、人审Interrupt、父图恢复时复用子图 | [cli.py](trialtrust/cli.py)、[suite.py](trialtrust/suite.py) |
 | MCP | 可独立连接的两个只读stdio工具；主网页内部工具调用不经过该服务 | [mcp_server.py](trialtrust/mcp_server.py) |
 | 应用内 Skills | 可信白名单、按需说明加载、JSON Schema、权限闸门、调用摘要与检查点恢复 | [skill_runtime.py](trialtrust/skill_runtime.py)、[技能说明](docs/skills.md) |
-| 分层需求目录 | 景点、美食、旅行、生活4类12个合成场景；未知文字只形成澄清清单 | [catalog.py](trialtrust/catalog.py)、[request_analysis.py](trialtrust/request_analysis.py) |
+| 分层需求目录 | 景点、美食、旅行、生活分别有6、7、8、9个子分类，共291个可试运行的具体事项；未知文字只形成澄清清单 | [catalog.py](trialtrust/catalog.py)、[catalog_groups.py](trialtrust/catalog_groups.py)、[request_analysis.py](trialtrust/request_analysis.py) |
 | 服务与预算 | FastAPI、Gradio托管适配、匿名会话归属、同源校验、请求前费用预留 | [webapp.py](trialtrust/webapp.py)、[app.py](app.py) |
 
 完整能力清单与尚未实现的部分见[架构文档](docs/architecture.md)。v0.5已实现应用内可信 Skills 运行时；尚无A2A、神经重排或任意第三方Agent接入。Skills 与只读 MCP 的不同职责见技能文档。

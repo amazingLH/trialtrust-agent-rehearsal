@@ -138,7 +138,7 @@
           <p class="hero-copy">先用模拟资料试一遍，看看 AI 在涨价、缺资料时，会不会漏查费用或做你没允许的事。</p>
         </section>
         <div class="workbench-overview" aria-label="工作台概览">
-          <span><b>12</b> 个模拟场景</span><span><b>5</b> 类检查情况</span>
+          <span><b id="scenario-total">291</b> 个模拟场景</span><span><b>5</b> 类检查情况</span>
           <span><b id="template-total">0</b> 个个人模板</span><span><b id="round-total">0</b> 轮会话记录</span>
         </div>
         <section id="coach" class="coach" aria-label="操作指引">
@@ -189,11 +189,23 @@
               ></div>
               </div>
               <div class="demand-selection-row">
-              <label id="manual-domain-field" class="field demand-domain-field"
-                ><span>具体想做什么</span><select id="domain" aria-describedby="scenario-note">
+              <div id="manual-domain-field" class="field demand-domain-field">
+                <span id="domain-picker-label">具体想做什么</span>
+                <div class="demand-picker">
+                  <button id="domain-picker" type="button" aria-label="具体想做什么" aria-haspopup="dialog" aria-expanded="false" aria-controls="domain-picker-menu" aria-describedby="scenario-note"><span id="domain-picker-value">请选择具体需求</span><span aria-hidden="true">⌄</span></button>
+                  <div id="domain-picker-menu" class="demand-picker-menu" role="dialog" aria-label="选择具体需求" hidden>
+                    <div class="demand-menu-heading"><span id="domain-menu-title"></span><button id="close-domain-menu" type="button" class="icon-button" aria-label="关闭需求菜单">×</button></div>
+                    <p class="demand-menu-tip">先移到或点击左侧子分类，再在右侧选择具体事项。</p>
+                    <div class="demand-menu-columns">
+                      <nav id="domain-groups" aria-label="需求子分类"></nav>
+                      <section class="demand-menu-options" aria-labelledby="domain-options-title"><h3 id="domain-options-title"></h3><div id="domain-options"></div></section>
+                    </div>
+                  </div>
+                </div>
+                <select id="domain" hidden aria-hidden="true" tabindex="-1">
                   <option value="">请先选择一个类别</option>
-                </select></label
-              >
+                </select>
+              </div>
               <p id="selected-demand" class="selection-summary" aria-live="polite">当前需求：尚未选择</p>
               </div>
               <p id="scenario-note" class="scenario-note">
@@ -448,7 +460,7 @@
           <span>试托 v0.7 · 把事情交给AI之前，先在模拟环境里试一遍</span
           >
           <p>
-            4类12个示例场景；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
+            <span id="catalog-summary">4大类、30个子分类、291个具体事项</span>；自定义需求可拆解和澄清。现实价格、日期、地点与库存需另行核实。
           </p>
         </footer>
       </div>

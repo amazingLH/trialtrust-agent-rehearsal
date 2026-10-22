@@ -65,6 +65,7 @@ function element(tag, text, cls) {
   return node;
 }
 function notice(text = "", target) {
+  if (target === "domain") target = "domain-picker";
   $("notice-text").textContent = text;
   $("notice").hidden = !text;
   if (target) {
@@ -151,6 +152,7 @@ function modeNote() {
 }
 function setBusy(value) {
   running = value;
+  if (value) closeDemandMenu();
   if (value) closeConversationMenus();
   [
     "run",
@@ -159,6 +161,7 @@ function setBusy(value) {
     "budget",
     "agent",
     "domain",
+    "domain-picker",
     "quantity",
     "fulfillment",
     "confirmed",
@@ -189,6 +192,7 @@ function setBusy(value) {
   updateCoach();
 }
 function selectCategory(id, selected = "") {
+  closeDemandMenu();
   currentStep = selected ? 2 : 1;
   currentCategory = id;
   $("categories").replaceChildren();
@@ -214,13 +218,90 @@ function selectCategory(id, selected = "") {
     $("domain").append(option);
   }
   $("domain").value = selected;
+  renderDemandGroups(selected);
   domainFields(true);
   invalidateConfirmation();
+}
+let demandHoverTimer = null;
+function closeDemandMenu(returnFocus = false) {
+  clearTimeout(demandHoverTimer);
+  $("domain-picker-menu").hidden = true;
+  $("domain-picker").setAttribute("aria-expanded", "false");
+  if (returnFocus) $("domain-picker").focus({preventScroll:true});
+}
+function positionDemandMenu() {
+  const menu = $("domain-picker-menu"), anchor = $("domain-picker").getBoundingClientRect();
+  const below = window.innerHeight - anchor.bottom - 18;
+  const above = anchor.top - 88;
+  const opensAbove = above > below && below < 340;
+  menu.classList.toggle("opens-above", opensAbove);
+  menu.style.setProperty("--demand-list-height", `${Math.max(100, Math.min(370, (opensAbove ? above : below) - 90))}px`);
+  menu.style.left = `${Math.max(16 - anchor.left, Math.min(0, window.innerWidth - 16 - anchor.left - menu.offsetWidth))}px`;
+}
+function renderDemandOptions(groupId) {
+  const group = catalog.groups.find(group => group.id === groupId);
+  if (!group) return;
+  $("domain-groups").querySelectorAll("button").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.group === groupId));
+  });
+  const items = catalog.scenarios.filter(item => item.group === groupId);
+  $("domain-options-title").textContent = `${group.label} · ${items.length}个具体事项`;
+  $("domain-options").replaceChildren();
+  $("domain-options").parentElement.scrollTop = 0;
+  for (const item of items) {
+    const button = element("button", item.label, "demand-option");
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(item.id === $("domain").value));
+    button.addEventListener("click", () => {
+      if (running) return;
+      $("domain").value = item.id;
+      $("domain").dispatchEvent(new Event("change"));
+      closeDemandMenu(true);
+    });
+    $("domain-options").append(button);
+  }
+}
+function renderDemandGroups(selected = "") {
+  const groups = (catalog.groups || []).filter(group => group.category === currentCategory);
+  const selectedGroup = catalog.scenarios.find(item => item.id === selected)?.group;
+  const category = catalog.categories.find(category => category.id === currentCategory);
+  $("domain-menu-title").textContent = `${category.label} · ${groups.length}个子分类`;
+  $("domain-groups").replaceChildren();
+  groups.forEach((group, index) => {
+    const button = element("button", undefined, "demand-group");
+    button.type = "button"; button.dataset.group = group.id;
+    button.append(element("span", group.label), element("small", `${group.count}项 ›`));
+    button.addEventListener("pointerenter", event => {
+      if (event.pointerType !== "mouse" || button.getAttribute("aria-pressed") === "true") return;
+      clearTimeout(demandHoverTimer);
+      demandHoverTimer = setTimeout(() => {
+        if (!$("domain-picker-menu").hidden && button.matches(":hover")) renderDemandOptions(group.id);
+      }, 180);
+    });
+    button.addEventListener("pointerleave", () => clearTimeout(demandHoverTimer));
+    button.addEventListener("click", () => { clearTimeout(demandHoverTimer); renderDemandOptions(group.id); });
+    button.addEventListener("keydown", event => {
+      if (event.key === "ArrowRight") {
+        event.preventDefault(); renderDemandOptions(group.id);
+        $("domain-options").querySelector("button")?.focus({preventScroll:true});
+      } else if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        const next = event.key === "Home" ? 0 : event.key === "End" ? groups.length - 1 :
+          (index + (event.key === "ArrowDown" ? 1 : groups.length - 1)) % groups.length;
+        renderDemandOptions(groups[next].id);
+        $("domain-groups").querySelectorAll("button")[next].focus();
+      }
+    });
+    $("domain-groups").append(button);
+  });
+  renderDemandOptions(selectedGroup || groups[0]?.id);
+  $("domain-groups").scrollTop = 0;
 }
 function domainFields(reset = false) {
   const s = catalog.scenarios.find((s) => s.id === $("domain").value),
     old = $("fulfillment").value;
   $("selected-demand").textContent = s ? `当前需求：${s.label}` : "当前需求：尚未选择";
+  $("domain-picker-value").textContent = s ? s.label : "请选择具体需求";
   $("fulfillment").replaceChildren();
   if (!s) {
     const opt = element("option", "请先选择具体需求");
@@ -1247,9 +1328,46 @@ $("confirmed").addEventListener("change", () => {
   $("confirmation-status").classList.toggle("ok", $("confirmed").checked);
 });
 $("domain").addEventListener("change", () => {
+  closeDemandMenu();
   currentStep = $("domain").value ? 2 : 1;
   domainFields(true);
   invalidateConfirmation();
+});
+$("domain-picker").addEventListener("click", () => {
+  if (running) return;
+  if (!$("domain-picker-menu").hidden) { closeDemandMenu(); return; }
+  renderDemandGroups($("domain").value);
+  $("domain-picker-menu").hidden = false;
+  $("domain-picker").setAttribute("aria-expanded", "true");
+  positionDemandMenu();
+  const nav = $("domain-groups"), selected = nav.querySelector('[aria-pressed="true"]');
+  if (selected) nav.scrollTop += selected.getBoundingClientRect().top - nav.getBoundingClientRect().top - Math.max(0, (nav.clientHeight - selected.offsetHeight) / 2);
+});
+$("close-domain-menu").addEventListener("click", () => closeDemandMenu(true));
+$("domain-picker").addEventListener("keydown", event => {
+  if (event.key === "Escape") closeDemandMenu(true);
+  if (event.key === "ArrowDown" && !running) {
+    event.preventDefault();
+    if ($("domain-picker-menu").hidden) $("domain-picker").click();
+    $("domain-groups").querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});
+  }
+});
+$("domain-picker-menu").addEventListener("keydown", event => {
+  if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); closeDemandMenu(true); }
+});
+$("domain-options").addEventListener("keydown", event => {
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    $("domain-groups").querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});
+  }
+});
+$("domain-picker").closest(".demand-picker").addEventListener("focusout", event => {
+  if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) closeDemandMenu();
+});
+window.addEventListener("resize", () => { if (!$("domain-picker-menu").hidden) positionDemandMenu(); });
+window.addEventListener("scroll", () => { if (!$("domain-picker-menu").hidden) positionDemandMenu(); }, {passive:true});
+document.addEventListener("click", event => {
+  if (!event.target.closest(".demand-picker")) closeDemandMenu();
 });
 ["quantity", "fulfillment", "budget", "unit-price", "changed-price", "order-fee"].forEach((id) =>
   $(id).addEventListener("input", () => {
@@ -1406,7 +1524,7 @@ $("coach-next").addEventListener("click", () =>
 const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
-        {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'自己选择需求时，先点类别，例如“美食聚会”，再在“具体想做什么”中选“自助餐聚会”。核对“当前需求”显示正确，再点“选好了，下一步核对条件”。'},
+        {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点“选好了，下一步核对条件”。'},
         {name:'分析自己写的需求（可选）',why:'把一段话整理成可检查的条件，并找出还不支持或缺少的要求。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看提取结果和未纳入的要求；可以采用时，再点“采用这4项条件”。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
@@ -1494,6 +1612,8 @@ $("dismiss-notice").addEventListener("click", () => notice());
       $("full-screen").href = target.href;
     }
     catalog = await api("/api/catalog");
+    $("scenario-total").textContent = catalog.scenarios.length;
+    $("catalog-summary").textContent = `${catalog.categories.length}大类、${catalog.groups.length}个子分类、${catalog.scenarios.length}个具体事项`;
     domainLabels = Object.fromEntries(
       catalog.scenarios.map((s) => [s.id, s.label]),
     );
