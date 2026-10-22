@@ -77,7 +77,7 @@ class TrialWorld:
             value = Decimal(str(total_yuan))
         except InvalidOperation:
             return {"valid": False, "reason": "invalid_amount"}
-        if not value.is_finite() or value < 0 or value > 10000:
+        if not value.is_finite() or value < 0:
             return {"valid": False, "reason": "invalid_amount"}
         if value * 100 != (value * 100).to_integral_value():
             return {"valid": False, "reason": "invalid_currency_precision"}

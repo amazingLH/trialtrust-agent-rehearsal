@@ -1,7 +1,7 @@
 {
   "id": "mandate-review",
   "name": "委托边界核对",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "固定输入条件和权限，输出可复查的委托摘要。",
   "capabilities": [
     "read_conditions"
@@ -306,22 +306,12 @@
       },
       "quantity": {
         "type": "integer",
-        "minimum": 1,
-        "maximum": 8
+        "minimum": 1
       },
       "fulfillment": {
-        "enum": [
-          "pickup",
-          "shipping",
-          "onsite",
-          "entry",
-          "dine_in",
-          "meetup",
-          "stay",
-          "visit",
-          "ride",
-          "rental"
-        ]
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
       },
       "budget_yuan": {
         "type": "integer",

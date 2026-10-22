@@ -278,11 +278,11 @@
               </div>
               <div class="control-stage"><h3>① 填好这次的条件</h3><p>告诉它多少人、怎么服务、最多花多少钱；后面就按这份条件检查。</p></div>
               <div class="form-grid conditions-grid">
-                <label class="field"><span id="quantity-label">数量</span><input id="quantity" type="number" min="1" max="8" value="2" /></label>
+                <label class="field"><span id="quantity-label">数量</span><input id="quantity" type="number" min="1" step="1" value="2" /></label>
                 <div class="field service-method-field">
                   <label for="fulfillment-text">服务方式</label>
                   <div class="service-method-control">
-                    <input id="fulfillment-text" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="例如输入：入住体验" aria-describedby="fulfillment-status" />
+                    <input id="fulfillment-text" type="text" maxlength="500" autocomplete="off" spellcheck="false" placeholder="例如输入：入住体验" aria-describedby="fulfillment-status" />
                     <div class="service-method-actions">
                       <button id="confirm-fulfillment" type="button" class="primary">确认</button>
                       <button id="clear-fulfillment" type="button" class="secondary" aria-label="清空服务方式" title="只清空服务方式">清空</button>
@@ -297,7 +297,7 @@
               <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
               <details class="compact-help fee-help"><summary>查看费用明细 / 调整这次的模拟价格</summary>
                 <p id="fee-note" class="micro-note">先选择具体需求，再查看本次费用。</p>
-                <p class="micro-note">下面是供AI查证的模拟价目，可自行修改；数量和价格改变后会重算，服务方式需点击“确认”后才参与计算。开始运行后也使用这份价目。每项支持0—1000元整数。切换具体需求会恢复默认价格；确认改用另一种服务方式时，会恢复该方式的默认每单费用。</p>
+                <p class="micro-note">下面是供AI查证的模拟价目，可自行修改；数量和价格改变后会重算，服务方式需点击“确认”后才参与计算。开始运行后也使用这份价目。每项支持0—1000元整数。切换具体需求会恢复默认价格；服务方式可自由描述；自定义描述沿用当前价目，请按需要调整。填写自取、邮寄等常用方式时，会带入相应的默认每单费用。</p>
                 <div class="form-grid conditions-grid pricing-grid">
                   <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" max="1000" step="1" /></label>
                   <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" max="1000" step="1" /></label>

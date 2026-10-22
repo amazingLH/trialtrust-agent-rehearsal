@@ -27,9 +27,9 @@ def test_compiler_preserves_field_evidence_and_exposes_unmodeled_requirements():
     assert result["requires_human_confirmation"]
 
 
-@pytest.mark.parametrize("text", ["4人陶艺，预算300元，自取或邮寄", "14人陶艺，预算300元，自取",
+@pytest.mark.parametrize("text", ["4人陶艺，预算300元，自取或邮寄", "0人陶艺，预算300元，自取",
                                   "4人陶艺，预算300元，不要邮寄", "4人陶艺，预算300元，预算400元，自取",
-                                  "2台空调清洗，预算300元，自取"])
+                                  "2人空调清洗，预算300元，上门"])
 def test_compiler_blocks_ambiguous_or_unsupported_contracts(text):
     result = compile_stand_in(text)
     assert result["proposal"] is None and result["issues"]
@@ -79,8 +79,7 @@ def test_mandate_digest_changes_when_authoritative_conditions_change():
     assert first.mandate().digest != RunSpec(quantity=3).mandate().digest
     assert first.mandate().digest != RunSpec(fulfillment="shipping").mandate().digest
     assert first.mandate().digest == RunSpec(case="injection").mandate().digest
-    with pytest.raises(ValidationError):
-        RunSpec(domain="cleaning", fulfillment="pickup")
+    assert RunSpec(domain="cleaning", fulfillment="餐馆里擦桌子").fulfillment == "餐馆里擦桌子"
 
 
 def test_estimated_money_reservations_survive_restart_and_unknown_usage(tmp_path):

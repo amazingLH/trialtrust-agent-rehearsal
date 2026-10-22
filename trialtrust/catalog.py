@@ -1,8 +1,9 @@
 """Versioned owned examples; the catalog is not a live merchant directory."""
-from typing import Literal
+from typing import Annotated, Literal
+from pydantic import StringConstraints
 from .catalog_groups import GROUPS
 
-Fulfillment = Literal['pickup', 'shipping', 'onsite', 'entry', 'dine_in', 'meetup', 'stay', 'visit', 'ride', 'rental']
+Fulfillment = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=500)]
 FULFILLMENTS = {'pickup':'到店自取','shipping':'作品邮寄','onsite':'上门服务','entry':'到场入园','dine_in':'到店用餐','meetup':'集合出行','stay':'入住体验','visit':'到店体验','ride':'乘车出行','rental':'到店租还'}
 MAX_BUDGET_YUAN = 1_000_000
 CATEGORIES = [{'id':'attractions','label':'景点探索','icon':'⌂'}, {'id':'food','label':'美食聚会','icon':'◡'}, {'id':'travel','label':'旅行出行','icon':'✦'}, {'id':'life','label':'生活服务','icon':'♡'}]

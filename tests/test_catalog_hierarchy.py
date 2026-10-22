@@ -43,11 +43,11 @@ def test_skill_schemas_allow_the_entire_catalog_and_keep_unknown_domains_closed(
         fields = load(name)['input_schema']['properties']
         assert set(fields['domain']['enum']) == set(CATALOG)
         if 'fulfillment' in fields:
-            assert set(fields['fulfillment']['enum']) == set(FULFILLMENTS)
+            assert fields['fulfillment'] == {'type':'string','minLength':1,'maxLength':500}
+            assert 'maximum' not in fields['quantity']
     with pytest.raises(ValidationError):
         RunSpec(domain='not-a-catalog-service')
-    with pytest.raises(ValidationError):
-        RunSpec(domain='public_transport-01', fulfillment='shipping')
+    assert RunSpec(domain='public_transport-01', fulfillment='自由描述').fulfillment == '自由描述'
 
 
 @pytest.mark.parametrize('group', GROUPS, ids=lambda g:g['id'])

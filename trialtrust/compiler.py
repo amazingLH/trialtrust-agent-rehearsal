@@ -32,7 +32,7 @@ def compile_stand_in(text: str) -> dict:
         raise ValueError("替身仍含可识别的手机号、邮箱或身份证格式，请先在本地替换")
     fields: dict[str, list] = {name: [] for name in Mandate.model_fields}
     spans, issues = [], []
-    numeral = {str(i): i for i in range(1, 9)} | dict(zip("一二三四五六七八", range(1, 9))) | {"两": 2}
+    numeral = dict(zip("一二三四五六七八九", range(1, 10))) | {"两": 2, "十": 10}
 
     def add(field, value, match):
         before = text[max(0, match.start() - 5):match.start()]
@@ -47,8 +47,9 @@ def compile_stand_in(text: str) -> dict:
     for match in re.finditer('|'.join(re.escape(word) for word in sorted(keywords,key=len,reverse=True)), text, re.I):
         add("domain", keywords[match.group().lower()], match)
     quantity_units = []
-    for match in re.finditer(r"(?<![\d一二三四五六七八九十百])([1-8一二两三四五六七八])\s*(人|台|份|间|次)", text):
-        add("quantity", numeral[match.group(1)], match)
+    for match in re.finditer(r"(?<![\d.\-一二两三四五六七八九十百])([0-9]+|[一二两三四五六七八九十])\s*(人|台|份|间|次)", text):
+        token = match.group(1)
+        add("quantity", int(token) if token.isascii() else numeral[token], match)
         quantity_units.append(match.group(2))
     for match in re.finditer(r"(?:总预算|预算)(?:为|是|不超过|最多|[：:])?\s*([0-9]+)\s*元", text):
         add("budget_yuan", int(match.group(1)), match)
