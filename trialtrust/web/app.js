@@ -34,6 +34,7 @@ let sessionToken = readLocal("trialtrust-session");
 let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
+let serviceConfirmedFor = null, servicePricingMode = null;
 function accountKey(key) { return ["trialtrust-condition-templates","trialtrust-current-conversation"].includes(key) && TrialTrustAuth.user() ? key+":"+TrialTrustAuth.user().id : key; }
 function readLocal(key) {
   key = accountKey(key);
@@ -119,6 +120,7 @@ function signature() {
       "domain",
       "quantity",
       "fulfillment",
+      "fulfillment-text",
       "budget",
       "agent",
       "dense",
@@ -131,8 +133,11 @@ function signature() {
 function invalidateConfirmation() {
   confirmedFor = null;
   $("confirmed").checked = false;
+  $("confirmed").disabled = running || !serviceIsConfirmed();
   $("confirmed").removeAttribute("aria-invalid");
-  $("confirmation-status").textContent = "尚未确认 · 修改条件后需重新勾选";
+  $("confirmation-status").textContent = $("domain").value && !serviceIsConfirmed()
+    ? "请先填写并确认服务方式，再勾选全部条件"
+    : "尚未确认 · 修改条件后需重新勾选";
   $("confirmation-status").classList.remove("ok");
   updateCoach();
   renderBudgetPreview();
@@ -164,6 +169,7 @@ function setBusy(value) {
     "domain-picker",
     "quantity",
     "fulfillment",
+    "fulfillment-text", "confirm-fulfillment", "clear-fulfillment",
     "confirmed",
     "prepare-stand-in",
     "compile",
@@ -189,6 +195,7 @@ function setBusy(value) {
     ? "正在彩排，请稍候…"
     : "开始一组对照彩排 ↗";
   $("run").textContent = value ? "正在试运行…" : "运行这次试托 ↗";
+  $("confirmed").disabled = value || !serviceIsConfirmed();
   updateCoach();
 }
 function selectCategory(id, selected = "") {
@@ -297,16 +304,62 @@ function renderDemandGroups(selected = "") {
   renderDemandOptions(selectedGroup || groups[0]?.id);
   $("domain-groups").scrollTop = 0;
 }
+function serviceIsConfirmed() {
+  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  return !!($("fulfillment").value && scenario?.fulfillments.includes($("fulfillment").value)
+    && serviceConfirmedFor === WorkbenchTools.normalizeServiceText($("fulfillment-text").value));
+}
+function serviceChoicesHint() {
+  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  return scenario
+    ? `本次可核对：${scenario.fulfillments.map(mode => fulfillmentLabels[mode]).join(" / ")}。填写后点“确认”。`
+    : "先在第一步选定具体事项，再填写并确认服务方式。";
+}
+function invalidateServiceMethod(message = serviceChoicesHint()) {
+  $("fulfillment").value = "";
+  serviceConfirmedFor = null;
+  $("fulfillment-text").removeAttribute("aria-invalid");
+  $("fulfillment-status").textContent = message;
+  $("fulfillment-status").classList.remove("ok", "danger-text");
+}
+function setServiceDraft(text = "") {
+  $("fulfillment-text").value = text;
+  invalidateServiceMethod(text ? `已带入“${text}”，请点右侧“确认”。` : serviceChoicesHint());
+}
+function confirmServiceMethod() {
+  if (running) return;
+  const scenario = catalog.scenarios.find(s => s.id === $("domain").value);
+  if (!scenario) { notice("请先在第一步选定具体事项，再确认服务方式。", "domain"); return; }
+  const mode = WorkbenchTools.resolveFulfillment($("fulfillment-text").value, scenario, fulfillmentLabels);
+  if (!mode) {
+    invalidateServiceMethod(); invalidateConfirmation();
+    $("fulfillment-status").textContent = `未能确认。${serviceChoicesHint()}`;
+    $("fulfillment-status").classList.add("danger-text");
+    notice($("fulfillment-text").value.trim()
+      ? "这种服务方式与当前事项不匹配，请按下方提示修改后再确认。"
+      : "请先填写服务方式，再点“确认”。", "fulfillment-text");
+    return;
+  }
+  $("fulfillment").value = mode;
+  serviceConfirmedFor = WorkbenchTools.normalizeServiceText($("fulfillment-text").value);
+  $("fulfillment-text").removeAttribute("aria-invalid");
+  $("fulfillment-status").classList.remove("danger-text");
+  $("fulfillment-status").classList.add("ok");
+  $("fulfillment-status").textContent = `已确认：${fulfillmentLabels[mode]}。修改后需要重新确认。`;
+  if (servicePricingMode !== mode) $("order-fee").value = WorkbenchTools.pricing(scenario, mode).order_fee;
+  servicePricingMode = mode;
+  currentStep = 2;
+  feeNote(); invalidateConfirmation(); notice();
+}
 function domainFields(reset = false) {
-  const s = catalog.scenarios.find((s) => s.id === $("domain").value),
-    old = $("fulfillment").value;
+  const s = catalog.scenarios.find((s) => s.id === $("domain").value);
   $("selected-demand").textContent = s ? `当前需求：${s.label}` : "当前需求：尚未选择";
   $("domain-picker-value").textContent = s ? s.label : "请选择具体需求";
-  $("fulfillment").replaceChildren();
+  const categoryExample = {attractions:"到场入园", food:"到店用餐", travel:"入住体验", life:"上门服务"};
+  $("fulfillment-text").placeholder = `例如输入：${s ? fulfillmentLabels[s.fulfillments[0]] : categoryExample[currentCategory] || "入住体验"}`;
+  setServiceDraft();
+  servicePricingMode = s?.fulfillments[0] || null;
   if (!s) {
-    const opt = element("option", "请先选择具体需求");
-    opt.value = "";
-    $("fulfillment").append(opt);
     $("scenario-description").textContent =
       "选好后，这里会说明能帮你检查什么。";
     $("quantity-label").textContent = "数量";
@@ -314,13 +367,7 @@ function domainFields(reset = false) {
     ["unit-price", "changed-price", "order-fee"].forEach(id => $(id).value = "");
     return;
   }
-  for (const value of s.fulfillments) {
-    const opt = element("option", fulfillmentLabels[value]);
-    opt.value = value;
-    $("fulfillment").append(opt);
-  }
-  if (!reset && s.fulfillments.includes(old)) $("fulfillment").value = old;
-  if (reset) { $("quantity").value = 2; fillPrices(WorkbenchTools.pricing(s,$("fulfillment").value)); }
+  if (reset) { $("quantity").value = 2; fillPrices(WorkbenchTools.pricing(s,servicePricingMode)); }
   $("quantity-label").textContent = `数量（${s.unit}，1—8）`;
   $("scenario-description").textContent =
     s.description + "；地点、日期等要求还需你自己确认。";
@@ -485,13 +532,14 @@ async function compileStandIn() {
         const s = catalog.scenarios.find((s) => s.id === p.domain);
         selectCategory(s.category, p.domain);
         $("quantity").value = p.quantity;
-        $("fulfillment").value = p.fulfillment;
+        setServiceDraft(fulfillmentLabels[p.fulfillment]);
+        servicePricingMode = p.fulfillment;
         $("budget").value = p.budget_yuan;
         fillPrices(WorkbenchTools.pricing(s,p.fulfillment));
         feeNote();
         invalidateConfirmation();
         goStep(2);
-        notice("已填入需求、数量、服务方式和预算。请核对；分析中列出的其他要求还没有纳入本次试运行。");
+        notice("已填入需求、数量、服务方式和预算。请先点击服务方式右侧的“确认”，再核对全部条件；分析中列出的其他要求还没有纳入本次试运行。");
       });
       box.append(apply);
     } else
@@ -622,7 +670,8 @@ function restoreConditions(spec, method = "paired") {
   }
   selectCategory(scenario.category, spec.domain);
   $("quantity").value = spec.quantity;
-  $("fulfillment").value = spec.fulfillment;
+  setServiceDraft(fulfillmentLabels[spec.fulfillment]);
+  servicePricingMode = spec.fulfillment;
   $("budget").value = spec.budget_yuan;
   fillPrices(WorkbenchTools.pricing(scenario,spec.fulfillment,spec.pricing));
   $("agent").value = spec.agent;
@@ -685,10 +734,11 @@ $("apply-template").addEventListener("click", () => {
   setDemandPath("template");
   if (!liveEnabled && $("agent").value === "live") {$("agent").value="demo_careful";$("dense").checked=false;modeNote();}
   invalidateConfirmation(); goStep(2);
-  notice("模板条件已填入。请核对场景、费用与执行方式，重新确认后才会运行。");
+  notice("模板条件已填入。请先确认服务方式，再核对场景、费用与执行方式，勾选全部条件后才会运行。");
 });
 $("save-template").addEventListener("click", () => {
   if (running) return;
+  if (!serviceIsConfirmed()) {notice("先填写并确认服务方式，再保存条件模板。", "fulfillment-text");return;}
   const title = $("template-name").value.trim();
   const own = personalTemplates();
   const t = WorkbenchTools.cleanTemplate({id:crypto.randomUUID(), name:title, method:$("run-method").value, spec:editorSpec()}, catalog);
@@ -708,7 +758,9 @@ function renderBudgetPreview() {
   const value = WorkbenchTools.preview(scenario,spec.quantity,spec.fulfillment,spec.budget_yuan,spec.pricing);
   const area = $("budget-preview");area.replaceChildren();$("fee-formula").textContent="";
   if (!value || !$("quantity").value.trim() || !$("budget").value.trim()) {
-    const message = !scenario ? "先在第一步选择具体需求，再填写数量和预算。" : "请填写1—8的数量、0—1,000,000元的整数预算，并在费用明细中填写0—1000元的单价和每单费用。";
+    const message = !scenario ? "先在第一步选择具体需求，再填写数量和预算。" : !serviceIsConfirmed()
+      ? "请先手动填写服务方式，并点击输入框右侧的“确认”，再查看本次费用。"
+      : "请填写1—8的数量、0—1,000,000元的整数预算，并在费用明细中填写0—1000元的单价和每单费用。";
     area.append(element("span", message, "micro-note"));$("fee-note").textContent=message;return;
   }
   const formula = price => `${value.quantity}${value.unit} × ¥${price}/${value.unit} + 每单费用¥${value.fee}`;
@@ -726,6 +778,7 @@ function renderBudgetPreview() {
 $("reset-prices").addEventListener("click", () => {
   const s=catalog.scenarios.find(s=>s.id===$("domain").value);
   if(!s || running)return;
+  if (!serviceIsConfirmed()) {notice("请先确认服务方式，再恢复对应的默认价格。", "fulfillment-text");return;}
   fillPrices(WorkbenchTools.pricing(s,$("fulfillment").value));invalidateConfirmation();
 });
 function renderResultChecklist(row, side) {
@@ -1255,6 +1308,11 @@ async function start(isSuite = false) {
     notice("请先选择具体需求，或应用一套条件模板。", $("manual-demand-fields").hidden ? "template-select" : "domain");
     return;
   }
+  if (!serviceIsConfirmed()) {
+    invalidateConfirmation();
+    notice("请先手动填写服务方式，并点击右侧“确认”。", "fulfillment-text");
+    return;
+  }
   const budget = Number($("budget").value),
     quantity = Number($("quantity").value);
   if (
@@ -1319,6 +1377,9 @@ async function review(accepted) {
   }
 }
 $("confirmed").addEventListener("change", () => {
+  if ($("confirmed").checked && !serviceIsConfirmed()) {
+    invalidateConfirmation(); notice("请先填写并确认服务方式。", "fulfillment-text"); return;
+  }
   confirmedFor = $("confirmed").checked ? signature() : null;
   if ($("confirmed").checked) notice();
   $("confirmed").removeAttribute("aria-invalid");
@@ -1369,11 +1430,23 @@ window.addEventListener("scroll", () => { if (!$("domain-picker-menu").hidden) p
 document.addEventListener("click", event => {
   if (!event.target.closest(".demand-picker")) closeDemandMenu();
 });
-["quantity", "fulfillment", "budget", "unit-price", "changed-price", "order-fee"].forEach((id) =>
+$("fulfillment-text").addEventListener("input", () => {
+  invalidateServiceMethod();
+  if ($("domain").value) currentStep = 2;
+  invalidateConfirmation();
+});
+$("fulfillment-text").addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.isComposing) {event.preventDefault();confirmServiceMethod();}
+});
+$("confirm-fulfillment").addEventListener("click", confirmServiceMethod);
+$("clear-fulfillment").addEventListener("click", () => {
+  if (running) return;
+  setServiceDraft(); invalidateConfirmation();
+  $("fulfillment-text").focus({preventScroll:true});
+});
+["quantity", "budget", "unit-price", "changed-price", "order-fee"].forEach((id) =>
   $(id).addEventListener("input", () => {
     currentStep = 2;
-    const s=catalog.scenarios.find(s=>s.id===$("domain").value);
-    if(id === "fulfillment" && s) $("order-fee").value=WorkbenchTools.pricing(s,$("fulfillment").value).order_fee;
     feeNote();
     invalidateConfirmation();
   }),
@@ -1485,7 +1558,7 @@ $("continue-trial").addEventListener("click", () => {
   clearInputs();
   restoreConditions(latestRow.conditions, latestRow.kind === "suite" ? "paired" : "single");
   goStep(2);
-  notice("已把这次的需求、数量、服务方式、预算和模拟价格填回第二步。请核对并重新勾选确认，再开始运行。");
+  notice("已把这次的需求、数量、服务方式、预算和模拟价格填回第二步。请先确认服务方式，再核对并勾选全部条件，之后再运行。");
 });
 $("preview-export").addEventListener("click", async () => {
   const expectedId = activeId;
@@ -1528,7 +1601,7 @@ const helpModules = [
         {name:'分析自己写的需求（可选）',why:'把一段话整理成可检查的条件，并找出还不支持或缺少的要求。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看提取结果和未纳入的要求；可以采用时，再点“采用这4项条件”。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
-        {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量、服务方式和总预算。看下方费用预览；需要改变单价或每单费用时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价，再加只收一次的每单费用，就是总费用。改预算只会改变是否超支。'},
+        {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。系统会按当前事项核对方式是否匹配；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},
         {name:'选择执行方式',why:'决定先熟悉操作，还是观察真实AI自己如何查资料、检查方案。',how:'第一次选“免费演示 · 按条件核对”，不消耗模型额度。想观察AI真实决策时再选“真实模型”。可选的混合检索会同时查关键词与意思相近的资料，额外消耗模型额度。'},
         {name:'选择试运行的情况',why:'检查事情发生变化时，AI是否仍能算对费用、查到依据并遵守你的限制。',how:'推荐选对比两次：先按原情况运行，再改变一项情况运行。免费演示比较服务单价变化前后；真实模型会从单价变化、缺少价目、诱导越权、查询超时中选一项。只想检查某一项时，选单次运行，再选具体情况。'},
         {name:'确认并开始',why:'确保运行的是你核对过的设置，避免填错条件就开始。',how:'核对以上设置，勾选确认，再点“开始一组对照彩排”或单次运行按钮。常用时可先保存模板：保存需求、数量、方式、预算、模拟价格、执行方式和检查设置；下次从第一步的“使用条件模板”选用。'}

@@ -7,6 +7,28 @@
   const agents = ["demo_careful", "demo_rushed", "live"];
   const cases = ["baseline", "price_change", "missing_evidence", "injection", "tool_timeout"];
   const maxBudget = 1000000;
+  function normalizeServiceText(value) {
+    return typeof value === "string" ? value.normalize("NFKC").trim().replace(/\s+/g, "").toLowerCase() : "";
+  }
+  function resolveFulfillment(text, scenario, labels) {
+    const normalized = normalizeServiceText(text);
+    if (!normalized || !scenario || text.length > 40) return null;
+    const aliases = {
+      pickup:["自取","自行取货","到店取货","到店领取"],
+      shipping:["邮寄","作品寄送","邮寄到家","作品邮寄到家"],
+      onsite:["上门","上门清洗","上门整理"],
+      entry:["入园","到场","入场参观"],
+      dine_in:["堂食","到店吃饭","到店吃","店内用餐"],
+      meetup:["集合","集合出发","集合参加"],
+      stay:["入住","酒店入住","住宿","民宿入住"],
+      visit:["到店参加","店内体验"],
+      ride:["乘车","坐车出行"],
+      rental:["租还","到店租赁"],
+    };
+    const matches = scenario.fulfillments.filter(mode =>
+      [mode,labels[mode],...(aliases[mode] || [])].some(value => normalizeServiceText(value) === normalized));
+    return matches.length === 1 ? matches[0] : null;
+  }
   function pricing(scenario, fulfillment, value) {
     if (value == null) return {unit_price:scenario.price, changed_unit_price:scenario.changed_price, order_fee:scenario.id === "pottery" ? (fulfillment === "shipping" ? 20 : 0) : scenario.fee};
     const result = {};
@@ -39,5 +61,5 @@
     const totals = drafts.map(x => x.total_yuan).filter(x => typeof x === "number" && Number.isFinite(x));
     return {domain:row.conditions.domain, quantity:row.conditions.quantity, budget:row.conditions.budget_yuan, fulfillment:row.conditions.fulfillment, mode:r.execution_mode || row.report.execution_mode, agent:row.conditions.agent, case:r.conditions?.case || (suite && side === "changed" ? row.report.design?.case : row.conditions.case), review:row.status === "reviewed" ? (row.reviewed ? "已保留" : "暂不接受") : "尚未审阅", side:suite ? (side === "changed" ? "变化条件" : "原始条件") : "单次测试", drafts:drafts.length, total:totals.length ? Math.max(...totals) : null, price:r.evidence_coverage?.current_price_observed === true, cancellation:r.evidence_coverage?.cancellation_terms_observed === true, attempts:r.attempted_out_of_scope_actions ?? null, effects:r.real_world_side_effects ?? null, termination:r.termination || "未记录"};
   }
-  return {cleanTemplate, readTemplates, preview, facts, pricing, maxBudget};
+  return {cleanTemplate, readTemplates, preview, facts, pricing, maxBudget, normalizeServiceText, resolveFulfillment};
 });
