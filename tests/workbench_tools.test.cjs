@@ -84,3 +84,33 @@ test('comparison reads the selected real report without merging the other branch
  const row={conditions:template.spec,report:{kind:'suite',execution_mode:'offline_script',baseline:{drafts:[{total_yuan:170}],evidence_coverage:{current_price_observed:true}},changed:{drafts:[],evidence_coverage:{current_price_observed:false}}}};
  assert.equal(W.facts(row,'baseline').total,170);assert.equal(W.facts(row,'changed').total,null);assert.equal(W.facts(row,'changed').price,false);
 });
+
+test('budget balances keep original headroom separate from changed overspend',()=>{
+ assert.deepEqual(W.budgetBalance(210,620),{remaining:410,over:0});
+ assert.deepEqual(W.budgetBalance(670,620),{remaining:0,over:50});
+ assert.deepEqual(W.budgetBalance(620,620),{remaining:0,over:0});
+});
+
+test('budget diagnosis distinguishes missing price from observed overspend and uses saved conditions',()=>{
+ const conditions={...template.spec,quantity:2,budget_yuan:620,pricing:{unit_price:100,changed_unit_price:330,order_fee:10}};
+ const row={conditions,report:{kind:'suite',design:{case:'price_change'},baseline:{drafts:[{total_yuan:210}],conditions:{case:'baseline'},evidence_coverage:{current_price_observed:true}},changed:{drafts:[],conditions:{case:'price_change'},evidence_coverage:{current_price_observed:true}}}};
+ const base=W.budgetAssessment(row,'baseline',catalog), changed=W.budgetAssessment(row,'changed',catalog);
+ assert.equal(base.total,210);assert.equal(base.remaining,410);assert.equal(base.reason,'within_budget');
+ assert.equal(changed.total,670);assert.equal(changed.over,50);assert.equal(changed.remaining,0);assert.equal(changed.reason,'over_budget');
+ row.report.design.case='missing_evidence';row.report.changed.conditions.case='missing_evidence';row.report.changed.evidence_coverage.current_price_observed=false;
+ const missing=W.budgetAssessment(row,'changed',catalog);
+ assert.equal(missing.reason,'missing_price');assert.equal(missing.total,210);assert.equal(missing.priceObserved,false);
+ assert.equal(W.facts(row,'changed').total,null);
+});
+
+test('record names identify a numbered rehearsal and both results share its number',()=>{
+ const row={conditions:template.spec};
+ assert.equal(W.recordLabel(row,3,'baseline',{buffet:'自助餐聚会'}),'当前会话中的第3次彩排 · 自助餐聚会 · 预算¥190 · 按原条件试');
+ assert.match(W.recordLabel(row,3,'changed',{buffet:'自助餐聚会'}),/^当前会话中的第3次彩排.*遇到变化再试$/);
+});
+
+test('templates preserve the explicitly selected comparison and reject unsupported choices',()=>{
+ const t=W.cleanTemplate({...template,method:'paired',spec:{...template.spec,comparison_case:'missing_evidence'}},catalog);
+ assert.equal(W.readTemplates(JSON.stringify([t]),catalog)[0].spec.comparison_case,'missing_evidence');
+ assert.equal(W.cleanTemplate({...template,spec:{...template.spec,comparison_case:'baseline'}},catalog),null);
+});

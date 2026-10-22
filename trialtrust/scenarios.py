@@ -21,6 +21,7 @@ class SimulationPricing(BaseModel):
 
 class RunSpec(Mandate):
     case: Literal["baseline", "price_change", "missing_evidence", "injection", "tool_timeout"] = "baseline"
+    comparison_case: Literal["auto", "price_change", "missing_evidence", "injection", "tool_timeout"] = "auto"
     agent: Literal["demo_careful", "demo_rushed", "live"] = "demo_careful"
     dense: bool = Field(default=False, strict=True)
     confirmed: bool = Field(default=False, strict=True)

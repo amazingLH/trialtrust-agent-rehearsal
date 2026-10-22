@@ -1623,6 +1623,7 @@ button.danger-button:hover:not(:disabled) { background: #92293e; }
 .budget-preview > div { flex: 1 1 180px; background: #f2eefb; padding: 12px 16px; border-radius: 10px; }
 .budget-preview b { display: block; font-size: 21px; }
 .budget-preview .budget-detail { display:block; margin-top:5px; font-size:13px; color:var(--muted); line-height:1.7; overflow-wrap:anywhere; }
+.budget-preview .budget-over { color:#ad344d; font-weight:650; }
 .budget-preview small { display:block; line-height:1.7; }
 .budget-preview p { width: 100%; }
 .compact-help { padding: 10px 0; margin: 10px 0; border-top: 1px solid var(--line); }

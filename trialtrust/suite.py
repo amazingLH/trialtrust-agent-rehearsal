@@ -93,7 +93,10 @@ def build_suite_graph(directory, suite_id, spec, ledger, saver, role_provider=No
     provider = role_provider or (Bailian(ledger.for_run(suite_id)) if live else None)
 
     def design_node(state):
-        if provider:
+        if spec.comparison_case != "auto":
+            design = Design(case=spec.comparison_case,
+                            rationale=f"按你选择的情况测试：{CASE_LABELS[spec.comparison_case]}。第一次使用原始资料，第二次只改变这一项；数量、服务方式和预算保持相同。")
+        elif provider:
             design = role_json(provider,
                 "你是试托的试验设计Agent。只选择一个已支持的合成变化来检验当前委托。"
                 "不能修改用户人数/台数、预算、服务方式或授权。优先选择容易暴露关键缺口的变化。"
@@ -147,8 +150,9 @@ def build_suite_graph(directory, suite_id, spec, ledger, saver, role_provider=No
                   "mandate": base["mandate"], "baseline": base, "changed": changed, "audit": state["audit"],
                   "comparison": {"baseline": observations(base), "changed": observations(changed),
                       "changed_variable": "fixture_case", "same_mandate": True,
+                      "case_selection": "automatic" if spec.comparison_case == "auto" else "user",
                       "different_evidence_versions": base["sources_digest"] != changed["sources_digest"]},
-                  "roles": [{"role": "designer", "authority": "choose_one_fixture_case", "tools": []},
+                  "roles": [{"role": "designer", "authority": "choose_one_fixture_case" if spec.comparison_case == "auto" else "use_user_selected_fixture_case", "tools": []},
                             {"role": "executor", "authority": "query_check_draft_only", "isolated_runs": 2},
                             {"role": "auditor", "authority": "read_observed_facts_only", "tools": []}],
                   "real_world_side_effects": 0, "usage": ledger.summary(), 'skill_events':state.get('skill_events',[]),
