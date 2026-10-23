@@ -100,6 +100,39 @@ def test_empty_location_hint_does_not_hide_a_later_supplied_location():
     assert result['known_fields']['location']=='上海青浦区'
 
 
+def test_model_can_count_grounded_participants_in_ordinary_wording():
+    text='我和我哥准备去北京朝阳区一个修脚店铺去找人家修脚去'
+    counted={**field('quantity',2,'我和我哥'),'counted_items':['我','我哥']}
+    model=Response([counted,field('task_name','修脚','修脚'),
+                    field('fulfillment','到店','去北京朝阳区一个修脚店铺')],
+                   [{'field':'quantity','question':'几个人？'},{'field':'budget_yuan','question':'总预算多少元？'}])
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+    assert result['known_fields']['quantity']==2
+    assert result['known_fields']['unit']=='人'
+    assert result['known_fields']['fulfillment']=='去北京朝阳区一个修脚店铺'
+    assert result['known_fields']['location']=='北京朝阳区'
+    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan'}
+    assert not result['can_rehearse']
+
+
+@pytest.mark.parametrize('items',[['我','不存在的人'],['我和我哥','我'],['我'],['','我哥']])
+def test_inferred_count_requires_separate_literal_participant_spans(items):
+    model=Response([{**field('quantity',2,'我和我哥'),'counted_items':items},field('unit','人','我和我哥')])
+    result=analyze(AnalysisRequest(text='我和我哥去修脚，预算350，到店',reviewed=True,use_model=True),model)
+    assert 'quantity' not in result['known_fields']
+
+
+def test_template_example_numbers_are_not_user_supplied_conditions():
+    text='我和我哥准备去北京朝阳区一个修脚店铺去找人家修脚去；数量：【填写：数量和单位，例如8人】；总预算：【填写：本次总预算，例1200元】；服务方式：【填写：到店】。'
+    model=Response([{**field('quantity',2,'我和我哥'),'counted_items':['我','我哥']},field('unit','人','我和我哥'),
+                    field('fulfillment','去北京朝阳区一个修脚店铺','去北京朝阳区一个修脚店铺')])
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+    assert result['known_fields']['quantity']==2
+    assert 'budget_yuan' not in result['known_fields']
+    assert '8人' not in str(result['known_fields'])
+    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan'}
+
+
 def custom_spec():
     return {'domain':'custom','custom_task':{'name':'刷鞋','unit':'双','context':['地点：测试城区','具体要求：运动鞋，不漂白']},
             'quantity':2,'fulfillment':'到店送洗','budget_yuan':350,'comparison_case':'price_change',

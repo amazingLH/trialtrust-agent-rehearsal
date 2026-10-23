@@ -23,6 +23,7 @@ class ExtractedField(BaseModel):
     field: FieldName
     value: str | int
     quote: str = Field(min_length=1,max_length=1200)
+    counted_items: list[str] = Field(default_factory=list,max_length=100)
 
 class MissingField(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -97,28 +98,50 @@ def _grounded_field(item,text):
     if item.quote not in text or PLACEHOLDER.search(item.quote): return None
     value=item.value
     if item.field=='quantity':
-        return value if type(value) is int and value>0 and any(n==value for n,_,_ in quantities(item.quote)) else None
+        if type(value) is not int or value<=0: return None
+        if item.counted_items:
+            # The model may count clearly enumerated participants (我和我哥).
+            # Each member must have a separate, literal, nonoverlapping span.
+            if len(item.counted_items)!=value: return None
+            cursor=0
+            for member in item.counted_items:
+                if not member.strip(): return None
+                start=item.quote.find(member,cursor)
+                if start<0: return None
+                cursor=start+len(member)
+            return value
+        return value if any(n==value for n,_,_ in quantities(item.quote)) else None
     if item.field=='budget_yuan':
         numbers=[number(m.group()) for m in re.finditer(NUM,item.quote)]
         return value if type(value) is int and 0<=value<=MAX_BUDGET_YUAN and value in numbers and re.search(r'预算|元|[¥￥]|花费|花|上限',item.quote) else None
     if not isinstance(value,str) or not value.strip(): return None
     value=value.strip()
     if item.field=='task_name': return (value if value in item.quote else item.quote.strip())[:100]
+    if item.field=='fulfillment':
+        # A semantic label such as 到店 may summarize a longer sentence. Carry
+        # the user's quoted wording into the mandate instead of inventing text.
+        return (value if value in item.quote else item.quote.strip())[:300]
     if item.field=='unit': return value if len(value)<=12 else None
     return value if value in item.quote and len(value)<=300 else None
 
 def analyze(body,provider=None):
     if not body.reviewed: raise ValueError('请先检查并确认这段文字已去除个人资料')
-    compiled=compile_stand_in(body.text)
+    # Template instructions are not user facts (e.g. “例如2人” is not a count).
+    facts_text=PLACEHOLDER.sub(lambda match:' '*len(match.group()),body.text)
+    compiled=compile_stand_in(facts_text)
     def handle(payload,instructions):
-        known,evidence=_base_fields(body.text,compiled)
+        known,evidence=_base_fields(facts_text,compiled)
         brief=None
         if body.use_model:
             if provider is None: raise ValueError('真实模型尚未启用')
             from .suite import role_json
             brief=role_json(provider,instructions+'''
 理解用户实际想做的事，不限任何目录、行业或关键词。只提取原文明确提供的条件；不得猜数量、预算、地点、日期或取送方式。
-fields逐项输出field、value、quote；quote必须逐字引用原文。task_name可简短概括；unit可根据事项推断计价单位，但数量必须有原文依据。
+fields逐项输出field、value、quote、counted_items；quote必须逐字引用原文。task_name可简短概括；unit可根据事项推断计价单位，但数量必须有原文依据。
+理解自然表达，不要求用户按模板填写。忽略所有【填写…】示例文字，不把示例的数字、地点、方式等当作已提供条件。模板空项若已在别处说清楚，不重复问。
+明确列举的参与者可以计数，例如“我和我哥”就是2人，quantity字段value=2、quote="我和我哥"、counted_items=["我","我哥"]；列出的每一项都必须按顺序逐字出现在quote里，且不重叠、不重复计算。同一句“去修脚店铺找人修脚”也已经表达了到店服务。
+counted_items仅用于明确列举的参与者人数，并同时输出unit="人"字段。显式数量或其他字段的counted_items用空数组。不能从“我们一家”“和几个朋友”等模糊表达猜人数；只列举实际接受服务的人，不把服务人员、未参加的人算进去。
+用户已描述去店里接受服务时，不因缺少“到店”二字而反问服务方式；fulfillment的value保留原话中表达服务方式的片段即可，不能写原文没有的词。
 quantity、budget_yuan用整数；fulfillment用用户自己的服务描述，不要输出代码。location/time/details原样保留。
 missing最多5项，只问这项具体任务确实缺少的信息；已给“预算350”就是350元预算，不要再问总预算、单次预算或重复问需求是什么。
 字段已有值时不要再询问该字段。数量和单位可以一起问。无地点要求的线上任务不问城市；没有明确必要性不额外问条件。
@@ -131,6 +154,8 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                 value=_grounded_field(item,body.text)
                 if value is not None:
                     model_values.setdefault(item.field,[]).append(value)
+                    if item.field=='quantity' and item.counted_items and 'unit' not in known:
+                        known['unit']='人'
                     evidence.append({'field':item.field,'value':value,'text':item.quote,'start':body.text.index(item.quote),'end':body.text.index(item.quote)+len(item.quote)})
             for key,values in model_values.items():
                 if key in {'location','time','details'}:
@@ -181,7 +206,7 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
         return {'summary':summary,'known_fields':known,'missing_fields':missing,'questions':[m['question'] for m in missing],
                 'rewrite_example':example,'proposal':proposal,'can_rehearse':proposal is not None,'mode':'live_llm' if body.use_model else 'explicit_rules',
                 'field_evidence':evidence,'unmodeled_fragments':compiled['unmodeled_fragments'],
-                'next_actions':['补齐【填写】部分后重新分析。'] if missing else ['核对已提取条件，进入第二步。'],
+                'next_actions':['在原文补充缺少的条件后，再点①检查。'] if missing else ['核对已提取条件，进入第二步。'],
                 'evidence_needed':['现行价格及全部附加费','退改条款'],'data_notice':'自定义需求使用你确认的模拟条件，不代表已查询真实商家。'}
     required={'analyze_text'}|({'model_call'} if body.use_model else set())
     result,event=invoke('request-analysis',{'text':body.text},handle,granted=required,required=required)

@@ -1923,6 +1923,8 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
 .request-check-status { padding:11px 14px; border:1px solid #e1d6f4; border-radius:10px; background:#f7f2ff; font-size:14px; line-height:1.7; }
 .request-check-status.is-ready { color:#24665c; border-color:#c6dfd7; background:#eff8f4; }
 .request-check-status.is-missing { margin:7px 0 12px; padding:0; border:0; background:transparent; color:#b42318; font-size:13px; }
+.custom-request .custom-request-label { display:block; }
+.custom-request-label small { margin-left:8px; color:var(--muted); font-size:12px; font-weight:400; }
 .analysis-understood { display:grid; grid-template-columns:minmax(190px,.45fr) minmax(0,1fr); gap:16px; margin:12px 0 16px; }
 .analysis-understood-actions { display:flex; flex-direction:column; gap:12px; min-width:0; }
 .analysis-understood-actions .analysis-heading { margin:0; line-height:1.6; }

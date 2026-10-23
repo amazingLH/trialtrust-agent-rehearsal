@@ -35,7 +35,7 @@ let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
 let serviceConfirmedFor = null, servicePricingMode = null;
-let currentCustomTask = null, preparedRequestFor = null;
+let currentCustomTask = null, preparedRequestFor = null, checkedRequestAnalysis = null;
 function serviceLabel(value) { return Object.hasOwn(fulfillmentLabels, value) ? fulfillmentLabels[value] : value; }
 function scenarioFor(spec) { return WorkbenchTools.scenarioSpec(catalog,spec); }
 function currentScenario() { return scenarioFor({domain:$("domain").value,custom_task:$("domain").value === "custom" ? currentCustomTask : null}); }
@@ -182,8 +182,6 @@ function setBusy(value) {
     "compile",
     "private-task",
     "cases",
-    "text-reviewed",
-    "analyze-live",
     "new-conversation",
     "new-trial",
     "continue-trial",
@@ -196,7 +194,7 @@ function setBusy(value) {
     .forEach((b) => (b.disabled = value));
   updateAnalysisAvailability();
   $("dense").disabled = value || $("agent").value !== "live";
-  $("analyze-live").disabled = value || !liveEnabled;
+  $("prepare-stand-in").disabled = value || !liveEnabled;
   $("run-suite").textContent = value
     ? "正在彩排，请稍候…"
     : "开始一组对照彩排 ↗";
@@ -461,12 +459,12 @@ function goStep(step, scroll = true) {
     );
 }
 function updateAnalysisAvailability() {
-  $("compile").disabled = running || analyzing || !preparedRequestFor || preparedRequestFor !== $("private-task").value || !$("text-reviewed").checked;
+  $("compile").disabled = running || analyzing || !checkedRequestAnalysis || !preparedRequestFor || preparedRequestFor !== $("private-task").value;
 }
 function invalidateRequestPreparation() {
   preparedRequestFor = null;
+  checkedRequestAnalysis = null;
   $("analysis-controls").hidden = true;
-  $("text-reviewed").checked = false;
   updateAnalysisAvailability();
 }
 function requestStatus(text, ready=false, missing=false) {
@@ -474,25 +472,37 @@ function requestStatus(text, ready=false, missing=false) {
   note.classList.toggle("is-ready",ready);
   note.classList.toggle("is-missing",missing);
 }
-function prepareStandIn() {
+async function prepareStandIn() {
   if(running || analyzing) return;
-  analysisNonce++;
-  const result=WorkbenchTools.prepareRequest($("private-task").value);
+  const raw=$("private-task").value;
+  const redacted=WorkbenchTools.redactRequest(raw);
   invalidateRequestPreparation();
   $("compile-result").replaceChildren();analysisResult=null;
-  if(result.empty) {requestStatus("请先写下你想办的事。",false,true);$("private-task").focus();return;}
-  $("private-task").value=result.text;
-  const hidden=Object.values(result.counts).reduce((a,b)=>a+b,0);
-  const privacy=hidden ? `已隐藏${hidden}处手机号、证件号或邮箱。` : "";
-  if(!result.ready) {
-    const missing=result.missing.length ? "还缺："+result.missing.join("、")+"。请补齐后再点①检查。" : "";
-    requestStatus(privacy+(result.overflow ? "文字较长，请先精简。" : "")+missing,false,true);
-    $("private-task").focus();return;
+  if(redacted.text.trim().length<2) {requestStatus("请先写下你想办的事。",false,true);$("private-task").focus();return;}
+  if(!liveEnabled) {requestStatus("大模型暂未启用，无法检查需求，请稍后再试。",false,true);return;}
+  const expectedConversation=conversationId,nonce=++analysisNonce;
+  const hidden=Object.values(redacted.counts).reduce((a,b)=>a+b,0);
+  const privacy=hidden ? `发送前已隐藏${hidden}处手机号、证件号或邮箱。` : "";
+  analyzing=true;setBusy(true);
+  $("prepare-stand-in").textContent="① 大模型正在检查…";
+  requestStatus("正在理解已提供的条件，检查还缺少什么…");
+  try {
+    const result=await api("/api/analyze",{text:redacted.text,reviewed:true,use_model:true});
+    if(conversationId!==expectedConversation || nonce!==analysisNonce || $("private-task").value!==raw) return;
+    if(result.questions.length || !result.can_rehearse || !result.proposal) {
+      requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再点①检查。",false,true);
+      return;
+    }
+    checkedRequestAnalysis=result;preparedRequestFor=raw;
+    $("analysis-controls").hidden=false;
+    requestStatus(privacy+"条件已齐全，点②查看识别结果。",true);
+  } catch(error) {
+    if(conversationId===expectedConversation && nonce===analysisNonce)
+      requestStatus("大模型检查未完成："+error.message+" 原文已保留，请稍后再点①重试。",false,true);
+  } finally {
+    analyzing=false;setBusy(false);
+    $("prepare-stand-in").textContent="① 隐去手机号等信息";
   }
-  preparedRequestFor=result.text;
-  $("analysis-controls").hidden=false;
-  requestStatus(privacy+"基础条件已填齐。核对上方文字并勾选确认后，点②继续分析。",true);
-  updateAnalysisAvailability();
 }
 function frameDisclosures(root=document) {
   root.querySelectorAll("details").forEach(detail=>{
@@ -528,9 +538,7 @@ function renderRequestAnalysis(result) {
   if (result.questions.length) {
     box.append(element("b","还需要你补充","analysis-heading"));
     const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
-    if(result.rewrite_example.length<=1200) $("private-task").value=result.rewrite_example;
-    invalidateRequestPreparation();analysisNonce++;
-    requestStatus(result.rewrite_example.length<=1200 ? "分析发现还缺少条件，已在需求框中标出。补齐【填写】部分后，再点①检查。" : "请根据下方提示补全需求，精简文字后再点①检查。",false,true);
+    requestStatus("请补充："+result.questions.join("；")+" 补充后再点①检查。",false,true);
   }
   if (result.proposal) {
     const p=result.proposal,s=scenarioFor(p);
@@ -549,38 +557,13 @@ function renderRequestAnalysis(result) {
   const exp=element("button","下载需求清单 JSON","secondary");exp.type="button";
   exp.addEventListener("click",()=>downloadJSON(result,"trialtrust-request-brief.json"));more.append(exp);box.append(more);frameDisclosures(box);
 }
-async function compileStandIn() {
+function compileStandIn() {
   if (running || analyzing) return;
-  if (!preparedRequestFor || preparedRequestFor !== $("private-task").value) {
-    notice("请先点①检查需求，补齐【填写】部分后再检查。", "private-task");return;
+  if (!checkedRequestAnalysis || !preparedRequestFor || preparedRequestFor !== $("private-task").value) {
+    notice("请先点①检查需求，按红字补充后再检查。", "private-task");return;
   }
-  if (!$("text-reviewed").checked) {
-    notice("请先核对需求并勾选同意分析。", "text-reviewed");
-    return;
-  }
-  notice();
-  $("compile").disabled = true;
-  analyzing = true;
-  const expectedConversation = conversationId,
-    nonce = ++analysisNonce;
-  try {
-    const result = await api("/api/analyze", {
-      text: $("private-task").value,
-      reviewed: $("text-reviewed").checked,
-      use_model: $("analyze-live").checked,
-    });
-    if (conversationId !== expectedConversation || nonce !== analysisNonce)
-      return;
-    notice();
-    analysisResult = result;
-    renderRequestAnalysis(result);
-  } catch (error) {
-    if (conversationId === expectedConversation && nonce === analysisNonce)
-      notice(error.message);
-  } finally {
-    analyzing = false;
-    updateAnalysisAvailability();
-  }
+  notice();analysisResult=checkedRequestAnalysis;
+  renderRequestAnalysis(checkedRequestAnalysis);
 }
 function renderSkills(events) {
   $("run-skills").replaceChildren();
@@ -651,12 +634,10 @@ function clearRun() {
 function clearInputs() {
   setDemandPath("manual");
   analysisNonce++;
-  $("private-task").value = "";
+  $("private-task").value = $("private-task").defaultValue;
   invalidateRequestPreparation();
   requestStatus("");
   $("compile-result").replaceChildren();
-  $("text-reviewed").checked = false;
-  $("analyze-live").checked = false;
   analysisResult = null;
   $("budget").value = 200;
   $("agent").value = "demo_careful";
@@ -1518,9 +1499,6 @@ $("run").addEventListener("click", () => start(false));
 $("run-suite").addEventListener("click", () => start(true));
 $("accept").addEventListener("click", () => review(true));
 $("reject").addEventListener("click", () => review(false));
-["text-reviewed", "analyze-live"].forEach((id) =>
-  $(id).addEventListener("change", () => {analysisNonce++;updateAnalysisAvailability();}),
-);
 $("prepare-stand-in").addEventListener("click", prepareStandIn);
 $("compile").addEventListener("click", compileStandIn);
 $("private-task").addEventListener("input", () => {
@@ -1645,7 +1623,7 @@ const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
         {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点“选好了，下一步核对条件”。'},
-        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，照灰字示例填写自己的条件，点①。缺项会直接标在同一个输入框中，补齐后再点①；通过后核对文字、勾选同意，点②分析。若模型还发现缺项，按提示在原框补充后重新检查。齐全后点“采用这些条件，进入第二步”；目录外的事项需在第二步填写模拟价格。'}
+        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，可编辑框内格式，也可直接用自己的话描述。点①后，先隐去手机号等信息，再用大模型检查（消耗模型额度）；只在框下红字提示缺项，原文不变。补充后再点①，条件齐全时点②查看同一次分析的结果，不再调用模型；核对后点“采用这些条件，进入第二步”。目录外的事项需在第二步填写模拟价格。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。服务方式可以自己描述，例如“餐馆里擦桌子”或“吃个蛋挞”，不必照着灰字填；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},
@@ -1757,7 +1735,8 @@ frameDisclosures();
     option.textContent = liveEnabled
       ? "DeepSeek · 真实模型实测"
       : "真实模型 · 尚未启用";
-    $("analyze-live").disabled = !liveEnabled;
+    $("prepare-stand-in").disabled = !liveEnabled;
+    if(!liveEnabled) requestStatus("大模型暂未启用，无法检查自定义需求；可先从上方目录选择。",false,true);
     modeNote();
     const conversations = await refreshConversations();
     const saved = readLocal("trialtrust-current-conversation");
