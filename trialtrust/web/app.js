@@ -843,22 +843,27 @@ $("compare-rounds").addEventListener("click", async()=>{
 });
 let conversationAction = null;
 function closeConversationMenus(except) {
-  $("conversations").querySelectorAll(".conversation-actions[open]").forEach(menu => {
+  document.querySelectorAll(".conversation-actions[open]").forEach(menu => {
     if (menu !== except) menu.open = false;
   });
 }
-function openConversationAction(row, type) {
+function openConversationAction(row, type, scope="conversation") {
   if (running) return;
   closeConversationMenus();
   setSidebar(false);
-  conversationAction = { id: row.id, type, expectedUpdated: row.updated };
-  $("conversation-action-title").textContent = type === "rename" ? "重命名会话" : "删除会话？";
-  $("conversation-action-name").textContent = row.title;
+  const noun=scope==="run" ? "彩排记录" : "会话";
+  const displayTitle=row.title || `${domainLabel(row.conditions)} · ¥${row.conditions.budget_yuan}`;
+  conversationAction = { id: row.id, type, scope, sourceConversation:row.conversation_id, expectedRevision:row.revision, expectedUpdated: row.updated };
+  $("conversation-action-title").textContent = type === "rename" ? `重命名${noun}` : `删除${noun}？`;
+  $("conversation-action-name").textContent = displayTitle;
   $("conversation-action-name").hidden = type === "delete";
   $("conversation-action-dialog").setAttribute("aria-describedby", type === "delete" ? "delete-explanation" : "conversation-action-name");
   $("rename-field").hidden = type !== "rename";
   $("delete-explanation").hidden = type !== "delete";
-  $("conversation-name").value = row.title;
+  $("delete-explanation").textContent = scope==="run"
+    ? "只删除这条彩排记录，其他记录和已导出的文件不受影响。删除后无法在页面中恢复。"
+    : "该会话和其中的彩排记录将从历史中移除，无法在页面中恢复。已导出的文件不受影响。";
+  $("conversation-name").value = displayTitle;
   $("conversation-name").required = type === "rename";
   $("confirm-conversation-action").textContent = type === "rename" ? "保存名称" : "确认删除";
   $("confirm-conversation-action").classList.toggle("danger-button", type === "delete");
@@ -872,7 +877,7 @@ document.addEventListener("click", (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
-  const menu = $("conversations").querySelector(".conversation-actions[open]");
+  const menu = document.querySelector(".conversation-actions[open]");
   if (menu) { event.preventDefault(); event.stopImmediatePropagation(); menu.open = false; menu.querySelector("summary").focus(); }
 });
 $("cancel-conversation-action").addEventListener("click", () => $("conversation-action-dialog").close());
@@ -882,7 +887,7 @@ $("conversation-action-dialog").addEventListener("cancel", event => {
 $("conversation-action-form").addEventListener("submit", async event => {
   event.preventDefault();
   if (!conversationAction || running || $("confirm-conversation-action").disabled) return;
-  const {id, type, expectedUpdated} = conversationAction;
+  const {id, type, scope, sourceConversation, expectedRevision, expectedUpdated} = conversationAction;
   const title = $("conversation-name").value.trim();
   if (type === "rename" && (!title || [...title].length > 60 || /[\x00-\x1f\x7f]/.test(title))) {
     $("conversation-action-error").textContent = "请输入1—60个字符的名称，不要包含换行或控制字符。";
@@ -891,6 +896,26 @@ $("conversation-action-form").addEventListener("submit", async event => {
   $("confirm-conversation-action").disabled = true;
   $("cancel-conversation-action").disabled = true;
   try {
+    if(scope==="run") {
+      const result=await api(`/api/trials/${encodeURIComponent(id)}/actions`, {operation:type,confirmed:true,expected_revision:expectedRevision,...(type==="rename"?{title}:{})});
+      $("conversation-action-dialog").close();
+      if(conversationId===sourceConversation) {
+        const wasActive=id===activeId;
+        const rows=await history();
+        if(type==="delete" && wasActive) {
+          clearRun();invalidateConfirmation();
+          if(rows.length) {
+            restoreConditions(rows[0].conditions,rows[0].kind==="suite"?"paired":"single");
+            await loadRun(rows[0].id);
+          }
+        } else if(type==="rename" && wasActive && latestRow) {
+          latestRow={...latestRow,title:result.title,revision:result.revision};render(latestRow);
+        }
+      }
+      await refreshConversations();
+      notice(type==="rename" ? "彩排记录名称已更新。" : "这条彩排记录已删除，其他记录保留。");
+      return;
+    }
     await api(`/api/conversations/${encodeURIComponent(id)}/actions`, {operation:type, confirmed:true, expected_updated:expectedUpdated, ...(type === "rename" ? {title} : {})});
     $("conversation-action-dialog").close();
     if (type === "delete" && id === conversationId) {
@@ -1010,7 +1035,7 @@ async function history() {
     b.append(
       element(
         "b",
-        `${domainLabel(row.conditions)} · ¥${row.conditions.budget_yuan}`,
+        row.title || `${domainLabel(row.conditions)} · ¥${row.conditions.budget_yuan}`,
       ),
       element(
         "small",
@@ -1023,7 +1048,19 @@ async function history() {
       setSidebar(false);
       if (latestRow?.report) goStep(3);
     });
-    $("history").append(b);
+    const item=element("div",undefined,"history-row");
+    const menu=element("details",undefined,"conversation-actions run-actions");
+    const toggle=element("summary","⋯");
+    toggle.setAttribute("aria-label",`彩排记录操作：${row.title || domainLabel(row.conditions)}`);
+    toggle.setAttribute("title","重命名或删除彩排记录");
+    toggle.addEventListener("click",event=>{if(running || row.status==="running"){event.preventDefault();return;}closeConversationMenus(menu);});
+    const actions=element("div",undefined,"conversation-menu");
+    for(const [label,type] of [["重命名","rename"],["删除记录","delete"]]) {
+      const action=element("button",label,type==="delete"?"danger-text":"");action.type="button";
+      action.disabled=running || row.status==="running";
+      action.addEventListener("click",()=>openConversationAction(row,type,"run"));actions.append(action);
+    }
+    menu.append(toggle,actions);item.append(b,menu);$("history").append(item);
   }
   return rows;
 }
@@ -1061,7 +1098,7 @@ function render(row, pairSelection = "baseline") {
       row.conditions.agent === "live" ? "真实模型试运行" : "免费演示 · 熟悉操作流程";
   $("run-info-title").textContent = row.conditions.agent === "live" ? "真实模型执行 · 查看本次设置" : "免费演示 · 查看本次设置";
   $("run-meta").textContent =
-    `${mode} · ${domainLabel(row.conditions)} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
+    `${row.title ? `记录：${row.title} · ` : ""}${mode} · ${domainLabel(row.conditions)} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
   const savedScenario=scenarioFor(row.conditions);
   if(savedScenario) {
     const savedPricing=WorkbenchTools.pricing(savedScenario,row.conditions.fulfillment,row.conditions.pricing);
@@ -1346,7 +1383,7 @@ async function start(isSuite = false) {
   }
   if (!WorkbenchTools.pricing(currentScenario(),$("fulfillment").value,editorPricing())) {
     document.querySelector(".fee-help").open = true;
-    notice("请在费用明细中填写0—1000元之间的整数单价和每单费用。", "unit-price");return;
+    notice("单价和每单费用请填写非负整数。", "unit-price");return;
   }
   if (!$("confirmed").checked || confirmedFor !== signature()) {
     invalidateConfirmation();

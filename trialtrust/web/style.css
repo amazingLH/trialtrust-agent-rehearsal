@@ -1956,3 +1956,14 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
 }
 
 .analysis-summary-scroll:focus-visible, .disclosure-content:focus-visible { outline:2px solid var(--purple); outline-offset:-2px; border-radius:10px; }
+
+.history-row { position:relative; display:flex; align-items:center; gap:3px; margin-top:5px; border-radius:12px; }
+.history-row .history-item { flex:1; min-width:0; margin:0; }
+.history-row .history-item b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.history-row:has(.history-item.active) { background:var(--lilac); }
+.record-export-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:18px 0 8px; }
+.record-export-actions .download { margin:0; }
+.export-note { font-size:13px; color:var(--muted); line-height:1.7; margin:8px 0 0; }
+.review-block .retry-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:18px; }
+.review-block .retry-actions p { margin:0 8px 0 0; font-size:14px; }
+.review-block .retry-actions .chip { margin:0; }

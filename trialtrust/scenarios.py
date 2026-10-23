@@ -14,9 +14,9 @@ from .catalog import CATALOG, FULFILLMENTS
 class SimulationPricing(BaseModel):
     """Optional fixture prices, independent of the user's spending limit."""
     model_config = ConfigDict(extra="forbid", frozen=True)
-    unit_price: int = Field(ge=0, le=1000, strict=True)
-    changed_unit_price: int = Field(ge=0, le=1000, strict=True)
-    order_fee: int = Field(ge=0, le=1000, strict=True)
+    unit_price: int = Field(ge=0, strict=True)
+    changed_unit_price: int = Field(ge=0, strict=True)
+    order_fee: int = Field(ge=0, strict=True)
 
 
 class RunSpec(Mandate):

@@ -65,7 +65,7 @@ test('custom simulation prices follow quantity and survive a template round trip
  const x=W.preview(catalog.scenarios[1],3,'dine_in',2000,t.spec.pricing);
  assert.equal(x.base,387);assert.equal(x.changed,519);assert.equal(x.changedRemaining,1481);
  assert.deepEqual(W.readTemplates(JSON.stringify([t]),catalog),[t]);
- for(const invalid of [{...pricing,unit_price:NaN},{...pricing,order_fee:-1},{...pricing,changed_unit_price:1001},{}]) {
+ for(const invalid of [{...pricing,unit_price:NaN},{...pricing,order_fee:-1},{...pricing,changed_unit_price:1.5},{}]) {
    assert.equal(W.preview(catalog.scenarios[1],3,'dine_in',2000,invalid),null);
    assert.equal(W.cleanTemplate({...template,spec:{...spec,pricing:invalid}},catalog),null);
  }
@@ -174,4 +174,22 @@ test('failed verification conclusions are highlighted without marking unrelated 
 test('a multiline failed verdict also highlights its over-budget line and stops at the next section',()=>{
  const text='**核验结论：不通过**\n- 独立核验器返回 valid: false，原因 constraint_conflict。\n- 1830元 > 999元，超支831元。\n\n**后续操作**\n- 调整预算后再试。';
  assert.deepEqual(W.verificationSegments(text).map(x=>x.failedVerdict),[true,true,true,false,false,false]);
+});
+
+
+test('large order fees keep all cost previews and templates available',()=>{
+ const p={unit_price:90,changed_unit_price:300,order_fee:10000};
+ const value=W.preview(catalog.scenarios[1],6,'到店用餐',1200,p);
+ assert.equal(value.base,10540);assert.equal(value.changed,11800);
+ assert.equal(value.remaining,-9340);assert.equal(value.changedRemaining,-10600);
+ const saved=W.cleanTemplate({...template,spec:{...template.spec,quantity:6,pricing:p}},catalog);
+ assert.deepEqual(W.readTemplates(JSON.stringify([saved]),catalog)[0].spec.pricing,p);
+ for(const amount of [1001,10000,1000000,10000000]) assert.ok(W.pricing(catalog.scenarios[1],'到店用餐',{unit_price:amount,changed_unit_price:amount,order_fee:amount}));
+ for(const amount of [-1,1.5,Infinity,NaN,Number.MAX_SAFE_INTEGER+1]) assert.equal(W.pricing(catalog.scenarios[1],'到店用餐',{...p,order_fee:amount}),null);
+});
+
+
+test('renamed rehearsal titles are used in record comparison choices',()=>{
+ const row={title:'我的大额费用检查',conditions:{domain:'buffet',budget_yuan:50000}};
+ assert.match(W.recordLabel(row,2,'baseline',{buffet:'自助餐聚会'}),/第2次彩排 · 我的大额费用检查/);
 });

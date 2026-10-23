@@ -294,9 +294,9 @@
                 <p id="fee-note" class="micro-note">先选择具体需求，再查看本次费用。</p>
                 <p class="micro-note">填写本次模拟单价和额外费用，用于计算总价；自定义需求需自行填写。</p>
                 <div class="form-grid conditions-grid pricing-grid">
-                  <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" max="1000" step="1" /></label>
-                  <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" max="1000" step="1" /></label>
-                  <label class="field">每单额外费用（元，只收一次）<input id="order-fee" type="number" min="0" max="1000" step="1" /></label>
+                  <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" step="1" /></label>
+                  <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" step="1" /></label>
+                  <label class="field">每单额外费用（元，只收一次）<input id="order-fee" type="number" min="0" step="1" /></label>
                 </div>
                 <p id="fee-formula" class="micro-note"></p>
                 <button id="reset-prices" type="button" class="text-button">恢复当前需求的默认模拟价格</button>
@@ -427,25 +427,24 @@
                   </div>
                   <p id="review-placeholder" class="stage-placeholder" role="status">等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。</p>
                   <div id="review-content" hidden>
-                  <p>保留的是试运行记录，不是同意真实预约或付款。</p>
+                  <p class="module-intro">先决定是否保留结果；保存的是试运行记录，不会预约或付款。</p>
                   <div id="review" class="review-actions" hidden>
                     <button id="accept" class="primary">保留结果</button
                     ><button id="reject" class="secondary">暂不接受</button>
                   </div>
                   <p id="reviewed" class="data-note" hidden></p>
+                  <div class="record-export-actions">
                   <a id="export" class="secondary download" href="#" hidden
                     >下载完整记录 JSON ↓</a
                   >
                   <button id="preview-export" class="secondary" hidden>
                     查看并复制完整 JSON
                   </button>
+                  </div>
+                  <p class="export-note">完整记录（JSON）包含本次条件、费用与核验结果、AI执行过程，以及你的审阅决定，方便保存、排查问题或与后续结果对照。</p>
                   <div id="export-preview" hidden>
                     <label for="export-json">完整记录（只读）</label>
-                    <p class="data-note">
-                      如果下载未出现，可点入下方文本，按
-                      Ctrl+A、Ctrl+C（手机长按全选），粘贴保存为 .json
-                      文件。这里不含模型密钥。
-                    </p>
+                    <p class="export-note">选中下方文字后复制，可保存为 .json 文件。</p>
                     <textarea
                       id="export-json"
                       rows="12"
@@ -454,7 +453,7 @@
                     ></textarea>
                   </div>
                   <div class="retry-actions">
-                    <p class="muted">想再试一次？先改条件，再重新确认。</p>
+                    <p>调整后再试</p>
                     <button id="try-budget" class="chip">预算改为250元</button
                     ><button id="try-price" class="chip">试试价格上涨</button
                     ><button id="try-missing" class="chip">试试证据缺失</button>

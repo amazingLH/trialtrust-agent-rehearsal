@@ -75,6 +75,10 @@ class Store:
                 db.execute("ALTER TABLE runs ADD COLUMN kind TEXT NOT NULL DEFAULT 'trial'")
             if "conversation_id" not in {row[1] for row in db.execute("PRAGMA table_info(runs)")}:
                 db.execute("ALTER TABLE runs ADD COLUMN conversation_id TEXT")
+            columns={row[1] for row in db.execute("PRAGMA table_info(runs)")}
+            for column,definition in [("title","TEXT"),("deleted","INTEGER NOT NULL DEFAULT 0"),("revision","INTEGER NOT NULL DEFAULT 0")]:
+                if column not in columns:
+                    db.execute(f"ALTER TABLE runs ADD COLUMN {column} {definition}")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS conversations (
                     id TEXT PRIMARY KEY, owner TEXT NOT NULL, title TEXT NOT NULL,
@@ -108,7 +112,7 @@ class Store:
 
     def owned(self, run_id, owner):
         with self.connect() as db:
-            row = db.execute("SELECT * FROM runs WHERE id=? AND owner=? AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1)", (run_id, owner)).fetchone()
+            row = db.execute("SELECT * FROM runs WHERE id=? AND owner=? AND deleted=0 AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1)", (run_id, owner)).fetchone()
         if not row:
             raise HTTPException(404, "未找到这次试托")
         return dict(row)
@@ -126,16 +130,16 @@ class Store:
             # Group older, unassigned records lazily, under their original owner.
             # This is idempotent and preserves reports and graph checkpoints.
             db.execute("BEGIN IMMEDIATE")
-            old = db.execute("SELECT MIN(created),MAX(created) FROM runs WHERE owner=? AND conversation_id IS NULL",
+            old = db.execute("SELECT MIN(created),MAX(created) FROM runs WHERE owner=? AND conversation_id IS NULL AND deleted=0",
                              (owner,)).fetchone()
             if old[0] is not None:
                 legacy = str(uuid4())
                 db.execute("INSERT INTO conversations(id,owner,title,created,updated) VALUES (?,?,?,?,?)",
                            (legacy, owner, "历史彩排", old[0], old[1]))
-                db.execute("UPDATE runs SET conversation_id=? WHERE owner=? AND conversation_id IS NULL",
+                db.execute("UPDATE runs SET conversation_id=? WHERE owner=? AND conversation_id IS NULL AND deleted=0",
                            (legacy, owner))
             rows = db.execute("""SELECT c.id,c.title,c.created,c.updated,COUNT(r.id) AS run_count
-                FROM conversations c LEFT JOIN runs r ON r.conversation_id=c.id AND r.owner=c.owner
+                FROM conversations c LEFT JOIN runs r ON r.conversation_id=c.id AND r.owner=c.owner AND r.deleted=0
                 WHERE c.owner=? AND c.deleted=0 GROUP BY c.id ORDER BY c.updated DESC,c.id LIMIT 100""", (owner,)).fetchall()
         return [dict(row) for row in rows]
 
@@ -170,6 +174,24 @@ class Store:
             db.execute("UPDATE conversations SET title=?,updated=? WHERE id=? AND owner=?",
                        (title, time.time(), conversation_id, owner))
             return {"id": conversation_id, "title": title}
+
+    def change_run(self, run_id, owner, *, title=None, expected_revision):
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row=db.execute("SELECT * FROM runs WHERE id=? AND owner=? AND deleted=0 AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1)",(run_id,owner)).fetchone()
+            if not row:
+                raise HTTPException(404,"未找到这条彩排记录")
+            if row['status']=='running':
+                raise HTTPException(409,"这次彩排仍在进行，请完成后再操作")
+            if row['revision']!=expected_revision:
+                raise HTTPException(409,"记录已发生变化，请关闭弹窗后重新选择操作")
+            if title is None:
+                # Keep the report, checkpoints and quota accounting as tombstones.
+                db.execute("UPDATE runs SET deleted=1,revision=revision+1 WHERE id=? AND owner=?",(run_id,owner))
+            else:
+                db.execute("UPDATE runs SET title=?,revision=revision+1 WHERE id=? AND owner=?",(title,run_id,owner))
+            db.execute("UPDATE conversations SET updated=? WHERE id=? AND owner=?",(time.time(),row['conversation_id'],owner))
+            return {'id':run_id,'title':title,'revision':row['revision']+1,'deleted':title is None}
 
     def update(self, run_id, **fields):
         if not fields.keys() <= {"status", "stage", "report", "error", "reviewed"}:
@@ -297,7 +319,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
         return owner
 
     def public(row, full=False):
-        result = {k: row[k] for k in ("id", "status", "stage", "created", "reviewed", "error", "kind", "conversation_id")}
+        result = {k: row[k] for k in ("id", "status", "stage", "created", "reviewed", "error", "kind", "conversation_id", "title", "revision")}
         result["conditions"] = json.loads(row["spec"])
         if full and row["report"]:
             result["report"] = json.loads(row["report"])
@@ -403,10 +425,10 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             store.conversation(conversation_id, owner)
         with store.connect() as db:
             if conversation_id:
-                rows = db.execute("SELECT * FROM runs WHERE owner=? AND conversation_id=? ORDER BY created DESC LIMIT 100",
+                rows = db.execute("SELECT * FROM runs WHERE owner=? AND deleted=0 AND conversation_id=? ORDER BY created DESC LIMIT 100",
                                   (owner, conversation_id)).fetchall()
             else:
-                rows = db.execute("SELECT * FROM runs WHERE owner=? AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1) ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
+                rows = db.execute("SELECT * FROM runs WHERE owner=? AND deleted=0 AND NOT EXISTS (SELECT 1 FROM conversations c WHERE c.id=runs.conversation_id AND c.owner=runs.owner AND c.deleted=1) ORDER BY created DESC LIMIT 20", (owner,)).fetchall()
         return [public(dict(row)) for row in rows]
 
     @app.get("/api/conversations")
@@ -415,6 +437,8 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
 
     from .conversation_actions import register_conversation_actions
     register_conversation_actions(app, store, require_owner)
+    from .run_actions import register_run_actions
+    register_run_actions(app,store,require_owner,review_locks)
 
     @app.post("/api/conversations", status_code=201)
     def new_conversation(request: Request):
@@ -531,7 +555,7 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
             raise HTTPException(403, "真实模型调用当前未启用")
         with store.connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            current = db.execute("SELECT r.status FROM runs r JOIN conversations c ON c.id=r.conversation_id AND c.owner=r.owner WHERE r.id=? AND r.owner=? AND c.deleted=0", (run_id, require_owner(request))).fetchone()
+            current = db.execute("SELECT r.status FROM runs r JOIN conversations c ON c.id=r.conversation_id AND c.owner=r.owner WHERE r.id=? AND r.owner=? AND r.deleted=0 AND c.deleted=0", (run_id, require_owner(request))).fetchone()
             if not current:
                 raise HTTPException(404, "未找到这次试托")
             if current["status"] not in {"failed", "interrupted"}:

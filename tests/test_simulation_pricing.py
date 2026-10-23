@@ -57,7 +57,35 @@ def test_custom_price_suite_persists_reviews_and_replays_without_changing_mandat
         assert replay['report']['changed']['drafts'][0]['total_yuan'] == 519
 
 
-@pytest.mark.parametrize('value', [-1, 1001, 1.5, True, None])
+@pytest.mark.parametrize('value', [-1, 1.5, True, None, float("inf")])
 def test_invalid_simulation_prices_are_rejected(value):
     with pytest.raises(ValidationError):
         RunSpec(pricing={'unit_price':value, 'changed_unit_price':100, 'order_fee':10})
+
+
+@pytest.mark.parametrize('amount',[1001,30000,1000000,10000000])
+def test_large_simulation_prices_and_order_fees_remain_valid(amount):
+    spec=RunSpec(domain='buffet',quantity=6,budget_yuan=1200,
+                 pricing={'unit_price':amount,'changed_unit_price':amount+100,'order_fee':amount})
+    sources,world,_=make_world(spec)
+    assert world.expected_total_cents==amount*7*100
+    assert str(amount) in next(s for s in sources if s.id==world.price_evidence_id).text
+
+
+def test_large_price_suite_survives_save_export_and_replay(tmp_path):
+    headers={'X-TrialTrust-Client':'web'}
+    with TestClient(create_app(tmp_path/'web',enable_live=False,require_accounts=False)) as client:
+        client.post('/api/session',json={},headers=headers)
+        spec={'domain':'buffet','quantity':6,'fulfillment':'到店用餐','budget_yuan':50000,
+              'pricing':{'unit_price':5000,'changed_unit_price':6000,'order_fee':12000},
+              'comparison_case':'price_change','confirmed':True}
+        started=client.post('/api/suites',json=spec,headers=headers)
+        assert started.status_code==202
+        path='/api/trials/'+started.json()['id']
+        row=client.get(path).json()
+        assert row['conditions']['pricing']==spec['pricing']
+        for side,total in [('baseline',42000),('changed',48000)]:
+            assert row['report'][side]['drafts'][0]['total_yuan']==total
+        exported=client.get(path+'/export').json()
+        assert exported['baseline']['conditions']['pricing']==spec['pricing']
+        assert client.get(path).json()['report']['changed']['drafts'][0]['total_yuan']==48000

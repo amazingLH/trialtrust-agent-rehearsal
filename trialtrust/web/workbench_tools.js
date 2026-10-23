@@ -103,7 +103,7 @@
     if (value == null) return {unit_price:scenario.price, changed_unit_price:scenario.changed_price, order_fee:scenario.id === "pottery" ? (serviceMode(fulfillment,scenario,{shipping:"作品邮寄"}) === "shipping" ? 20 : 0) : scenario.fee};
     const result = {};
     for (const key of ["unit_price", "changed_unit_price", "order_fee"]) {
-      if (!Number.isInteger(value[key]) || value[key] < 0 || value[key] > 1000) return null;
+      if (!Number.isSafeInteger(value[key]) || value[key] < 0) return null;
       result[key] = value[key];
     }
     return result;
@@ -148,7 +148,7 @@
   }
   function recordLabel(row, number, side, names) {
     const label = side === "baseline" ? "按原条件试" : side === "changed" ? "遇到变化再试" : "单次彩排";
-    return `当前会话中的第${number}次彩排 · ${row.conditions.custom_task?.name || names[row.conditions.domain] || row.conditions.domain} · 预算¥${row.conditions.budget_yuan} · ${label}`;
+    return `当前会话中的第${number}次彩排 · ${row.title || row.conditions.custom_task?.name || names[row.conditions.domain] || row.conditions.domain} · 预算¥${row.conditions.budget_yuan} · ${label}`;
   }
   return {verificationSegments, prepareRequest, cleanTemplate, readTemplates, preview, facts, pricing, maxBudget, normalizeServiceText, resolveFulfillment, serviceMode, budgetBalance, budgetAssessment, recordLabel, customTask, scenarioSpec};
 });
