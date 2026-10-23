@@ -1508,7 +1508,8 @@ $("private-task").addEventListener("input", () => {
   domainFields();
   invalidateConfirmation();
   invalidateRequestPreparation();
-  requestStatus("内容已修改，请点①重新检查。");
+  if(!$("request-check-status").classList.contains("is-missing"))
+    requestStatus("内容已修改，请点①重新检查。");
   $("compile-result").replaceChildren();
   analysisResult = null;
 });
