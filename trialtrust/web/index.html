@@ -214,16 +214,13 @@
               </p>
               <details class="custom-request">
                 <summary>没有合适选项？写下自己的需求 ↗</summary>
-                <p id="custom-request-help" class="muted">
-                  点击①后，会先隐去手机号等信息，再交给大模型检查条件（消耗模型额度）。请勿填写姓名或详细住址。
-                </p>
                 <label class="field custom-request-label" for="private-task">你的需求 <small>可按下方格式填写真实情况，也可以直接用自己的话描述。</small></label>
                 <div class="custom-request-row">
                   <textarea
                     id="private-task"
                     rows="4"
                     maxlength="1200"
-                    aria-describedby="custom-request-help request-check-status"
+                    aria-describedby="request-check-status"
                   >具体需求：【填写：想办的事】；地点：【填写：城市或区域，线上服务可写无需地点】；具体要求：【填写：服务内容、时长或特殊要求，没有可写无】；数量：【填写：数量和单位，例如2人】；服务方式：【填写：到店、上门或其他交付方式】；完成时间：【填写：时间要求，没有可写时间不限】；总预算：【填写：本次总预算，单位元】。</textarea>
                 <button id="prepare-stand-in" class="secondary">
                   ① 隐去手机号等信息
