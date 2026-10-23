@@ -100,7 +100,7 @@
           ><span class="brand-mark">试</span
           ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
         >
-        <button id="help" class="quiet">流程简介</button>
+        <button id="help" class="quiet">全流程简介</button>
         <a
           id="full-screen"
           class="quiet fullscreen-link"
@@ -135,7 +135,7 @@
             <span class="orbit two">证据 ↗</span>
             <p>你的彩排搭子 · 小托</p>
           </div>
-          <p class="hero-copy">先用模拟资料试一遍，看看 AI 在涨价、缺资料时，会不会漏查费用或做你没允许的事。</p>
+          <p class="hero-copy">把生活事务交给AI前，先看它遇到问题时会怎么做。试托按你填写的需求、预算和授权试运行，再用涨价、缺少价格依据等情况考验它，把费用计算、查证记录和操作过程展示出来。你可以提前发现漏算、乱猜或越权的风险，决定哪些条件要补充、哪些环节需要自己把关，再考虑怎样让AI参与实际事务。</p>
         </section>
         <div class="workbench-overview" aria-label="工作台概览">
           <span><b id="scenario-total">291</b> 个模拟场景</span><span><b>5</b> 类检查情况</span>
@@ -168,6 +168,7 @@
                   <p class="eyebrow">选择需求</p>
                   <h2>这次，想先试哪类事情？</h2>
                 </div>
+                <button type="button" class="secondary module-help" data-module-help="0" aria-haspopup="dialog">01模块·流程介绍</button>
               </div>
               <div class="demand-paths" role="group" aria-label="选择需求填写方式">
                 <button id="manual-demand" class="secondary" aria-pressed="true" aria-controls="manual-demand-fields manual-domain-field">自己选择需求</button>
@@ -214,37 +215,30 @@
               <details class="custom-request">
                 <summary>没有合适选项？写下自己的需求 ↗</summary>
                 <p id="custom-request-help" class="muted">
-                  直接写你想办的事，不限上面的选项。分析后会保留已知条件，只问缺少的信息，并给出补充示例。请勿填写姓名、电话或详细住址。
+                  写清想办的事和条件，先点①检查，补齐后再点②分析。请勿填写姓名、电话或详细住址。
                 </p>
                 <label class="field custom-request-label" for="private-task">你的需求</label>
                 <div class="custom-request-row">
                   <textarea
                     id="private-task"
-                    rows="2"
+                    rows="4"
                     maxlength="1200"
                     aria-describedby="custom-request-help"
-                    placeholder="例如：找个刷鞋的店，预算350。也可以写任何其他需求。"
+                    placeholder="例如：找一家足疗店；地点：杭州西湖区；数量：2人；具体要求：60分钟足部按摩，无特殊要求；服务方式：到店体验；完成时间：周六下午；总预算：350元。请换成你自己的需求和条件。"
                   ></textarea>
                 <button id="prepare-stand-in" class="secondary">
                   ① 隐去手机号等信息
                 </button>
                 </div>
-                <div id="stand-in-stage" hidden>
-                  <label class="field"
-                    >检查处理后的文字<textarea
-                      id="stand-in"
-                      rows="3"
-                      maxlength="1200"
-                    ></textarea>
-                  </label>
-                  <p id="redaction-note" class="muted"></p>
+                <p id="request-check-status" class="request-check-status" role="status" hidden></p>
+                <div id="analysis-controls" hidden>
                   <label class="check-control"
                     ><input id="text-reviewed" type="checkbox" /><span
                       class="checkmark"
                       aria-hidden="true"
                       >✓</span
                     ><span
-                      >我已检查，确认这段文字不含个人信息，同意发送并分析。</span
+                      >我已核对“你的需求”，确认不含个人信息，同意发送并分析。</span
                     ></label
                   ><label class="check-control"
                     ><input id="analyze-live" type="checkbox" /><span
@@ -254,7 +248,7 @@
                     ><span
                       >使用大模型理解自定义需求（推荐，会消耗模型额度）</span
                     ></label
-                  ><button id="compile" class="secondary">
+                  ><button id="compile" class="secondary" disabled>
                     ② 分析需求与缺失条件
                   </button>
                 </div>
@@ -275,6 +269,7 @@
                   <p class="eyebrow">划清委托边界</p>
                   <h2>核对条件，再开始彩排</h2>
                 </div>
+                <button type="button" class="secondary module-help" data-module-help="1" aria-haspopup="dialog">02模块·流程介绍</button>
               </div>
               <div class="control-stage"><h3>① 填好这次的条件</h3><p>告诉它多少人、怎么服务、最多花多少钱；后面就按这份条件检查。</p></div>
               <div class="form-grid conditions-grid">
@@ -293,11 +288,11 @@
                 </div>
                 <label class="field">本次总预算（元）<input id="budget" type="number" min="0" max="1000000" step="1" value="200" aria-describedby="budget-help" /></label>
               </div>
-              <p id="budget-help" class="micro-note">预算是这次最多愿意花的钱，支持0—1,000,000元整数。改预算会改变是否超支，不会改变服务单价。</p>
+              <p id="budget-help" class="micro-note">预算填本次最多愿意花的总金额。</p>
               <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
               <details class="compact-help fee-help"><summary>查看费用明细 / 调整这次的模拟价格</summary>
                 <p id="fee-note" class="micro-note">先选择具体需求，再查看本次费用。</p>
-                <p class="micro-note">下面是供AI查证的模拟价目，可自行修改；数量和价格改变后会重算，服务方式需点击“确认”后才参与计算。开始运行后也使用这份价目。每项支持0—1000元整数。切换目录事项会恢复默认价格；自定义事项需自行填写模拟价格；服务方式可自由描述；自定义描述沿用当前价目，请按需要调整。填写自取、邮寄等常用方式时，会带入相应的默认每单费用。</p>
+                <p class="micro-note">填写本次模拟单价和额外费用，用于计算总价；自定义需求需自行填写。</p>
                 <div class="form-grid conditions-grid pricing-grid">
                   <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" max="1000" step="1" /></label>
                   <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" max="1000" step="1" /></label>
@@ -380,6 +375,7 @@
                   <h2>它做了什么，依据在哪？</h2>
                 </div>
                 <span id="run-status" class="status-pill">尚未开始</span>
+                <button type="button" class="secondary module-help" data-module-help="2" aria-haspopup="dialog">03模块·流程介绍</button>
               </div>
               <div id="empty-state" class="empty-state">
                 <p>尚未运行。完成第二步后，这里显示结果、费用检查和工具证据。</p>
@@ -427,6 +423,7 @@
                       <p class="eyebrow">由你来决定</p>
                       <h2>这份结果，你愿意保留吗？</h2>
                     </div>
+                <button type="button" class="secondary module-help" data-module-help="3" aria-haspopup="dialog">04模块·流程介绍</button>
                   </div>
                   <p id="review-placeholder" class="stage-placeholder" role="status">等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。</p>
                   <div id="review-content" hidden>

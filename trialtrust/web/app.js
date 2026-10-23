@@ -35,7 +35,7 @@ let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
 let serviceConfirmedFor = null, servicePricingMode = null;
-let currentCustomTask = null;
+let currentCustomTask = null, preparedRequestFor = null;
 function serviceLabel(value) { return Object.hasOwn(fulfillmentLabels, value) ? fulfillmentLabels[value] : value; }
 function scenarioFor(spec) { return WorkbenchTools.scenarioSpec(catalog,spec); }
 function currentScenario() { return scenarioFor({domain:$("domain").value,custom_task:$("domain").value === "custom" ? currentCustomTask : null}); }
@@ -181,7 +181,6 @@ function setBusy(value) {
     "prepare-stand-in",
     "compile",
     "private-task",
-    "stand-in",
     "cases",
     "text-reviewed",
     "analyze-live",
@@ -195,7 +194,7 @@ function setBusy(value) {
       ".category,.retry-actions button,.history-item,.conversation-item,.conversation-actions button,.analysis-result button",
     )
     .forEach((b) => (b.disabled = value));
-  $("compile").disabled = value || analyzing;
+  updateAnalysisAvailability();
   $("dense").disabled = value || $("agent").value !== "live";
   $("analyze-live").disabled = value || !liveEnabled;
   $("run-suite").textContent = value
@@ -461,31 +460,47 @@ function goStep(step, scroll = true) {
       ["", "step-one", "step-two", "step-three", "step-four"][step],
     );
 }
-function prepareStandIn() {
-  analysisNonce++;
-  let value = $("private-task").value;
-  if (!value.trim()) {
-    notice("请先写下需求，不要填写真实个人资料。", "private-task");
-    return;
-  }
-  const counts = { phone: 0, id: 0, email: 0 };
-  const rules = [
-    ["id", /(?<!\d)\d{17}[0-9Xx](?!\d)/g, "[已隐藏证件号]"],
-    ["phone", /(?<!\d)1[3-9]\d{9}(?!\d)/g, "[已隐藏手机号]"],
-    ["email", /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[已隐藏邮箱]"],
-  ];
-  for (const [kind, pattern, replacement] of rules)
-    value = value.replace(pattern, () => {
-      counts[kind]++;
-      return replacement;
-    });
-  $("stand-in").value = value;
-  $("stand-in-stage").hidden = false;
+function updateAnalysisAvailability() {
+  $("compile").disabled = running || analyzing || !preparedRequestFor || preparedRequestFor !== $("private-task").value || !$("text-reviewed").checked;
+}
+function invalidateRequestPreparation() {
+  preparedRequestFor = null;
+  $("analysis-controls").hidden = true;
   $("text-reviewed").checked = false;
-  $("compile-result").replaceChildren();
-  analysisResult = null;
-  $("redaction-note").textContent =
-    `已在浏览器中隐藏手机号${counts.phone}处、证件号${counts.id}处、邮箱${counts.email}处。仍可能漏掉个人信息，请自行删除姓名、地址等内容。`;
+  updateAnalysisAvailability();
+}
+function requestStatus(text, ready=false) {
+  const note=$("request-check-status");note.textContent=text;note.hidden=!text;
+  note.classList.toggle("is-ready",ready);
+}
+function prepareStandIn() {
+  if(running || analyzing) return;
+  analysisNonce++;
+  const result=WorkbenchTools.prepareRequest($("private-task").value);
+  invalidateRequestPreparation();
+  $("compile-result").replaceChildren();analysisResult=null;
+  if(result.empty) {requestStatus("请先写下你想办的事。");$("private-task").focus();return;}
+  $("private-task").value=result.text;
+  const hidden=Object.values(result.counts).reduce((a,b)=>a+b,0);
+  const privacy=hidden ? `已隐藏${hidden}处手机号、证件号或邮箱。` : "";
+  if(!result.ready) {
+    requestStatus(privacy+(result.overflow ? "文字较长，请先精简，再补充："+result.missing.join("、")+"。" : "请补全需求框中的【填写】部分，再点①检查。"));
+    $("private-task").focus();return;
+  }
+  preparedRequestFor=result.text;
+  $("analysis-controls").hidden=false;
+  requestStatus(privacy+"基础条件已填齐。核对上方文字并勾选确认后，点②继续分析。",true);
+  updateAnalysisAvailability();
+}
+function frameDisclosures(root=document) {
+  root.querySelectorAll("details").forEach(detail=>{
+    if(detail.matches(".custom-request, .conversation-actions, #conversation-drawer, #run-drawer") || detail.querySelector(":scope > .disclosure-content")) return;
+    const summary=detail.querySelector(":scope > summary");if(!summary)return;
+    const frame=element("div",undefined,"disclosure-content");frame.tabIndex=0;
+    frame.setAttribute("role","region");frame.setAttribute("aria-label",summary.textContent.trim()+"的内容");
+    [...detail.childNodes].filter(node=>node!==summary).forEach(node=>frame.append(node));
+    detail.append(frame);detail.open=false;
+  });
 }
 function downloadJSON(value, name) {
   const url = URL.createObjectURL(
@@ -500,43 +515,45 @@ function downloadJSON(value, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function renderRequestAnalysis(result) {
-  const box=$("compile-result");
-  box.replaceChildren(element("b","我理解的需求","analysis-heading"),element("p",result.summary));
+  const box=$("compile-result");box.replaceChildren();
+  const understood=element("div",undefined,"analysis-understood");
+  const actions=element("div",undefined,"analysis-understood-actions");
+  actions.append(element("b","我理解的需求","analysis-heading"));
+  const frame=element("div",undefined,"analysis-summary-frame");
+  const info=element("div",undefined,"analysis-summary-scroll");info.tabIndex=0;
+  info.setAttribute("role","region");info.setAttribute("aria-label","识别到的需求与条件");info.append(element("p",result.summary));
+  frame.append(info);understood.append(actions,frame);box.append(understood);
   if (result.questions.length) {
     box.append(element("b","还需要你补充","analysis-heading"));
     const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
-    box.append(element("b","补充后可以这样写（把【填写】部分换成实际信息）","analysis-heading"));
-    const example=element("textarea",undefined,"analysis-example");example.value=result.rewrite_example;example.readOnly=true;
-    example.setAttribute("aria-label","补充后的输入示例");box.append(example);
-    const fill=element("button","用这个示例补充需求","secondary");fill.type="button";
-    fill.addEventListener("click",()=>{
-      $("private-task").value=result.rewrite_example;$("stand-in-stage").hidden=true;$("text-reviewed").checked=false;
-      analysisNonce++;analysisResult=null;$("private-task").focus();
-      notice("已填入需求框。请把【填写】部分改成实际信息，再检查并重新分析。");
-    });box.append(fill);
+    if(result.rewrite_example.length<=1200) $("private-task").value=result.rewrite_example;
+    invalidateRequestPreparation();analysisNonce++;
+    requestStatus(result.rewrite_example.length<=1200 ? "分析发现还缺少条件，已在需求框中标出。补齐【填写】部分后，再点①检查。" : "请根据下方提示补全需求，精简文字后再点①检查。");
   }
   if (result.proposal) {
     const p=result.proposal,s=scenarioFor(p);
-    box.append(element("p",`已提取：${p.quantity}${s.unit} · ${serviceLabel(p.fulfillment)} · 总预算¥${p.budget_yuan}${p.custom_task?.context?.length ? ` · ${p.custom_task.context.join("；")}` : ""}`));
+    info.append(element("p",`已提取：${p.quantity}${s.unit} · ${serviceLabel(p.fulfillment)} · 总预算¥${p.budget_yuan}${p.custom_task?.context?.length ? ` · ${p.custom_task.context.join("；")}` : ""}`));
     const apply=element("button","采用这些条件，进入第二步 →","secondary");apply.type="button";
     apply.addEventListener("click",()=>{
       if(p.domain === "custom") currentCustomTask=WorkbenchTools.customTask(p.custom_task);
       selectCategory(s.category,p.domain);$("quantity").value=p.quantity;$("budget").value=p.budget_yuan;
       setServiceDraft(serviceLabel(p.fulfillment));servicePricingMode=WorkbenchTools.serviceMode(p.fulfillment,s,fulfillmentLabels);
       fillPrices(WorkbenchTools.pricing(s,p.fulfillment));feeNote();invalidateConfirmation();goStep(2);
-      if(p.domain === "custom") document.querySelector(".fee-help").open=true;
-      notice(p.domain === "custom" ? "需求已带入第二步。请确认服务方式，并填写本次模拟价格。" : "条件已带入第二步，请确认服务方式并核对费用。");
-    });box.append(apply);
+      notice(p.domain === "custom" ? "需求已带入第二步。请确认服务方式，并展开费用明细填写本次模拟价格。" : "条件已带入第二步，请确认服务方式并核对费用。");
+    });actions.append(apply);
   }
   const more=element("details"),summary=element("summary","查看识别依据或下载需求清单（可选）");
   more.append(summary,element("pre",JSON.stringify({已识别条件:result.known_fields,原文依据:result.field_evidence},null,2)));
   const exp=element("button","下载需求清单 JSON","secondary");exp.type="button";
-  exp.addEventListener("click",()=>downloadJSON(result,"trialtrust-request-brief.json"));more.append(exp);box.append(more);
+  exp.addEventListener("click",()=>downloadJSON(result,"trialtrust-request-brief.json"));more.append(exp);box.append(more);frameDisclosures(box);
 }
 async function compileStandIn() {
   if (running || analyzing) return;
+  if (!preparedRequestFor || preparedRequestFor !== $("private-task").value) {
+    notice("请先点①检查需求，补齐【填写】部分后再检查。", "private-task");return;
+  }
   if (!$("text-reviewed").checked) {
-    notice("请先检查处理后的文字，并勾选同意发送进行分析。", "text-reviewed");
+    notice("请先核对需求并勾选同意分析。", "text-reviewed");
     return;
   }
   notice();
@@ -546,7 +563,7 @@ async function compileStandIn() {
     nonce = ++analysisNonce;
   try {
     const result = await api("/api/analyze", {
-      text: $("stand-in").value,
+      text: $("private-task").value,
       reviewed: $("text-reviewed").checked,
       use_model: $("analyze-live").checked,
     });
@@ -560,7 +577,7 @@ async function compileStandIn() {
       notice(error.message);
   } finally {
     analyzing = false;
-    $("compile").disabled = running;
+    updateAnalysisAvailability();
   }
 }
 function renderSkills(events) {
@@ -619,7 +636,7 @@ function clearRun() {
   $("review-content").hidden = true;
   $("review-placeholder").hidden = false;
   $("review-placeholder").textContent = "等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。";
-  $("executor-explanation").open = false;
+  $("step-three").querySelectorAll("details").forEach(detail=>{detail.open=false;});
   $("workspace").classList.remove("has-result");
   compareNonce++;
   $("round-comparison-output").replaceChildren();
@@ -633,8 +650,8 @@ function clearInputs() {
   setDemandPath("manual");
   analysisNonce++;
   $("private-task").value = "";
-  $("stand-in").value = "";
-  $("stand-in-stage").hidden = true;
+  invalidateRequestPreparation();
+  requestStatus("");
   $("compile-result").replaceChildren();
   $("text-reviewed").checked = false;
   $("analyze-live").checked = false;
@@ -760,7 +777,7 @@ function renderBudgetPreview() {
   if (!value || !$("quantity").value.trim() || !$("budget").value.trim()) {
     const message = !scenario ? "先在第一步选择具体需求，再填写数量和预算。" : !serviceIsConfirmed()
       ? "请先手动填写服务方式，并点击输入框右侧的“确认”，再查看本次费用。"
-      : "数量请填大于0的整数，预算填0—1,000,000元整数；费用明细中的单价和每单费用填0—1000元整数。";
+      : "请补齐数量、预算和模拟价格。";
     area.append(element("span", message, "micro-note"));$("fee-note").textContent=message;return;
   }
   const formula = price => `${value.quantity}${value.unit} × ¥${price}/${value.unit} + 每单费用¥${value.fee}`;
@@ -1134,7 +1151,11 @@ function render(row, pairSelection = "baseline") {
     metric.append(element("b", String(value)), element("small", label));
     $("metrics").append(metric);
   }
-  $("answer").textContent = report.answer || "没有最终说明，请查看工具记录。";
+  $("answer").replaceChildren();
+  WorkbenchTools.verificationSegments(report.answer || "没有最终说明，请查看工具记录。").forEach((line,i)=>{
+    if(i) $("answer").append("\n");
+    $("answer").append(element("span",line.text,line.failedVerdict ? "failed-verdict" : undefined));
+  });
   if (report.mandate) {
     const m = report.mandate,
       c = report.evidence_coverage;
@@ -1265,6 +1286,7 @@ function render(row, pairSelection = "baseline") {
     $("run-meta").textContent +=
       ` · 两次对比 / 正在查看：${pairSelection === "baseline" ? "按原条件试" : "遇到变化再试"}`;
   }
+  frameDisclosures($("step-three"));
 }
 async function loadRun(id) {
   activeId = id;
@@ -1458,28 +1480,18 @@ $("run-suite").addEventListener("click", () => start(true));
 $("accept").addEventListener("click", () => review(true));
 $("reject").addEventListener("click", () => review(false));
 ["text-reviewed", "analyze-live"].forEach((id) =>
-  $(id).addEventListener("change", () => analysisNonce++),
+  $(id).addEventListener("change", () => {analysisNonce++;updateAnalysisAvailability();}),
 );
 $("prepare-stand-in").addEventListener("click", prepareStandIn);
 $("compile").addEventListener("click", compileStandIn);
-$("stand-in").addEventListener("input", () => {
-  analysisNonce++;
-  currentStep = 1;
-  $("domain").value = "";
-  domainFields();
-  invalidateConfirmation();
-  $("text-reviewed").checked = false;
-  $("compile-result").replaceChildren();
-  analysisResult = null;
-});
 $("private-task").addEventListener("input", () => {
   analysisNonce++;
   currentStep = 1;
   $("domain").value = "";
   domainFields();
   invalidateConfirmation();
-  $("stand-in-stage").hidden = true;
-  $("text-reviewed").checked = false;
+  invalidateRequestPreparation();
+  requestStatus("内容已修改，请点①重新检查。");
   $("compile-result").replaceChildren();
   analysisResult = null;
 });
@@ -1594,7 +1606,7 @@ const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
         {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点“选好了，下一步核对条件”。'},
-        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'没有合适选项时，展开“写下自己的需求”。输入后点“隐去手机号等信息”，自己检查并删除遗漏的个人资料，再勾选同意分析。查看已识别的需求和缺少的条件。可点击补充示例，将【填写】部分换成实际信息后再分析；齐全后点“采用这些条件，进入第二步”。目录外的需求也可使用，第二步需自行填写模拟价格。'}
+        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，照灰字示例填写自己的条件，点①。缺项会直接标在同一个输入框中，补齐后再点①；通过后核对文字、勾选同意，点②分析。若模型还发现缺项，按提示在原框补充后重新检查。齐全后点“采用这些条件，进入第二步”；目录外的事项需在第二步填写模拟价格。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。服务方式可以自己描述，例如“餐馆里擦桌子”或“吃个蛋挞”，不必照着灰字填；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},
@@ -1627,12 +1639,13 @@ function renderHelpSteps(index) {
   const list = $("help-substeps-list"); list.replaceChildren();
   module.steps.forEach((step,i) => {
     const section=element("section",undefined,"help-substep");
-    const details=element("details"); details.open=i===0;
+    const details=element("details"); details.open=false;
     const how=element("div",step.how,"help-how");
     details.append(element("summary","查看具体操作"),how);
     section.append(element("h4",`${["①","②","③","④"][i]} ${step.name}`),element("p",`目的：${step.why}`,"help-step-purpose"),details);
     list.append(section);
   });
+  frameDisclosures(list);
   $("help-substeps-output").textContent = `完成后：${module.output}`;
 }
 function renderHelpMap() {
@@ -1646,7 +1659,7 @@ function renderHelpMap() {
     card.append(heading,element("span",`作用与目的：${module.purpose}`,"help-module-purpose"),element("span",`完成后：${module.output}`,"help-output"));
     card.addEventListener("click",()=>renderHelpSteps(i));
     card.addEventListener("keydown",event=>{
-      if(!["ArrowDown","ArrowUp","Home","End"].includes(event.key))return;
+      if($("help-dialog").classList.contains("module-only") || !["ArrowDown","ArrowUp","Home","End"].includes(event.key))return;
       event.preventDefault();
       const next=event.key==="Home" ? 0 : event.key==="End" ? 3 : (i+(event.key==="ArrowDown" ? 1 : 3))%4;
       renderHelpSteps(next);cards.querySelectorAll("button")[next].focus({preventScroll:true});
@@ -1655,16 +1668,23 @@ function renderHelpMap() {
   });
   renderHelpSteps(helpSelected);
 }
-$("help").addEventListener("click", () => {
-  helpSelected=Math.max(0,Math.min(3,currentStep-1));
+function openHelp(moduleIndex=null) {
+  const onlyModule=moduleIndex!==null;
+  helpSelected=onlyModule ? moduleIndex : Math.max(0,Math.min(3,currentStep-1));
+  $("help-dialog").classList.toggle("module-only",onlyModule);
+  $("help-title").textContent=onlyModule ? `${helpModules[helpSelected].n}模块·流程介绍` : "全流程简介";
+  $("start-tutorial").textContent=onlyModule ? "返回当前模块 →" : "返回工作台 →";
   renderHelpMap();$("help-dialog").showModal();$("help-dialog").scrollTop=0;
-});
+}
+$("help").addEventListener("click",()=>openHelp());
+document.querySelectorAll("[data-module-help]").forEach(button=>button.addEventListener("click",()=>openHelp(Number(button.dataset.moduleHelp))));
 $("close-help").addEventListener("click", () => $("help-dialog").close());
 $("start-tutorial").addEventListener("click", () => {
   $("help-dialog").close();
-  scrollToSection("coach");
+  scrollToSection($("help-dialog").classList.contains("module-only") ? ["step-one","step-two","step-three","step-four"][helpSelected] : "coach");
 });
 $("dismiss-notice").addEventListener("click", () => notice());
+frameDisclosures();
 (async () => {
   try {
     await TrialTrustAuth.ready();

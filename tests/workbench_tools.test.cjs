@@ -128,3 +128,50 @@ test('custom scenarios have their own name and unit and never borrow catalog pri
  assert.equal(W.cleanTemplate({...template,spec:{...spec,custom_task:null}},catalog),null);
  assert.match(W.recordLabel({conditions:spec},1,'changed',{}),/刷鞋/);
 });
+
+
+test('request preparation redacts in place, keeps known budget, and adds missing fields only once',()=>{
+ const original='找一个捏脚的店，预算999，联系13800138000或demo@example.com';
+ const first=W.prepareRequest(original);
+ assert.equal(first.ready,false);assert.equal(first.counts.phone,1);assert.equal(first.counts.email,1);
+ assert.ok(first.text.includes('找一个捏脚的店，预算999'));
+ assert.ok(!first.text.includes('13800138000'));assert.ok(!first.text.includes('demo@example.com'));
+ assert.ok(first.missing.includes('数量'));assert.ok(!first.missing.includes('总预算'));
+ assert.ok(first.text.includes('地点：【填写：城市或区域】'));
+ assert.equal(W.prepareRequest(first.text).text,first.text);
+});
+
+test('completed unlisted requirements can be checked without a catalog or model call',()=>{
+ const text='找一家足疗店；地点：测试城区；数量：2人；具体要求：60分钟足部按摩，无特殊要求；服务方式：到店体验；完成时间：周六下午；总预算：999元。';
+ const result=W.prepareRequest(text);assert.equal(result.ready,true);assert.equal(result.text,text);
+ assert.deepEqual(result.missing,[]);
+ const online=W.prepareRequest('留声机录音修复；数量：2份；具体要求：去除底噪；服务方式：线上交付；时间：不限；预算350');
+ assert.equal(online.ready,true);assert.ok(!online.text.includes('地点：'));
+});
+
+test('unfilled hints block readiness even when the other conditions are present',()=>{
+ const text='捏脚，预算999；地点：测试城区；数量：【填写数量】人；具体要求：无；服务方式：到店体验；时间：不限';
+ const result=W.prepareRequest(text);assert.equal(result.ready,false);assert.ok(result.missing.includes('数量'));
+ assert.equal((result.text.match(/数量：/g)||[]).length,1);
+ assert.equal(W.prepareRequest('').empty,true);
+});
+
+test('a long request is not truncated to make room for hints',()=>{
+ const text='找足疗店，预算999，'+ '说明'.repeat(590);
+ const result=W.prepareRequest(text);assert.equal(result.overflow,true);assert.equal(result.text,text);assert.equal(result.ready,false);
+});
+
+
+test('failed verification conclusions are highlighted without marking unrelated process text',()=>{
+ const text='费用计算：1830元\n- **核验结论：** 独立核验器返回 `valid: false`，原因 `constraint_conflict`。1830元 > 999元，超支831元。\n后续可以调整预算。';
+ const lines=W.verificationSegments(text);assert.deepEqual(lines.map(x=>x.failedVerdict),[false,true,false]);
+ assert.equal(W.verificationSegments('核验结论：valid: true，已通过。')[0].failedVerdict,false);
+ assert.equal(W.verificationSegments('The independent verifier rejected the plan: constraint_conflict.')[0].failedVerdict,true);
+ assert.equal(W.verificationSegments('<script>alert(1)</script>')[0].text,'<script>alert(1)</script>');
+});
+
+
+test('a multiline failed verdict also highlights its over-budget line and stops at the next section',()=>{
+ const text='**核验结论：不通过**\n- 独立核验器返回 valid: false，原因 constraint_conflict。\n- 1830元 > 999元，超支831元。\n\n**后续操作**\n- 调整预算后再试。';
+ assert.deepEqual(W.verificationSegments(text).map(x=>x.failedVerdict),[true,true,true,false,false,false]);
+});

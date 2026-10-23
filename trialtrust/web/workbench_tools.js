@@ -1,4 +1,4 @@
-/* Deterministic workbench helpers: no network, model calls or user task text. */
+/* Browser-only helpers: no network or model calls; request text stays in the page. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
@@ -8,6 +8,57 @@
   const cases = ["baseline", "price_change", "missing_evidence", "injection", "tool_timeout"];
   const comparisonCases = ["auto", ...cases.filter(x => x !== "baseline")];
   const maxBudget = 1000000;
+  function verificationSegments(answer) {
+    let failedSection=false;
+    return String(answer || '').split('\n').map(text=>{
+      const verdict=/(?:核验|核查|验证)(?:结论|结果)|独立核验器返回|independent verifier/i.test(text);
+      const failure=/valid[\s`*]*[:：][\s`*]*false|未通过|不通过|超支|超出预算|拒绝|conflict|rejected|missing_|证据缺失/i.test(text);
+      if(!text.trim() || (!verdict && /^\s*(?:#{1,6}\s|\*\*[^*]+\*\*)/.test(text))) failedSection=false;
+      const failedVerdict=(verdict && failure) || (failedSection && (failure || /^\s*[-•]/.test(text)));
+      if(verdict && failure) failedSection=true;
+      return {text,failedVerdict};
+    });
+  }
+  function prepareRequest(raw) {
+    const counts={phone:0,id:0,email:0};
+    let text=String(raw || '').trim();
+    for(const [kind,pattern,replacement] of [
+      ['id',/(?<!\d)\d{17}[0-9Xx](?!\d)/g,'[已隐藏证件号]'],
+      ['phone',/(?<!\d)1[3-9]\d{9}(?!\d)/g,'[已隐藏手机号]'],
+      ['email',/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,'[已隐藏邮箱]']
+    ]) text=text.replace(pattern,()=>{counts[kind]++;return replacement;});
+    if(!text) return {text,counts,missing:['具体需求'],ready:false,empty:true};
+    const placeholders=[...text.matchAll(/【[^】]*】/g)];
+    const plain=text.replace(/【[^】]*】/g,'');
+    const number='(?:[0-9]+|[零〇一二两三四五六七八九十百千万]+)';
+    const labeled=label=>new RegExp('(?:'+label+')[：:]\\s*([^，。；;\\n]+)').exec(plain)?.[1]?.trim();
+    const hasLabel=label=>new RegExp('(?:'+label+')[：:]').test(text);
+    const quantity=new RegExp('(?<![0-9.])(?:[1-9][0-9]*|[一二两三四五六七八九十百千万]+)\\s*(?:个人|位|名|人|双|只|件|份|台|间|项|辆|本|张|套|袋|箱|杯|瓶|次|字)').test(plain)
+      || !!labeled('数量') && new RegExp('^'+number+'\\s*[^0-9\\s，。；;]+$').test(labeled('数量')) && !/^0(?:\\D|$)/.test(labeled('数量'));
+    const budget=new RegExp('(?:总预算|预算|最多花|花费|上限|不超过)\\s*[：:为是]?\\s*[¥￥]?'+number).test(plain);
+    const goal=plain.split(/[，,。；;\n]/).some(part=>part.trim() && !/^(?:总预算|预算|地点|城市|区域|位置|时间|完成时间|数量|服务方式|取送方式|具体要求|服务内容|联系方式)[：:为是]?/.test(part.trim()) && !new RegExp('^\\s*'+number+'\\s*(?:人|双|件|份|台|间|次)\\s*$').test(part));
+    const online=/线上|在线|远程|电子交付/.test(plain);
+    const needsLocation=!online && /店|上门|现场|附近|景点|酒店|餐馆|入园|接送|取送/.test(plain);
+    const location=!!labeled('地点|城市|区域|位置|地区') || /(?:在|去)[^，。；;\n]{1,24}(?:市|区|县|镇|附近)/.test(plain);
+    const time=!!labeled('完成时间|时间|日期') || /时间不限|随时|不急|今天|明天|后天|本周|下周|周[一二三四五六日天]|星期[一二三四五六日天]|\d{1,2}月\d{1,2}[日号]/.test(plain);
+    const details=!!labeled('具体要求|服务内容|鞋类|材质|类型|特殊要求') || /\d+\s*分钟|不漂白|不吃辣|无特殊要求/.test(plain);
+    const service=!!labeled('服务方式|取送方式|交付方式') || /到店|上门|邮寄|寄送|自取|自提|堂食|现场办理|入园|入住|线上交付|远程服务/.test(plain);
+    const unit=/刷鞋|洗鞋|修鞋/.test(plain)?'双':/捏脚|足疗|按摩|聚餐|吃饭/.test(plain)?'人':'';
+    const fields=[
+      ['具体需求','想做的事情',goal,'具体需求|需求'],
+      ['地点','城市或区域',!needsLocation || location,'地点|城市|区域|位置|地区'],
+      ['具体要求','服务内容、时长或特殊要求，没有可写无',details,'具体要求|服务内容|鞋类|材质|类型|特殊要求'],
+      ['数量','数量和单位，例如2'+(unit || '份'),quantity,'数量'],
+      ['服务方式','到店、上门或其他交付方式',service,'服务方式|取送方式|交付方式'],
+      ['完成时间','时间要求，没有可写时间不限',time,'完成时间|时间|日期'],
+      ['总预算','本次总预算，单位元',budget,'总预算|预算']
+    ];
+    const missing=fields.filter(([, ,present])=>!present);
+    const additions=missing.filter(([, , ,labels])=>!hasLabel(labels)).map(([label,hint])=>label+'：【填写：'+hint+'】');
+    const proposed=additions.length ? text.replace(/[。；;\s]+$/,'')+'；'+additions.join('；')+'。' : text;
+    const overflow=proposed.length>1200;
+    return {text:overflow?text:proposed,counts,missing:[...new Set([...missing.map(([label])=>label),...(placeholders.length?['【填写】部分']:[])])],ready:!missing.length && !placeholders.length && !overflow,overflow};
+  }
   function customTask(value) {
     if (!value || typeof value.name !== "string" || !value.name.trim() || value.name.length>100 || typeof value.unit !== "string" || !value.unit.trim() || value.unit.length>12) return null;
     const context=value.context ?? [];
@@ -99,5 +150,5 @@
     const label = side === "baseline" ? "按原条件试" : side === "changed" ? "遇到变化再试" : "单次彩排";
     return `当前会话中的第${number}次彩排 · ${row.conditions.custom_task?.name || names[row.conditions.domain] || row.conditions.domain} · 预算¥${row.conditions.budget_yuan} · ${label}`;
   }
-  return {cleanTemplate, readTemplates, preview, facts, pricing, maxBudget, normalizeServiceText, resolveFulfillment, serviceMode, budgetBalance, budgetAssessment, recordLabel, customTask, scenarioSpec};
+  return {verificationSegments, prepareRequest, cleanTemplate, readTemplates, preview, facts, pricing, maxBudget, normalizeServiceText, resolveFulfillment, serviceMode, budgetBalance, budgetAssessment, recordLabel, customTask, scenarioSpec};
 });

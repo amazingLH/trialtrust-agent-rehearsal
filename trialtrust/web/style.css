@@ -916,7 +916,7 @@ details > div {
 }
 .analysis-result .analysis-heading { display:block; margin:12px 0 4px; font-size:15px; }
 .analysis-result ul { margin:5px 0 12px; padding-left:22px; }
-.analysis-result .analysis-example { width:100%; min-height:100px; margin:7px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font:inherit; line-height:1.75; resize:vertical; background:#faf8ff; }
+
 .analysis-result details { margin-top:15px; font-size:12px; color:var(--muted); }
 .site-footer {
   display: flex;
@@ -1918,3 +1918,41 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
  #help-dialog .help-substeps { padding:16px; }
  #help-dialog .help-purpose { padding:13px; }
 }
+
+/* One request field, with a compact confirmation summary. */
+.request-check-status { padding:11px 14px; border:1px solid #e1d6f4; border-radius:10px; background:#f7f2ff; font-size:14px; line-height:1.7; }
+.request-check-status.is-ready { color:#24665c; border-color:#c6dfd7; background:#eff8f4; }
+.analysis-understood { display:grid; grid-template-columns:minmax(190px,.45fr) minmax(0,1fr); gap:16px; margin:12px 0 16px; }
+.analysis-understood-actions { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.analysis-understood-actions .analysis-heading { margin:0; line-height:1.6; }
+.analysis-understood-actions button { margin:0; white-space:normal; text-align:left; }
+.analysis-summary-frame { position:relative; min-width:0; border:1px solid var(--line); border-radius:10px; background:#faf8ff; }
+.analysis-summary-scroll { position:absolute; inset:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding:10px 14px; line-height:1.7; overflow-wrap:anywhere; }
+.analysis-summary-scroll p { margin:0 0 8px; }
+.analysis-summary-scroll p:last-child { margin-bottom:0; }
+.analysis-understood:not(:has(button)) { min-height:68px; }
+.disclosure-content { max-height:min(52vh,440px); overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; min-width:0; padding:14px 16px; margin-top:12px; border:1px solid var(--line); border-radius:11px; background:#faf9fd; overflow-wrap:anywhere; }
+.disclosure-content > :first-child { margin-top:0; }
+.disclosure-content > :last-child { margin-bottom:0; }
+.disclosure-content pre { white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; max-height:none; overflow:visible; }
+.disclosure-content .disclosure-content { max-height:320px; }
+#help-dialog .disclosure-content .help-how { padding:0; margin:0; background:transparent; }
+@media(max-width:560px) {
+ .analysis-understood { grid-template-columns:minmax(122px,.8fr) minmax(0,1fr); gap:10px; }
+ .analysis-understood-actions button { padding:9px 10px; font-size:13px; }
+ .analysis-summary-scroll { padding:9px 10px; font-size:13px; }
+ .disclosure-content { padding:12px; }
+}
+
+.failed-verdict { color:#b42318; font-weight:700; }
+
+.module-help { flex:0 0 auto; padding:9px 12px; font-size:13px; white-space:nowrap; }
+#help-dialog.module-only .help-purpose, #help-dialog.module-only .help-map-intro, #help-dialog.module-only .help-module:not(.is-current) { display:none; }
+#help-dialog.module-only .help-layout { margin-top:18px; }
+@media(max-width:560px) {
+ .section-heading { flex-wrap:wrap; }
+ .section-heading > div { min-width:160px; }
+ .section-heading > .module-help { margin-left:auto; }
+}
+
+.analysis-summary-scroll:focus-visible, .disclosure-content:focus-visible { outline:2px solid var(--purple); outline-offset:-2px; border-radius:10px; }
