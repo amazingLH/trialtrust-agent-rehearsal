@@ -161,6 +161,45 @@ test('a long request is not truncated to make room for hints',()=>{
  const result=W.prepareRequest(text);assert.equal(result.overflow,true);assert.equal(result.text,text);assert.equal(result.ready,false);
 });
 
+test('ordinary wording supplies location, quantity, service and budget before missing hints are added',()=>{
+ const original='找一家洗店我要泡澡，一共3个人，地点上海青浦区，总共预算1200，到时候我到店；地点：【填写：城市或区域】；具体要求：【填写：服务内容、时长或特殊要求，没有可写无】；完成时间：【填写：时间要求，没有可写时间不限】。';
+ const result=W.prepareRequest(original);
+ assert.deepEqual(result.missing,['具体要求','完成时间']);
+ assert.ok(result.text.startsWith(original.split('；')[0]));
+ assert.ok(!result.text.includes('地点：【填写'));
+ assert.ok(!result.text.includes('总预算：【填写'));
+ assert.ok(!result.text.includes('数量：【填写'));
+ assert.ok(!result.text.includes('服务方式：【填写'));
+ assert.equal(result.ready,false);
+ assert.equal(W.prepareRequest(result.text).text,result.text);
+ const completed=result.text.replace('【填写：服务内容、时长或特殊要求，没有可写无】','无').replace('【填写：时间要求，没有可写时间不限】','时间不限');
+ assert.equal(W.prepareRequest(completed).ready,true);
+ assert.deepEqual(W.prepareRequest(completed).missing,[]);
+});
+
+test('location labels accept natural connectors, spacing and unlabeled district clauses',()=>{
+ for(const location of ['地点上海青浦区','地点是上海青浦区','地点在上海青浦区','地点 上海青浦区','地点：上海青浦区','在上海青浦区','上海青浦区','地点：【填写：城市或区域】；地点上海青浦区']) {
+   const result=W.prepareRequest('找泡澡店；'+location+'；3个人；预算1200；到店；具体要求：无；完成时间：时间不限。');
+   assert.equal(result.ready,true,location);
+   assert.ok(!result.text.includes('【填写'),location);
+ }
+ const missing=W.prepareRequest('找泡澡店；地点：【填写：城市或区域】；3个人；预算1200；到店；具体要求：无；完成时间：时间不限。');
+ assert.deepEqual(missing.missing,['地点']);
+});
+
+test('stale hints for supplied conditions are removed while filled and partially filled clauses stay intact',()=>{
+ const base='找足疗店；地点上海青浦区；3个人；预算1200；到店；具体要求：无；完成时间：时间不限';
+ const stale='；地点：【填写：城市或区域】；数量：【填写数量】【填写单位】；总预算：【填写预算】元；服务方式：【填写：服务方式】；完成时间：【填写时间】；具体要求：【填写具体要求】。';
+ const result=W.prepareRequest(base+stale);
+ assert.equal(result.ready,true);assert.equal(result.text,base+'。');
+ assert.equal(W.prepareRequest(result.text).text,result.text);
+ const filled=W.prepareRequest(base+'；地点：上海青浦区；具体要求：不要高温水池。');
+ assert.ok(filled.text.includes('地点：上海青浦区；具体要求：不要高温水池'));
+ const partial=W.prepareRequest(base+'；具体要求：水温【填写温度】。');
+ assert.equal(partial.ready,false);assert.ok(partial.text.includes('水温【填写温度】'));
+ assert.deepEqual(partial.missing,['【填写】部分']);
+});
+
 
 test('failed verification conclusions are highlighted without marking unrelated process text',()=>{
  const text='费用计算：1830元\n- **核验结论：** 独立核验器返回 `valid: false`，原因 `constraint_conflict`。1830元 > 999元，超支831元。\n后续可以调整预算。';

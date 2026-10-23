@@ -469,9 +469,10 @@ function invalidateRequestPreparation() {
   $("text-reviewed").checked = false;
   updateAnalysisAvailability();
 }
-function requestStatus(text, ready=false) {
+function requestStatus(text, ready=false, missing=false) {
   const note=$("request-check-status");note.textContent=text;note.hidden=!text;
   note.classList.toggle("is-ready",ready);
+  note.classList.toggle("is-missing",missing);
 }
 function prepareStandIn() {
   if(running || analyzing) return;
@@ -479,12 +480,13 @@ function prepareStandIn() {
   const result=WorkbenchTools.prepareRequest($("private-task").value);
   invalidateRequestPreparation();
   $("compile-result").replaceChildren();analysisResult=null;
-  if(result.empty) {requestStatus("请先写下你想办的事。");$("private-task").focus();return;}
+  if(result.empty) {requestStatus("请先写下你想办的事。",false,true);$("private-task").focus();return;}
   $("private-task").value=result.text;
   const hidden=Object.values(result.counts).reduce((a,b)=>a+b,0);
   const privacy=hidden ? `已隐藏${hidden}处手机号、证件号或邮箱。` : "";
   if(!result.ready) {
-    requestStatus(privacy+(result.overflow ? "文字较长，请先精简，再补充："+result.missing.join("、")+"。" : "请补全需求框中的【填写】部分，再点①检查。"));
+    const missing=result.missing.length ? "还缺："+result.missing.join("、")+"。请补齐后再点①检查。" : "";
+    requestStatus(privacy+(result.overflow ? "文字较长，请先精简。" : "")+missing,false,true);
     $("private-task").focus();return;
   }
   preparedRequestFor=result.text;
@@ -528,7 +530,7 @@ function renderRequestAnalysis(result) {
     const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
     if(result.rewrite_example.length<=1200) $("private-task").value=result.rewrite_example;
     invalidateRequestPreparation();analysisNonce++;
-    requestStatus(result.rewrite_example.length<=1200 ? "分析发现还缺少条件，已在需求框中标出。补齐【填写】部分后，再点①检查。" : "请根据下方提示补全需求，精简文字后再点①检查。");
+    requestStatus(result.rewrite_example.length<=1200 ? "分析发现还缺少条件，已在需求框中标出。补齐【填写】部分后，再点①检查。" : "请根据下方提示补全需求，精简文字后再点①检查。",false,true);
   }
   if (result.proposal) {
     const p=result.proposal,s=scenarioFor(p);
