@@ -51,7 +51,7 @@ def number(token):
     return total+section+current
 
 def quantities(text):
-    return [(number(m.group(1)),m.group(2),m) for m in re.finditer(rf'(?<![\d.\-])({NUM})\s*({UNITS})',text)]
+    return [(number(m.group(1)),m.group(2),m) for m in re.finditer(rf'(?<![\d.\-])({NUM})\s*(?:个\s*(?=人|位|名))?({UNITS})',text)]
 
 def _base_fields(text,compiled):
     known,evidence={},list(compiled['field_evidence'])
@@ -69,12 +69,25 @@ def _base_fields(text,compiled):
             r'(?:总预算|预算|地点|时间|数量|服务方式|鞋类|材质|城市|区域)[：:为是]?.*',c.strip())
             and not re.fullmatch(rf'\s*({NUM})\s*({UNITS})\s*',c)),None)
         if goal: known['task_name']=goal[:100]
-    for key,pattern in {'location':r'(?:地点|城市|区域)[：:]\s*([^，。；;\n]+)',
-                        'time':r'(?:完成时间|时间)[：:]\s*([^，。；;\n]+)',
-                        'details':r'(?:具体要求|鞋类|材质|服务内容)[：:]\s*([^。；;\n]+)',
-                        'fulfillment':r'(?:服务方式|取送方式)[：:]\s*([^，。；;\n]+)'}.items():
-        match=re.search(pattern,text)
-        if match and not PLACEHOLDER.search(match.group(1)): known[key]=match.group(1).strip()
+    for key,labels in {'location':'地点|城市|区域|位置|地区',
+                       'time':'完成时间|时间|日期',
+                       'details':'具体要求|鞋类|材质|服务内容|特殊要求',
+                       'fulfillment':'服务方式|取送方式|交付方式'}.items():
+        # A colon is optional in ordinary wording, e.g. 地点上海青浦区.
+        # Inspect separate clauses so empty hints never swallow the next field.
+        for clause in re.split(r'[。；;\n]' if key=='details' else r'[，,。；;\n]',text):
+            match=re.search(rf'(?:{labels})(.*)$',clause)
+            if not match: continue
+            value=match.group(1).lstrip(' ：:\t').strip()
+            if key=='location': value=re.sub(r'^(?:是|为|在)\s*','',value)
+            if value and not PLACEHOLDER.search(value):
+                known[key]=value
+                break
+    if 'location' not in known:
+        match=re.search(r'(?:在|去)([^，,。；;\n]{1,24}(?:市|区|县|镇|附近))',text)
+        if not match:
+            match=re.search(r'(?:^|[，,。；;\n])\s*([\u4e00-\u9fff]{2,16}(?:市|区|县|镇))\s*(?=[，,。；;\n]|$)',text)
+        if match and not PLACEHOLDER.search(match.group(1)): known['location']=match.group(1)
     if 'fulfillment' not in known:
         match=re.search(r'到店送洗|上门取送|快递寄送|到店自提|到店办理|到店|线上办理|线上交付|远程服务',text)
         if match: known['fulfillment']=match.group()

@@ -77,6 +77,29 @@ def test_unfilled_rewrite_placeholders_are_not_actual_conditions():
     assert {'quantity','fulfillment'} <= {m['field'] for m in result['missing_fields']}
 
 
+@pytest.mark.parametrize('use_model',[False,True])
+@pytest.mark.parametrize('location',['地点上海青浦区','地点是上海青浦区','地点在上海青浦区','地点：上海青浦区','在上海青浦区','上海青浦区'])
+@pytest.mark.parametrize('quantity',['3个人','三个人'])
+def test_natural_conditions_survive_analysis_without_reasking(use_model,location,quantity):
+    text=f'找一家洗店我要泡澡，一共{quantity}，{location}，总共预算1200，到时候我到店；具体要求：无；完成时间：时间不限。'
+    model=Response([], [{'field':key,'question':question} for key,question in
+                        [('quantity','几个人？'),('location','在哪个区域？'),('budget_yuan','预算多少？')]]) if use_model else None
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=use_model),model)
+    assert result['missing_fields']==[]
+    assert result['can_rehearse']
+    assert result['proposal']['quantity']==3
+    assert result['proposal']['budget_yuan']==1200
+    assert result['proposal']['fulfillment']=='到店'
+    assert '地点：上海青浦区' in result['proposal']['custom_task']['context']
+    assert '时间：时间不限' in result['proposal']['custom_task']['context']
+
+
+def test_empty_location_hint_does_not_hide_a_later_supplied_location():
+    text='找泡澡店；地点：【填写城市或区域】；地点上海青浦区；3个人；预算1200；到店；具体要求：无；完成时间：时间不限。'
+    result=analyze(AnalysisRequest(text=text,reviewed=True))
+    assert result['known_fields']['location']=='上海青浦区'
+
+
 def custom_spec():
     return {'domain':'custom','custom_task':{'name':'刷鞋','unit':'双','context':['地点：测试城区','具体要求：运动鞋，不漂白']},
             'quantity':2,'fulfillment':'到店送洗','budget_yuan':350,'comparison_case':'price_change',
