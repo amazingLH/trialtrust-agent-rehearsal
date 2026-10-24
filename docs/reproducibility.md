@@ -61,7 +61,13 @@ export TRIALTRUST_ENABLE_LIVE=1
 python -m uvicorn trialtrust.webapp:app --host 127.0.0.1 --port 8774
 ```
 
-在页面明确选择真实模型，再按需勾选语义检索。模型为`deepseek-v4.1-flash`，向量模型为`qwen3.7-text-embedding-flash`，百炼地域/权限需与模型可用性匹配。
+在页面明确选择真实模型，再按需勾选语义检索。聊天先用`deepseek-v4.1-flash`，收到明确的免费额度耗尽错误后，将同一请求自动交给`qwen3.7-flash`继续处理。向量模型仍为`qwen3.7-text-embedding-flash`，百炼地域/权限需与模型可用性匹配。
+
+要在免费额度耗尽时切换，请在百炼开启DeepSeek的“免费额度用完即停”，让服务返回`403 / AllocationQuota.FreeTierOnly`；Qwen保持按量付费可用（关闭该开关，或模型不支持开启）。若DeepSeek的开关关闭，服务商会直接为DeepSeek按量计费，应用不能从成功响应判断免费额度是否用完。额度由服务商管理，不按本地累计Token猜测。
+
+切换后在原`usage.sqlite`中保存模型选择，新会话和服务重启后继续使用Qwen；只保存凭据摘要，不保存密钥。更换API Key不会继承旧Key的切换状态。核验结果与导出记录包含实际调用的模型。只对明确的免费额度耗尽进行一次切换，鉴权失败、网络超时和一般限流不会触发重复调用。Qwen兼容Function Calling；切换保留原始消息、工具参数、数量、预算和授权，不重放已执行的工具动作。
+
+模型能力与价格见[Qwen3.7-Flash官方文档](https://help.aliyun.com/zh/model-studio/qwen3-7-flash)，额度规则见[百炼免费额度说明](https://help.aliyun.com/zh/model-studio/new-free-quota)。用量估值按支持模型的最高输出费率保守记录，不作为账户账单；应用默认无累计Token或金额上限。
 
 显式真实向量消融：
 

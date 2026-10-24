@@ -1085,6 +1085,11 @@ function render(row, pairSelection = "baseline") {
   $("run-info-title").textContent = row.conditions.agent === "live" ? "真实模型执行 · 查看本次设置" : "免费演示 · 查看本次设置";
   $("run-meta").textContent =
     `${row.title ? `记录：${row.title} · ` : ""}${mode} · ${domainLabel(row.conditions)} · ${caseLabels[report?.conditions?.case || row.conditions.case]} · 预算 ¥${row.conditions.budget_yuan}`;
+  if (row.conditions.agent === "live" && report?.execution_metadata?.model) {
+    const models=report.execution_metadata.models?.length ? report.execution_metadata.models : [report.execution_metadata.model];
+    const names={"deepseek-v4.1-flash":"DeepSeek V4.1 Flash","qwen3.7-flash":"Qwen3.7-Flash"};
+    $("run-meta").textContent += ` · 本次实际模型：${models.map(m=>names[m] || m).join("、")}`;
+  }
   const savedScenario=scenarioFor(row.conditions);
   if(savedScenario) {
     const savedPricing=WorkbenchTools.pricing(savedScenario,row.conditions.fulfillment,row.conditions.pricing);
@@ -1742,7 +1747,7 @@ frameDisclosures();
     const option = $("agent").querySelector('[value="live"]');
     option.disabled = !liveEnabled;
     option.textContent = liveEnabled
-      ? "DeepSeek · 真实模型实测"
+      ? "真实模型 · DeepSeek（免费额度用完自动切换Qwen）"
       : "真实模型 · 尚未启用";
     $("prepare-stand-in").disabled = !liveEnabled;
     if(!liveEnabled) requestStatus("大模型暂未启用，无法检查自定义需求；可先从上方目录选择。",false,true);

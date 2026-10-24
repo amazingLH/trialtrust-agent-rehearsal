@@ -71,7 +71,8 @@ def run_trial(directory: Path, live: bool = False, dense_model: str | None = Non
                        "requested_retrieval": "dense_rrf" if dense_model else "bm25_only",
                        "awaiting_human_review": bool(graph.get_state(config).interrupts), "usage": ledger.summary(),
                        "run_usage": ledger.summary(run_only=True),
-                       "execution_metadata": {"model": provider.model if live else None,
+                       "execution_metadata": {"model": (ledger.summary(run_only=True).get("last_chat_model") or provider.model) if live else None,
+                           "models": ledger.summary(run_only=True).get("models",[]) if live else [],
                            "embedding_model": dense_model, "thinking": False if live else None,
                            "started_utc": started_utc, "finished_utc": datetime.now(timezone.utc).isoformat(),
                            "source_hashes": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()

@@ -25,6 +25,8 @@ Docker和可选Gradio入口共用FastAPI业务，账号鉴权默认开启。/api
 
 DASHSCOPE_API_KEY仅供模型后端；ALIPAY_MODELSCOPE_KEY仅用于本地部署管理，不进入前端、源码和日志。资源仍为免费CPU。应用默认不设累计Token和估算费用上限，保留usage.sqlite的历史记录；旧TRIALTRUST_TOKEN_LIMIT、TRIALTRUST_BUDGET_CNY环境变量不再生效。模型调用按服务商账户的免费额度、计费和访问规则执行。
 
+模型策略：DeepSeek免费额度用完后自动切换Qwen3.7-Flash，后者继续按服务商规则使用免费额度或按量付费。DeepSeek的“免费额度用完即停”须开启以提供明确耗尽信号，Qwen保持付费可用。切换状态随usage.sqlite持久化，不删除历史用量；模型与错误处理细节见[复现说明](reproducibility.md#启用真实模型)。
+
 ## 发布与验收
 
 开发流程负责修改、测试、源码同步、部署和实际验收；维护者无需手动反复尝试发布。GitHub CI只测试，不直接自动部署。正常推送魔搭master后确认SDK与入口一致，再调用平台发布流程，不强推、不创建备用空间、不删除运行数据。

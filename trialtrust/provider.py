@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import copy
+import hashlib
 import os
 import sqlite3
 from decimal import Decimal
@@ -10,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+
+PRIMARY_MODEL = "deepseek-v4.1-flash"
+FALLBACK_MODEL = "qwen3.7-flash"
 
 
 def credential(name: str) -> str:
@@ -62,13 +66,16 @@ class TokenLedger:
                 db.execute("ALTER TABLE calls ADD COLUMN nano_cny_per_token INTEGER NOT NULL DEFAULT 8000")
             if "run_id" not in columns:
                 db.execute("ALTER TABLE calls ADD COLUMN run_id TEXT")
+            if "model" not in columns:
+                db.execute("ALTER TABLE calls ADD COLUMN model TEXT")
+            db.execute("CREATE TABLE IF NOT EXISTS provider_routes (credential_hash TEXT PRIMARY KEY, model TEXT NOT NULL)")
 
     def for_run(self, run_id: str):
         scoped = copy.copy(self)
         scoped.run_id = run_id
         return scoped
 
-    def reserve(self, kind: str, amount: int, nano_cny_per_token: int = 8000) -> int:
+    def reserve(self, kind: str, amount: int, nano_cny_per_token: int = 8000, model: str | None = None) -> int:
         if amount <= 0:
             raise ValueError("Reservation must be positive")
         if nano_cny_per_token <= 0:
@@ -83,9 +90,21 @@ class TokenLedger:
                 estimated = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)*nano_cny_per_token),0) FROM calls").fetchone()[0]
                 if estimated + amount * nano_cny_per_token > self.budget_nano_cny:
                     raise RuntimeError("Application estimated money budget reached; no request sent")
-            row = db.execute("INSERT INTO calls(kind,reserved,status,nano_cny_per_token,run_id) VALUES(?,?,?,?,?)",
-                             (kind, amount, "reserved", nano_cny_per_token, self.run_id))
+            row = db.execute("INSERT INTO calls(kind,reserved,status,nano_cny_per_token,run_id,model) VALUES(?,?,?,?,?,?)",
+                             (kind, amount, "reserved", nano_cny_per_token, self.run_id, model))
             return row.lastrowid
+
+    def prefer_fallback(self, credential_hash: str, exhausted: bool = False) -> bool:
+        # A provider-confirmed exhaustion survives new runs/restarts. Never store keys.
+        with sqlite3.connect(self.path, timeout=10) as db:
+            if exhausted:
+                db.execute("INSERT OR REPLACE INTO provider_routes VALUES(?,?)", (credential_hash, FALLBACK_MODEL))
+            row = db.execute("SELECT model FROM provider_routes WHERE credential_hash=?", (credential_hash,)).fetchone()
+        return bool(row and row[0] == FALLBACK_MODEL)
+
+    def reject(self, call_id: int) -> None:
+        with sqlite3.connect(self.path) as db:
+            db.execute("UPDATE calls SET actual=0,status='rejected' WHERE id=?", (call_id,))
 
     def settle(self, call_id: int, actual: int | None) -> None:
         if actual is not None and (type(actual) is not int or actual < 0):
@@ -99,6 +118,11 @@ class TokenLedger:
         with sqlite3.connect(self.path) as db:
             count, tokens = db.execute("SELECT COUNT(*),COALESCE(SUM(COALESCE(actual,reserved)),0) FROM calls" + where, params).fetchone()
             estimated = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)*nano_cny_per_token),0) FROM calls" + where, params).fetchone()[0]
+            models = [row[0] for row in db.execute("SELECT DISTINCT model FROM calls" + where
+                      + (" AND" if where else " WHERE") + " model IS NOT NULL AND status!='rejected' ORDER BY model", params)]
+            last_chat = db.execute("SELECT model FROM calls" + where
+                       + (" AND" if where else " WHERE")
+                       + " kind='/chat/completions' AND model IS NOT NULL AND status='completed' ORDER BY id DESC LIMIT 1", params).fetchone()
         return {"requests": count, "charged_or_reserved_tokens": tokens,
                 "scope": "run_requests" if run_only else "application_database",
                 "budget_applies_to": "application_database" if self.limit is not None or self.budget_nano_cny is not None else "none",
@@ -106,13 +130,19 @@ class TokenLedger:
                 "application_token_limit": self.limit,
                 "conservative_valued_cny": estimated / 1_000_000_000,
                 "application_estimated_budget_cny": self.budget_nano_cny / 1_000_000_000 if self.budget_nano_cny is not None else None,
-                "pricing_version": "bailian-beijing-published-2026-10-15",
+                "models": models,
+                "last_chat_model": last_chat[0] if last_chat else None,
+                "pricing_version": "bailian-beijing-published-2026-10-24",
                 "cost_basis": "all_tokens_at_supported_model_max_rate; unresolved_requests_reserved",
                 "free_quota_balance": "not_available", "billed_cny": "not_verified"}
 
 
+class FreeTierExhausted(RuntimeError):
+    """Only an explicit provider quota refusal permits the model handover."""
+
+
 class Bailian:
-    def __init__(self, ledger: TokenLedger, model: str = "deepseek-v4.1-flash"):
+    def __init__(self, ledger: TokenLedger, model: str = PRIMARY_MODEL):
         self.ledger, self.model = ledger, model
         self.base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
@@ -120,17 +150,27 @@ class Bailian:
         # UTF-8 bytes provide a deliberately conservative input reservation.
         amount = len(json.dumps(body, ensure_ascii=False).encode("utf-8")) + output_limit + 128
         key = credential("DASHSCOPE_API_KEY")
-        rates = {("/chat/completions", "deepseek-v4.1-flash"): 8000,
+        rates = {("/chat/completions", PRIMARY_MODEL): 8000,
+                 ("/chat/completions", FALLBACK_MODEL): 4800,
                  ("/embeddings", "qwen3.7-text-embedding-flash"): 125}
         rate = rates.get((route, body.get("model")))
         if rate is None:
             raise RuntimeError("Model pricing not verified; no request sent")
-        call_id = self.ledger.reserve(route, amount, rate)
+        call_id = self.ledger.reserve(route, amount, rate, model=body.get("model"))
         with httpx.Client(timeout=45, follow_redirects=False) as client:
             response = client.post(self.base + route,
                                    headers={"Authorization": "Bearer " + key}, json=body)
         if response.status_code != 200:
             # Do not log raw provider response bodies, headers, credentials or prompts.
+            if response.status_code == 403:
+                try:
+                    error = response.json().get("error", {})
+                    exhausted = isinstance(error, dict) and error.get("code") == "AllocationQuota.FreeTierOnly"
+                except (ValueError, AttributeError):
+                    exhausted = False
+                if exhausted:
+                    self.ledger.reject(call_id)
+                    raise FreeTierExhausted("Provider free tier exhausted")
             raise RuntimeError(f"Provider HTTP {response.status_code}; request not retried")
         data = response.json()
         usage = data.get("usage", {}).get("total_tokens")
@@ -139,11 +179,23 @@ class Bailian:
 
     def chat(self, messages: list[dict], tools: list[dict] | None = None,
              max_tokens: int = 700) -> dict[str, Any]:
+        routing_key = hashlib.sha256((self.base + credential("DASHSCOPE_API_KEY")).encode()).hexdigest()
+        if self.model == PRIMARY_MODEL and self.ledger.prefer_fallback(routing_key):
+            self.model = FALLBACK_MODEL
         body = {"model": self.model, "messages": messages, "temperature": 0,
                 "max_tokens": max_tokens, "enable_thinking": False}
         if tools:
             body["tools"] = tools
-        data = self.request("/chat/completions", body, max_tokens)
+        try:
+            data = self.request("/chat/completions", body, max_tokens)
+        except FreeTierExhausted:
+            if self.model != PRIMARY_MODEL:
+                raise
+            self.ledger.prefer_fallback(routing_key, exhausted=True)
+            self.model = FALLBACK_MODEL
+            # The first request was refused before generation; submit the same
+            # messages/tool schema once to Qwen, without replaying any tool action.
+            data = self.request("/chat/completions", {**body, "model": FALLBACK_MODEL}, max_tokens)
         choice = data["choices"][0]
         # Store observable decisions and tool requests, not hidden reasoning.
         message = {key: value for key, value in choice["message"].items()

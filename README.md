@@ -74,7 +74,7 @@ flowchart LR
 
 | 能力 | 实现 | 代码入口 |
 |---|---|---|
-| 真实模型与工具选择 | 百炼 `deepseek-v4.1-flash`、Function Calling、严格参数验证、有限轮次 | [workflow.py](trialtrust/workflow.py) |
+| 真实模型与工具选择 | 百炼 `deepseek-v4.1-flash` 免费额度耗尽时自动切换 `qwen3.7-flash`；Function Calling、严格参数验证、有限轮次 | [provider.py](trialtrust/provider.py) |
 | 多角色编排 | 设计、执行、审阅三种职责；同一执行器分别试做原始和变化条件 | [suite.py](trialtrust/suite.py) |
 | Advanced RAG | 范围/现行版本预过滤、规则分面扩展、BM25＋真实稠密向量、两级RRF | [retrieval.py](trialtrust/retrieval.py) |
 | 真实Embedding | `qwen3.7-text-embedding-flash`，内容与版本绑定缓存，维度/数值验证 | [provider.py](trialtrust/provider.py) |
