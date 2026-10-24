@@ -1234,9 +1234,15 @@ function render(row, pairSelection = "baseline") {
   if (suite) {
     const area = $("paired-comparison");
     area.hidden = false;
+    const summary=WorkbenchTools.comparisonSummary(row,catalog);
+    const intro=element("p",undefined,"comparison-intro");
+    const selection=row.conditions.comparison_case === "auto" && suite.execution_mode === "live_llm"
+      ? `这次AI自动选中了“${caseLabels[suite.design.case]}”。` : `本组实际测试的变化：${caseLabels[suite.design.case]}。`;
+    intro.append(`${selection}${summary.explanation} `,
+      element("strong",summary.conclusion,"comparison-outcome"));
     area.append(
       element("h3", "先对比两次结果"),
-      element("p", `本组实际测试的变化：${caseLabels[suite.design.case]}。${suite.design.case === "price_change" ? "第二次使用你填写的变化后单价，检查是否超预算。" : "这次不使用第二步的变化后单价，原单价保持不变。"}点一张卡片，下方显示那次的结论和依据。`, "comparison-intro"),
+      intro,
     );
     const cards = element("div", undefined, "pair-grid");
     for (const [key, label] of [

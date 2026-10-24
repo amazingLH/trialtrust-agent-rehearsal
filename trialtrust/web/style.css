@@ -1839,6 +1839,7 @@ input:not([type]), input[type="text"] { width:100%; min-height:44px; padding:10p
 #paired-comparison { margin:0 0 20px; }
 #paired-comparison h3 { margin:0; font-size:18px; }
 .comparison-intro { font-size:14px; color:var(--muted); margin:5px 0 10px; }
+.comparison-outcome { font-weight:600; color:var(--ink); }
 .pair-grid { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; gap:12px; }
 .pair-card { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3px 12px; padding:12px 16px; min-width:0; }
 .pair-card b { font-size:16px; }
