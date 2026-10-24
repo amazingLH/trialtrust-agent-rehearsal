@@ -2,9 +2,7 @@ FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e57
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web \
-    TRIALTRUST_ENABLE_LIVE=0 \
-    TRIALTRUST_BUDGET_CNY=3 \
-    TRIALTRUST_TOKEN_LIMIT=200000
+    TRIALTRUST_ENABLE_LIVE=0
 WORKDIR /app
 COPY requirements.lock ./
 RUN pip install --no-cache-dir -r requirements.lock \

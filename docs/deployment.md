@@ -23,7 +23,7 @@ Docker和可选Gradio入口共用FastAPI业务，账号鉴权默认开启。/api
 
 两种入口均使用TRIALTRUST_RUNTIME=/mnt/workspace/trialtrust/web。web.sqlite保存账号和历史，子目录保存报告及检查点，上层usage.sqlite保存用量；这些文件不写入镜像或Git。启动前生成最近3日的一致性私有备份，与原库同盘。删除、转移创空间前另行备份，不保证平台删除或存储损坏后的恢复。
 
-DASHSCOPE_API_KEY仅供模型后端；ALIPAY_MODELSCOPE_KEY仅用于本地部署管理，不进入前端、源码和日志。资源仍为免费CPU，默认3元/20万tokens保守闸门不变。
+DASHSCOPE_API_KEY仅供模型后端；ALIPAY_MODELSCOPE_KEY仅用于本地部署管理，不进入前端、源码和日志。资源仍为免费CPU。应用默认不设累计Token和估算费用上限，保留usage.sqlite的历史记录；旧TRIALTRUST_TOKEN_LIMIT、TRIALTRUST_BUDGET_CNY环境变量不再生效。模型调用按服务商账户的免费额度、计费和访问规则执行。
 
 ## 发布与验收
 

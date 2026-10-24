@@ -28,14 +28,13 @@ let chosenCase = "baseline",
   confirmedFor = null,
   currentCategory = null,
   currentStep = 1,
-  latestRow = null,
-  analysisResult = null;
+  latestRow = null;
 let sessionToken = readLocal("trialtrust-session");
 let conversationId = null;
 let analysisNonce = 0,
   analyzing = false;
 let serviceConfirmedFor = null, servicePricingMode = null;
-let currentCustomTask = null, preparedRequestFor = null, checkedRequestAnalysis = null;
+let currentCustomTask = null;
 let directorySelection = null, activeDemandSource = "directory";
 const demandConfirmText = "确定！并进行下一步核对条件";
 function rememberDirectorySelection() {
@@ -201,7 +200,6 @@ function setBusy(value) {
     "confirmed",
     "prepare-stand-in",
     "confirm-directory-demand",
-    "compile",
     "private-task",
     "cases",
     "new-conversation",
@@ -214,7 +212,6 @@ function setBusy(value) {
       ".category,.retry-actions button,.history-item,.conversation-item,.conversation-actions button,.analysis-result button",
     )
     .forEach((b) => (b.disabled = value));
-  updateAnalysisAvailability();
   $("dense").disabled = value || $("agent").value !== "live";
   $("prepare-stand-in").disabled = value || !liveEnabled;
   $("run-suite").textContent = value
@@ -478,14 +475,8 @@ function goStep(step, scroll = true) {
       ["", "step-one", "step-two", "step-three", "step-four"][step],
     );
 }
-function updateAnalysisAvailability() {
-  $("compile").disabled = running || analyzing || !checkedRequestAnalysis || !preparedRequestFor || preparedRequestFor !== $("private-task").value;
-}
-function invalidateRequestPreparation() {
-  preparedRequestFor = null;
-  checkedRequestAnalysis = null;
-  $("analysis-controls").hidden = true;
-  updateAnalysisAvailability();
+function clearRequestAnalysis() {
+  $("compile-result").replaceChildren();
 }
 function requestStatus(text, ready=false, missing=false) {
   const note=$("request-check-status");note.textContent=text;note.hidden=!text;
@@ -496,8 +487,7 @@ async function prepareStandIn() {
   if(running || analyzing) return;
   const raw=$("private-task").value;
   const redacted=WorkbenchTools.redactRequest(raw);
-  invalidateRequestPreparation();
-  $("compile-result").replaceChildren();analysisResult=null;
+  clearRequestAnalysis();
   if(redacted.text.trim().length<2) {requestStatus("请先写下你想办的事。",false,true);$("private-task").focus();return;}
   if(!liveEnabled) {requestStatus("大模型暂未启用，无法检查需求，请稍后再试。",false,true);return;}
   const expectedConversation=conversationId,nonce=++analysisNonce;
@@ -509,14 +499,13 @@ async function prepareStandIn() {
   try {
     const result=await api("/api/analyze",{text:redacted.text,reviewed:true,use_model:true});
     if(conversationId!==expectedConversation || nonce!==analysisNonce || $("private-task").value!==raw) return;
+    renderRequestAnalysis(result);
     if(result.questions.length || !result.can_rehearse || !result.proposal) {
       requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再次点击右侧按钮。",false,true);
       return;
     }
-    checkedRequestAnalysis=result;preparedRequestFor=raw;
-    $("analysis-controls").hidden=false;
     requestStatus(privacy+"条件已齐全，已将你的需求带入第二步。",true);
-    analysisResult=result;renderRequestAnalysis(result);adoptAnalyzedRequest(result);
+    adoptAnalyzedRequest(result);
   } catch(error) {
     if(conversationId===expectedConversation && nonce===analysisNonce)
       requestStatus("大模型检查未完成："+error.message+" 原文已保留，请稍后再次点击右侧按钮。",false,true);
@@ -556,11 +545,6 @@ function renderRequestAnalysis(result) {
   const info=element("div",undefined,"analysis-summary-scroll");info.tabIndex=0;
   info.setAttribute("role","region");info.setAttribute("aria-label","识别到的需求与条件");info.append(element("p",result.summary));
   frame.append(info);understood.append(actions,frame);box.append(understood);
-  if (result.questions.length) {
-    box.append(element("b","还需要你补充","analysis-heading"));
-    const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
-    requestStatus("请补充："+result.questions.join("；")+" 补充后再次点击右侧按钮。",false,true);
-  }
   if (result.proposal) {
     const p=result.proposal,s=scenarioFor(p);
     info.append(element("p",`已提取：${p.quantity}${s.unit} · ${serviceLabel(p.fulfillment)} · 总预算¥${p.budget_yuan}${p.custom_task?.context?.length ? ` · ${p.custom_task.context.join("；")}` : ""}`));
@@ -578,14 +562,6 @@ function adoptAnalyzedRequest(result) {
   restoreConditions({...editorSpec(),...p,pricing:undefined},$("run-method").value,"custom");
   goStep(2);
   notice(p.domain === "custom" ? "你的需求已带入第二步。请确认服务方式，并填写本次模拟价格。" : "你的需求已带入第二步，请核对条件。");
-}
-function compileStandIn() {
-  if (running || analyzing) return;
-  if (!checkedRequestAnalysis || !preparedRequestFor || preparedRequestFor !== $("private-task").value) {
-    notice("请先点击“你的需求”右侧的确认按钮，按红字补充后再次确认。", "private-task");return;
-  }
-  notice();analysisResult=checkedRequestAnalysis;
-  renderRequestAnalysis(checkedRequestAnalysis);
 }
 function renderSkills(events) {
   $("run-skills").replaceChildren();
@@ -657,10 +633,8 @@ function clearInputs() {
   setDemandPath("manual");
   analysisNonce++;
   $("private-task").value = $("private-task").defaultValue;
-  invalidateRequestPreparation();
+  clearRequestAnalysis();
   requestStatus("");
-  $("compile-result").replaceChildren();
-  analysisResult = null;
   $("budget").value = 200;
   $("agent").value = "demo_careful";
   $("dense").checked = false;
@@ -1532,17 +1506,14 @@ $("run-suite").addEventListener("click", () => start(true));
 $("accept").addEventListener("click", () => review(true));
 $("reject").addEventListener("click", () => review(false));
 $("prepare-stand-in").addEventListener("click", prepareStandIn);
-$("compile").addEventListener("click", compileStandIn);
 $("private-task").addEventListener("input", () => {
   analysisNonce++;
   currentStep = 1;
   if(activeDemandSource === "custom") invalidateConfirmation();
   else updateCoach();
-  invalidateRequestPreparation();
+  clearRequestAnalysis();
   if(!$("request-check-status").classList.contains("is-missing"))
     requestStatus("内容已修改，请再次点击右侧按钮检查。");
-  $("compile-result").replaceChildren();
-  analysisResult = null;
 });
 $("try-budget").addEventListener("click", () => {
   $("budget").value = 250;
@@ -1655,7 +1626,7 @@ const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
         {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点它下方的“确定！并进行下一步核对条件”。这个按钮只使用目录选择或已应用的模板，不分析下方手写内容。'},
-        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，可编辑框内格式，也可直接用自己的话描述。点击“你的需求”右侧的“确定！并进行下一步核对条件”，只分析这份手写内容：先隐去手机号等信息，再用大模型检查（消耗模型额度）。缺项在框下用红字提示，原文不变；补充时红字保留，再次点击后更新。条件齐全就自动带入第二步，②可回看识别结果，不重复调用模型。即使上方也选了目录或模板，这个按钮也只使用手写需求。目录外的事项需在第二步填写模拟价格。'}
+        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，可编辑框内格式，也可直接用自己的话描述。点击“你的需求”右侧的“确定！并进行下一步核对条件”，只分析这份手写内容：先隐去手机号等信息，再用大模型检查（消耗模型额度）。缺项在框下用红字提示，原文不变；补充时红字保留，再次点击后更新。每次分析结束后，“我理解的需求”会直接显示识别结果，条件齐全就自动带入第二步。即使上方也选了目录或模板，这个按钮也只使用手写需求。目录外的事项需在第二步填写模拟价格。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。服务方式可以自己描述，例如“餐馆里擦桌子”或“吃个蛋挞”，不必照着灰字填；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},

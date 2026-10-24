@@ -35,19 +35,23 @@ def credential(name: str) -> str:
 
 
 class TokenLedger:
-    """Reserve before each request. Failed/ambiguous calls retain the reservation.
+    """Persist measured/reserved usage without capping normal model calls.
 
-    This is an application token limit, not an account billing or free-quota API.
+    Explicit constructor limits remain available for isolated evaluations. Legacy
+    deployment budget variables do not impose limits on the running application.
+    Provider-side quota, billing and access rules remain authoritative.
     """
     def __init__(self, path: Path, limit: int | None = None, budget_cny: str | None = None):
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path
         self.run_id = None
-        self.limit = limit if limit is not None else int(os.environ.get("TRIALTRUST_TOKEN_LIMIT", "200000"))
-        budget = Decimal(budget_cny or os.environ.get("TRIALTRUST_BUDGET_CNY", "3"))
-        if not budget.is_finite() or budget <= 0 or budget > 100 or self.limit <= 0:
-            raise ValueError("Application budget must be positive and at most CNY 100")
-        self.budget_nano_cny = int(budget * 1_000_000_000)
+        self.limit = limit
+        budget = Decimal(budget_cny) if budget_cny is not None else None
+        if limit is not None and (type(limit) is not int or limit <= 0):
+            raise ValueError("An explicit token limit must be a positive integer")
+        if budget is not None and (not budget.is_finite() or budget <= 0):
+            raise ValueError("An explicit evaluation budget must be positive")
+        self.budget_nano_cny = int(budget * 1_000_000_000) if budget is not None else None
         with sqlite3.connect(path) as db:
             db.execute("CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY, "
                        "kind TEXT, reserved INTEGER, actual INTEGER, status TEXT)")
@@ -71,12 +75,14 @@ class TokenLedger:
             raise ValueError("Unknown or invalid pricing")
         with sqlite3.connect(self.path, timeout=10) as db:
             db.execute("BEGIN IMMEDIATE")
-            used = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)),0) FROM calls").fetchone()[0]
-            if used + amount > self.limit:
-                raise RuntimeError("Application token budget reached; no request sent")
-            estimated = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)*nano_cny_per_token),0) FROM calls").fetchone()[0]
-            if estimated + amount * nano_cny_per_token > self.budget_nano_cny:
-                raise RuntimeError("Application estimated money budget reached; no request sent")
+            if self.limit is not None:
+                used = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)),0) FROM calls").fetchone()[0]
+                if used + amount > self.limit:
+                    raise RuntimeError("Application token budget reached; no request sent")
+            if self.budget_nano_cny is not None:
+                estimated = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)*nano_cny_per_token),0) FROM calls").fetchone()[0]
+                if estimated + amount * nano_cny_per_token > self.budget_nano_cny:
+                    raise RuntimeError("Application estimated money budget reached; no request sent")
             row = db.execute("INSERT INTO calls(kind,reserved,status,nano_cny_per_token,run_id) VALUES(?,?,?,?,?)",
                              (kind, amount, "reserved", nano_cny_per_token, self.run_id))
             return row.lastrowid
@@ -95,10 +101,11 @@ class TokenLedger:
             estimated = db.execute("SELECT COALESCE(SUM(COALESCE(actual,reserved)*nano_cny_per_token),0) FROM calls" + where, params).fetchone()[0]
         return {"requests": count, "charged_or_reserved_tokens": tokens,
                 "scope": "run_requests" if run_only else "application_database",
-                "budget_applies_to": "application_database",
+                "budget_applies_to": "application_database" if self.limit is not None or self.budget_nano_cny is not None else "none",
+                "application_limits_enabled": self.limit is not None or self.budget_nano_cny is not None,
                 "application_token_limit": self.limit,
                 "conservative_valued_cny": estimated / 1_000_000_000,
-                "application_estimated_budget_cny": self.budget_nano_cny / 1_000_000_000,
+                "application_estimated_budget_cny": self.budget_nano_cny / 1_000_000_000 if self.budget_nano_cny is not None else None,
                 "pricing_version": "bailian-beijing-published-2026-10-15",
                 "cost_basis": "all_tokens_at_supported_model_max_rate; unresolved_requests_reserved",
                 "free_quota_balance": "not_available", "billed_cny": "not_verified"}

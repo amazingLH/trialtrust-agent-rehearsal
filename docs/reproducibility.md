@@ -69,7 +69,7 @@ python -m uvicorn trialtrust.webapp:app --host 127.0.0.1 --port 8774
 python -m trialtrust.evaluate --dense --output runtime/evaluation-dense.json
 ```
 
-这会访问百炼、消耗额度；相同内容会复用本地缓存。默认每个账本数据库保守估值上限3元、token上限200000，可通过`TRIALTRUST_BUDGET_CNY`和`TRIALTRUST_TOKEN_LIMIT`配置。账本不读取免费余额或实际出账，不合并其他程序和独立部署的消费。
+这会访问百炼、消耗额度；相同内容会复用本地缓存。应用默认不设累计Token或估算费用上限，旧的`TRIALTRUST_BUDGET_CNY`、`TRIALTRUST_TOKEN_LIMIT`环境变量不再阻断调用。账本保留历史和本次的实测或预留用量，但不读取免费余额或实际出账。隔离评测可通过TokenLedger的显式构造器参数设置独立上限；生产入口不传入这些参数。
 
 ## MCP stdio服务
 
