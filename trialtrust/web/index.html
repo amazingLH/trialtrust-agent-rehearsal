@@ -209,9 +209,12 @@
               </div>
               <p id="selected-demand" class="selection-summary" aria-live="polite">当前需求：尚未选择</p>
               </div>
+              <div class="demand-next-row">
               <p id="scenario-note" class="scenario-note">
                 <span id="scenario-description">选好后，这里会说明能帮你检查什么。</span>
               </p>
+              <button id="confirm-directory-demand" type="button" class="secondary" aria-describedby="selected-demand">确定！并进行下一步核对条件</button>
+              </div>
               <details class="custom-request">
                 <summary>没有合适选项？写下自己的需求 ↗</summary>
                 <label class="field custom-request-label" for="private-task">你的需求 <small>可按下方格式填写真实情况，也可以直接用自己的话描述。</small></label>
@@ -223,7 +226,7 @@
                     aria-describedby="request-check-status"
                   >具体需求：【填写：想办的事】；地点：【填写：城市或区域，线上服务可写无需地点】；具体要求：【填写：服务内容、时长或特殊要求，没有可写无】；数量：【填写：数量和单位，例如2人】；服务方式：【填写：到店、上门或其他交付方式】；完成时间：【填写：时间要求，没有可写时间不限】；总预算：【填写：本次总预算，单位元】。</textarea>
                 <button id="prepare-stand-in" class="secondary">
-                  ① 隐去手机号等信息
+                  确定！并进行下一步核对条件
                 </button>
                 </div>
                 <p id="request-check-status" class="request-check-status" role="status" hidden></p>
@@ -238,9 +241,6 @@
                   aria-live="polite"
                 ></div>
               </details>
-              <button id="to-conditions" class="text-button">
-                选好了，下一步核对条件 →
-              </button>
             </section>
             <section class="panel conditions-panel" id="step-two">
               <div class="section-heading">

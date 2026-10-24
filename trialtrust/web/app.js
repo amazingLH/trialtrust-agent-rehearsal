@@ -36,6 +36,27 @@ let analysisNonce = 0,
   analyzing = false;
 let serviceConfirmedFor = null, servicePricingMode = null;
 let currentCustomTask = null, preparedRequestFor = null, checkedRequestAnalysis = null;
+let directorySelection = null, activeDemandSource = "directory";
+const demandConfirmText = "确定！并进行下一步核对条件";
+function rememberDirectorySelection() {
+  if(activeDemandSource !== "directory" || !currentScenario()) return;
+  directorySelection={spec:{...editorSpec(),fulfillment:$("fulfillment").value || $("fulfillment-text").value},method:$("run-method").value};
+}
+function renderDirectorySelection() {
+  const s=directorySelection && scenarioFor(directorySelection.spec);
+  $("selected-demand").textContent=s ? `当前需求：${s.label}` : "当前需求：尚未选择";
+  $("domain-picker-value").textContent=s ? s.label : "请选择具体需求";
+  $("scenario-description").textContent=s ? s.description+(s.id === "custom" ? "" : "；地点、日期等要求还需你自己确认。") : "选好后，这里会说明能帮你检查什么。";
+}
+function confirmDirectoryDemand() {
+  if(running || analyzing) return;
+  if(!directorySelection || !scenarioFor(directorySelection.spec)) {
+    notice("请先在上方选择具体需求，或应用一套条件模板。",$("manual-domain-field").hidden ? "template-select" : "domain-picker");return;
+  }
+  if(activeDemandSource === "directory") rememberDirectorySelection();
+  else restoreConditions(directorySelection.spec,directorySelection.method,"directory");
+  notice();goStep(2);
+}
 function serviceLabel(value) { return Object.hasOwn(fulfillmentLabels, value) ? fulfillmentLabels[value] : value; }
 function scenarioFor(spec) { return WorkbenchTools.scenarioSpec(catalog,spec); }
 function currentScenario() { return scenarioFor({domain:$("domain").value,custom_task:$("domain").value === "custom" ? currentCustomTask : null}); }
@@ -179,6 +200,7 @@ function setBusy(value) {
     "fulfillment-text", "confirm-fulfillment", "clear-fulfillment",
     "confirmed",
     "prepare-stand-in",
+    "confirm-directory-demand",
     "compile",
     "private-task",
     "cases",
@@ -231,8 +253,11 @@ function selectCategory(id, selected = "") {
   }
   if (selected === "custom" && currentCustomTask) $("domain").append(new Option(currentCustomTask.name,"custom"));
   $("domain").value = selected;
+  activeDemandSource="directory";
+  directorySelection=selected ? {spec:{domain:selected},method:$("run-method").value} : null;
   renderDemandGroups(selected);
   domainFields(true);
+  rememberDirectorySelection();
   invalidateConfirmation();
 }
 let demandHoverTimer = null;
@@ -264,7 +289,7 @@ function renderDemandOptions(groupId) {
   for (const item of items) {
     const button = element("button", item.label, "demand-option");
     button.type = "button";
-    button.setAttribute("aria-pressed", String(item.id === $("domain").value));
+    button.setAttribute("aria-pressed", String(item.id === directorySelection?.spec.domain));
     button.addEventListener("click", () => {
       if (running) return;
       $("domain").value = item.id;
@@ -360,16 +385,13 @@ function confirmServiceMethod() {
 }
 function domainFields(reset = false) {
   const s = currentScenario();
-  $("selected-demand").textContent = s ? `当前需求：${s.label}` : "当前需求：尚未选择";
-  $("domain-picker-value").textContent = s ? s.label : "请选择具体需求";
+  renderDirectorySelection();
   const categoryExample = {attractions:"到场入园", food:"到店用餐", travel:"入住体验", life:"上门服务"};
   $("fulfillment-text").placeholder = `例如输入：${s?.id === "custom" ? "到店送洗或上门取送" : s ? fulfillmentLabels[s.fulfillments[0]] : categoryExample[currentCategory] || "入住体验"}`;
   $("reset-prices").hidden = s?.id === "custom";
   setServiceDraft();
   servicePricingMode = s?.fulfillments[0] || null;
   if (!s) {
-    $("scenario-description").textContent =
-      "选好后，这里会说明能帮你检查什么。";
     $("quantity-label").textContent = "数量";
     $("fee-note").textContent = "先选择具体需求，再查看本次费用。";
     ["unit-price", "changed-price", "order-fee"].forEach(id => $(id).value = "");
@@ -377,8 +399,6 @@ function domainFields(reset = false) {
   }
   if (reset) { $("quantity").value = 2; fillPrices(WorkbenchTools.pricing(s,servicePricingMode)); }
   $("quantity-label").textContent = `数量（${s.unit}）`;
-  $("scenario-description").textContent =
-    s.description + (s.id === "custom" ? "" : "；地点、日期等要求还需你自己确认。");
   feeNote();
   updateCoach();
 }
@@ -484,24 +504,25 @@ async function prepareStandIn() {
   const hidden=Object.values(redacted.counts).reduce((a,b)=>a+b,0);
   const privacy=hidden ? `发送前已隐藏${hidden}处手机号、证件号或邮箱。` : "";
   analyzing=true;setBusy(true);
-  $("prepare-stand-in").textContent="① 大模型正在检查…";
+  $("prepare-stand-in").textContent="正在检查你的需求…";
   requestStatus("正在理解已提供的条件，检查还缺少什么…");
   try {
     const result=await api("/api/analyze",{text:redacted.text,reviewed:true,use_model:true});
     if(conversationId!==expectedConversation || nonce!==analysisNonce || $("private-task").value!==raw) return;
     if(result.questions.length || !result.can_rehearse || !result.proposal) {
-      requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再点①检查。",false,true);
+      requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再次点击右侧按钮。",false,true);
       return;
     }
     checkedRequestAnalysis=result;preparedRequestFor=raw;
     $("analysis-controls").hidden=false;
-    requestStatus(privacy+"条件已齐全，点②查看识别结果。",true);
+    requestStatus(privacy+"条件已齐全，已将你的需求带入第二步。",true);
+    analysisResult=result;renderRequestAnalysis(result);adoptAnalyzedRequest(result);
   } catch(error) {
     if(conversationId===expectedConversation && nonce===analysisNonce)
-      requestStatus("大模型检查未完成："+error.message+" 原文已保留，请稍后再点①重试。",false,true);
+      requestStatus("大模型检查未完成："+error.message+" 原文已保留，请稍后再次点击右侧按钮。",false,true);
   } finally {
     analyzing=false;setBusy(false);
-    $("prepare-stand-in").textContent="① 隐去手机号等信息";
+    $("prepare-stand-in").textContent=demandConfirmText;
   }
 }
 function frameDisclosures(root=document) {
@@ -538,29 +559,30 @@ function renderRequestAnalysis(result) {
   if (result.questions.length) {
     box.append(element("b","还需要你补充","analysis-heading"));
     const list=element("ul");result.questions.forEach(question=>list.append(element("li",question)));box.append(list);
-    requestStatus("请补充："+result.questions.join("；")+" 补充后再点①检查。",false,true);
+    requestStatus("请补充："+result.questions.join("；")+" 补充后再次点击右侧按钮。",false,true);
   }
   if (result.proposal) {
     const p=result.proposal,s=scenarioFor(p);
     info.append(element("p",`已提取：${p.quantity}${s.unit} · ${serviceLabel(p.fulfillment)} · 总预算¥${p.budget_yuan}${p.custom_task?.context?.length ? ` · ${p.custom_task.context.join("；")}` : ""}`));
     const apply=element("button","采用这些条件，进入第二步 →","secondary");apply.type="button";
-    apply.addEventListener("click",()=>{
-      if(p.domain === "custom") currentCustomTask=WorkbenchTools.customTask(p.custom_task);
-      selectCategory(s.category,p.domain);$("quantity").value=p.quantity;$("budget").value=p.budget_yuan;
-      setServiceDraft(serviceLabel(p.fulfillment));servicePricingMode=WorkbenchTools.serviceMode(p.fulfillment,s,fulfillmentLabels);
-      fillPrices(WorkbenchTools.pricing(s,p.fulfillment));feeNote();invalidateConfirmation();goStep(2);
-      notice(p.domain === "custom" ? "需求已带入第二步。请确认服务方式，并展开费用明细填写本次模拟价格。" : "条件已带入第二步，请确认服务方式并核对费用。");
-    });actions.append(apply);
+    apply.addEventListener("click",()=>adoptAnalyzedRequest(result));actions.append(apply);
   }
   const more=element("details"),summary=element("summary","查看识别依据或下载需求清单（可选）");
   more.append(summary,element("pre",JSON.stringify({已识别条件:result.known_fields,原文依据:result.field_evidence},null,2)));
   const exp=element("button","下载需求清单 JSON","secondary");exp.type="button";
   exp.addEventListener("click",()=>downloadJSON(result,"trialtrust-request-brief.json"));more.append(exp);box.append(more);frameDisclosures(box);
 }
+function adoptAnalyzedRequest(result) {
+  rememberDirectorySelection();
+  const p=result.proposal;
+  restoreConditions({...editorSpec(),...p,pricing:undefined},$("run-method").value,"custom");
+  goStep(2);
+  notice(p.domain === "custom" ? "你的需求已带入第二步。请确认服务方式，并填写本次模拟价格。" : "你的需求已带入第二步，请核对条件。");
+}
 function compileStandIn() {
   if (running || analyzing) return;
   if (!checkedRequestAnalysis || !preparedRequestFor || preparedRequestFor !== $("private-task").value) {
-    notice("请先点①检查需求，按红字补充后再检查。", "private-task");return;
+    notice("请先点击“你的需求”右侧的确认按钮，按红字补充后再次确认。", "private-task");return;
   }
   notice();analysisResult=checkedRequestAnalysis;
   renderRequestAnalysis(checkedRequestAnalysis);
@@ -648,14 +670,21 @@ function clearInputs() {
   selectCategory(catalog.categories[0].id);
   modeNote();
 }
-function restoreConditions(spec, method = "paired") {
+function restoreConditions(spec, method = "paired", source = spec.domain === "custom" ? "custom" : "directory") {
   const scenario = scenarioFor(spec);
   if (!scenario) {
     notice("这条历史记录的场景已不可用，可以查看记录。");
     return;
   }
-  if (spec.domain === "custom") currentCustomTask = WorkbenchTools.customTask(spec.custom_task);
-  selectCategory(scenario.category, spec.domain);
+  activeDemandSource=source;
+  if(source === "directory") directorySelection={spec:{...spec},method};
+  if (spec.domain === "custom") {
+    currentCustomTask=WorkbenchTools.customTask(spec.custom_task);
+    if(!$("domain").querySelector('option[value="custom"]')) $("domain").append(new Option(currentCustomTask.name,"custom"));
+    $("domain").value="custom";domainFields(true);
+  } else {
+    selectCategory(scenario.category,spec.domain);activeDemandSource=source;
+  }
   $("quantity").value = spec.quantity;
   setServiceDraft(serviceLabel(spec.fulfillment));
   servicePricingMode = WorkbenchTools.serviceMode(spec.fulfillment, scenario, fulfillmentLabels);
@@ -671,6 +700,7 @@ function restoreConditions(spec, method = "paired") {
   feeNote();
   currentStep = 2;
   invalidateConfirmation();
+  rememberDirectorySelection();renderDirectorySelection();
 }
 let compareNonce = 0;
 const builtInTemplates = [
@@ -729,12 +759,11 @@ $("apply-template").addEventListener("click", () => {
   if (running) return;
   const template = [...builtInTemplates, ...personalTemplates()].find(t=>t.id === $("template-select").value);
   if (!template) {notice("请先选择一个条件模板。", "template-select"); return;}
-  clearInputs();
-  restoreConditions(template.spec, template.method);
+  restoreConditions(template.spec, template.method,"directory");
   setDemandPath("template");
   if (!liveEnabled && $("agent").value === "live") {$("agent").value="demo_careful";$("dense").checked=false;modeNote();}
-  invalidateConfirmation(); goStep(2);
-  notice("模板条件已填入。请先确认服务方式，再核对场景、费用与执行方式，勾选全部条件后才会运行。");
+  invalidateConfirmation();
+  notice("模板条件已填入。请点击“当前需求”下方的确认按钮，进入第二步核对条件。");
 });
 $("save-template").addEventListener("click", () => {
   if (running) return;
@@ -1428,14 +1457,17 @@ $("confirmed").addEventListener("change", () => {
 });
 $("domain").addEventListener("change", () => {
   closeDemandMenu();
+  activeDemandSource="directory";currentCustomTask=null;
+  directorySelection=$("domain").value ? {spec:{domain:$("domain").value},method:$("run-method").value} : null;
   currentStep = $("domain").value ? 2 : 1;
   domainFields(true);
+  rememberDirectorySelection();
   invalidateConfirmation();
 });
 $("domain-picker").addEventListener("click", () => {
   if (running) return;
   if (!$("domain-picker-menu").hidden) { closeDemandMenu(); return; }
-  renderDemandGroups($("domain").value);
+  renderDemandGroups(directorySelection?.spec.domain || "");
   $("domain-picker-menu").hidden = false;
   $("domain-picker").setAttribute("aria-expanded", "true");
   positionDemandMenu();
@@ -1504,12 +1536,11 @@ $("compile").addEventListener("click", compileStandIn);
 $("private-task").addEventListener("input", () => {
   analysisNonce++;
   currentStep = 1;
-  $("domain").value = "";
-  domainFields();
-  invalidateConfirmation();
+  if(activeDemandSource === "custom") invalidateConfirmation();
+  else updateCoach();
   invalidateRequestPreparation();
   if(!$("request-check-status").classList.contains("is-missing"))
-    requestStatus("内容已修改，请点①重新检查。");
+    requestStatus("内容已修改，请再次点击右侧按钮检查。");
   $("compile-result").replaceChildren();
   analysisResult = null;
 });
@@ -1610,7 +1641,7 @@ $("export").addEventListener("click", async (event) => {
     notice(error.message);
   }
 });
-$("to-conditions").addEventListener("click", () => goStep(2));
+$("confirm-directory-demand").addEventListener("click", confirmDirectoryDemand);
 document
   .querySelectorAll("[data-step]")
   .forEach((b) =>
@@ -1623,8 +1654,8 @@ $("coach-next").addEventListener("click", () =>
 const helpModules = [
       {n:'01',name:'选择需求',title:'这次，想先试哪类事情？',purpose:'先选清楚要让AI试办的事，让后面的查资料、算费用都有明确目标。',problem:'只说“帮我安排一下”，AI可能理解错。先选具体需求，例如“自助餐聚会”，再填写人数和预算；自己写的要求也要检查是否已被采用。',output:'确定这次要试办的事情，接着到第二步填写条件。',steps:[
         {name:'选择需求来源',why:'确定是重新填写需求，还是沿用之前保存的设置。',how:'在“01 选择需求”中，点“自己选择需求”；已有模板时，也可以点“使用条件模板”，选模板后点“应用模板”。两种方式选一种即可。'},
-        {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点“选好了，下一步核对条件”。'},
-        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，可编辑框内格式，也可直接用自己的话描述。点①后，先隐去手机号等信息，再用大模型检查（消耗模型额度）；只在框下红字提示缺项，原文不变。补充后再点①，条件齐全时点②查看同一次分析的结果，不再调用模型；核对后点“采用这些条件，进入第二步”。目录外的事项需在第二步填写模拟价格。'}
+        {name:'选定具体事情',why:'告诉AI本次要处理哪一种服务，让它知道该查什么、怎么算钱。',how:'先点大类，例如“美食聚会”，再打开“具体想做什么”。鼠标移到左侧的“自助聚餐”，或点击这个子分类，右侧就会显示具体事项；点“自助餐聚会”完成选择。核对“当前需求”，再点它下方的“确定！并进行下一步核对条件”。这个按钮只使用目录选择或已应用的模板，不分析下方手写内容。'},
+        {name:'分析自己写的需求（可选）',why:'理解你实际想做的事，保留已填条件，只问还缺什么。',how:'展开“写下自己的需求”，可编辑框内格式，也可直接用自己的话描述。点击“你的需求”右侧的“确定！并进行下一步核对条件”，只分析这份手写内容：先隐去手机号等信息，再用大模型检查（消耗模型额度）。缺项在框下用红字提示，原文不变；补充时红字保留，再次点击后更新。条件齐全就自动带入第二步，②可回看识别结果，不重复调用模型。即使上方也选了目录或模板，这个按钮也只使用手写需求。目录外的事项需在第二步填写模拟价格。'}
       ]},
       {n:'02',name:'核对条件并试运行',title:'核对条件，再开始彩排',purpose:'告诉AI有多少人、最多花多少钱、允许做什么，再选怎么试并开始运行。',problem:'需求选好了，AI仍可能漏掉预算或服务方式。先确认这些条件，再观察价格变化、资料缺失等情况出现时，它会不会超支或做你没允许的事。',output:'得到一份试运行结果，或“按原条件／遇到变化”的两份结果，供第三步检查。',steps:[
         {name:'填好条件与模拟价格',why:'让AI知道有多少人、怎样服务、最多花多少钱；提供本次可查证的价目。',how:'填写数量，手动输入服务方式（灰字只是例子，不是已填内容），再点输入框右侧的“确认”。服务方式可以自己描述，例如“餐馆里擦桌子”或“吃个蛋挞”，不必照着灰字填；改过文字要重新确认。“清空”只清掉这项文字。再填总预算，看费用预览；需要改变价格时，展开“查看费用明细 / 调整这次的模拟价格”。数量×单价加上每单费用，就是总费用。模板或记录带入的服务方式也要重新点确认。'},

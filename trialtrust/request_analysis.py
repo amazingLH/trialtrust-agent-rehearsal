@@ -206,7 +206,7 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
         return {'summary':summary,'known_fields':known,'missing_fields':missing,'questions':[m['question'] for m in missing],
                 'rewrite_example':example,'proposal':proposal,'can_rehearse':proposal is not None,'mode':'live_llm' if body.use_model else 'explicit_rules',
                 'field_evidence':evidence,'unmodeled_fragments':compiled['unmodeled_fragments'],
-                'next_actions':['在原文补充缺少的条件后，再点①检查。'] if missing else ['核对已提取条件，进入第二步。'],
+                'next_actions':['在原文补充缺少的条件后，再点需求框右侧的确认按钮。'] if missing else ['核对已提取条件，进入第二步。'],
                 'evidence_needed':['现行价格及全部附加费','退改条款'],'data_notice':'自定义需求使用你确认的模拟条件，不代表已查询真实商家。'}
     required={'analyze_text'}|({'model_call'} if body.use_model else set())
     result,event=invoke('request-analysis',{'text':body.text},handle,granted=required,required=required)
