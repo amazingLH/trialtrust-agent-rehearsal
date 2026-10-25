@@ -18,7 +18,7 @@ class Model:
 
 def first_model(count=True):
     fields=[field('task_name','吃饭','吃饭'),field('unit','人','吃饭'),
-            field('time','明晚','明晚'),field('location','北京海淀','北京海淀')]
+            field('time','明晚','明晚')]
     if count: fields.append(field('quantity',2,ORIGINAL,counted_items=['我','我同桌']))
     return Model(fields,[{'field':'fulfillment','question':'希望怎样用餐？','example_value':'到店'},
                          {'field':'budget_yuan','question':'预算是多少？','example_value':'2000元'}])
@@ -98,16 +98,19 @@ def test_shopping_example_is_one_copyable_sentence_without_repeated_fields():
     model=Model([field('task_name','逛街买裙子','逛街买裙子'),
                  field('quantity',2,'我和小明',counted_items=['我','小明']),
                  field('unit','人','我和小明'),field('location','沈阳中街','沈阳中街')],
-                [{'field':'fulfillment','question':'你希望怎样服务或交付？','example_value':'到店'}])
-    first=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+                [{'field':'fulfillment','question':'你希望怎样服务或交付？','example_value':'到店'},
+                 {'field':'time','question':'什么时候去？','example_value':'10月30号下午'}])
+    already_complete=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+    assert already_complete['can_rehearse'] and already_complete['completion_example']==''
+    first=analyze(AnalysisRequest(text=text.replace('10月30号下午',''),reviewed=True,use_model=True),model)
     example=first['completion_example']
-    assert example=='10月30号下午我和小明共2人去沈阳中街花1200逛街买裙子，希望到店。'
+    assert example=='我和小明共2人去沈阳中街花1200逛街买裙子，时间定在10月30号下午。'
     for value in ['10月30号下午','沈阳中街','1200','逛街买裙子']:
         assert example.count(value)==1
     for label in ['具体需求：','数量：','服务方式：','总预算：','完成时间：','地点：']:
         assert label not in example
-    assert first['proposal'] is None and 'fulfillment' not in first['known_fields']
-    completed=analyze(AnalysisRequest(text=example,reviewed=True,use_model=True),Model())
+    assert first['proposal'] is None and 'time' not in first['known_fields']
+    completed=analyze(AnalysisRequest(text=example,reviewed=True,use_model=True),model)
     assert completed['can_rehearse'] and completed['proposal']['quantity']==2
     assert completed['proposal']['budget_yuan']==1200
 
@@ -133,3 +136,17 @@ def test_grounded_service_already_in_the_request_is_not_repeated_in_the_example(
     assert result['completion_example']=='我和小明共2人准备去沈阳中街花1200逛街买裙子，时间定在明天下午。'
     assert result['completion_example'].count(service)==1
     assert 'time' not in result['known_fields'] and result['proposal'] is None
+    # On resubmission the model may again forget the service field. Its
+    # grounded destination plus the literal activity still carries the intent.
+    forgot=Model([field('task_name','逛街买裙子','逛街买裙子'),
+                  field('location','沈阳中街','沈阳中街')],
+                 [{'field':'fulfillment','question':'你希望怎样服务或交付？'}])
+    completed=analyze(AnalysisRequest(text=result['completion_example'],reviewed=True,use_model=True),forgot)
+    assert completed['can_rehearse'] and completed['missing_fields']==[]
+
+
+def test_location_alone_does_not_silently_choose_a_service_method():
+    text='明天下午我想买裙子，共2人，地点沈阳中街，总预算1200元'
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),Model(
+        [field('task_name','买裙子','买裙子'),field('location','沈阳中街','沈阳中街')]))
+    assert not result['can_rehearse'] and 'fulfillment' not in result['known_fields']

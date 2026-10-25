@@ -243,6 +243,18 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                     retained=[prior] if prior and not any(prior in value for value in values) else []
                     known[key]='；'.join(dict.fromkeys(retained+[value for value in values if not prior or value not in prior or value==prior]))
                 elif len(set(values))==1 and (key not in {'budget_yuan','quantity'} or key not in known): known[key]=values[0]
+            if 'fulfillment' not in known:
+                # A quoted destination followed by the activity already says
+                # how this user plans to carry it out. Preserve that wording;
+                # do not require a second "到店" keyword or invent a new mode.
+                for location in known.get('location','').split('；'):
+                    if not location: continue
+                    match=re.search(r'(?:去|到)\s*'+re.escape(location)+r'[^，,。；;\n]{1,200}',facts_text)
+                    if match:
+                        known['fulfillment']=match.group()[:300]
+                        evidence.append({'field':'fulfillment','value':known['fulfillment'],'text':match.group(),
+                                         'start':match.start(),'end':match.end()})
+                        break
             if any(m.field=='task_name' for m in brief.missing) and 'task_name' not in model_values and not compiled['proposal'] and not labeled_task(facts_text):
                 known.pop('task_name',None)
             if 'unit' not in known:
@@ -358,6 +370,8 @@ def completion_for(text,missing,known,participants=()):
                  'details':f'具体要求是{value}'}
         if key=='fulfillment' and value=='到店':
             natural[key]='希望到店'
+        if key=='time' and value in {'时间不限','不限时间','随时','没有时间要求','无时间要求'}:
+            natural[key]=value
         parts.append(natural[key])
     example=sentence()
     if len(example)>1200: return ''
