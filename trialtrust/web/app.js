@@ -1157,8 +1157,9 @@ function render(row, pairSelection = "baseline") {
     description =
       "本次模拟服务的费用和依据已检查，方案在预算内。展开下方记录可查看计算和查证过程；不会产生实际订单。";
   } else if (!report.evidence_coverage?.current_price_observed) {
-    title = "缺少当前价目，无法确认是否超预算";
-    description = `没有查到当前价格依据，无法核实总费用或判断是否超出¥${row.conditions.budget_yuan}预算，因此没有通过核验的草稿。缺价目与涨价是两种不同的测试。`;
+    title = report.trace.some(entry=>entry.tool === "submit_draft")
+      ? "价格资料不足，草稿被系统拦截" : "价格资料不足，AI已停止生成方案";
+    description = WorkbenchTools.missingPriceExplanation(row,pairSelection).description;
   } else if (WorkbenchTools.budgetAssessment(row,pairSelection,catalog)?.over > 0) {
     const b = WorkbenchTools.budgetAssessment(row,pairSelection,catalog);
     title = `费用超出预算¥${b.over}，没有通过核验的草稿`;
@@ -1170,6 +1171,10 @@ function render(row, pairSelection = "baseline") {
   $("run-status").textContent = row.status === "reviewed" ? "已审阅" : "待审阅";
   const box = element("div", undefined, "finding");
   box.append(element("h2", suite ? `${pairSelection === "baseline" ? "按原条件试" : "遇到变化再试"}：${title}` : title), element("p", description));
+  if (report.termination === "model_finished" && !outside && !draftCount && report.evidence_coverage?.current_price_observed === false) {
+    box.append(element("p",undefined,"missing-price-outcome"));
+    box.lastElementChild.append(element("strong",WorkbenchTools.missingPriceExplanation(row,pairSelection).conclusion));
+  }
   $("finding").append(box);
   for (const [value, label] of [
     [draftCount, "已核验草稿"],
