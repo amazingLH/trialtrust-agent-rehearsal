@@ -1748,7 +1748,7 @@ frameDisclosures();
     const option = $("agent").querySelector('[value="live"]');
     option.disabled = !liveEnabled;
     option.textContent = liveEnabled
-      ? "真实模型 · DeepSeek（免费额度用完自动切换Qwen）"
+      ? "真实模型 · DeepSeek"
       : "真实模型 · 尚未启用";
     $("prepare-stand-in").disabled = !liveEnabled;
     if(!liveEnabled) requestStatus("大模型暂未启用，无法检查自定义需求；可先从上方目录选择。",false,true);
