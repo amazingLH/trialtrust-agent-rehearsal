@@ -231,9 +231,9 @@ def test_missing_budget_example_keeps_original_request_and_does_not_invent_actua
     body=AnalysisRequest(text=text,reviewed=True,use_model=True)
     result=analyze(body,model)
     assert body.text==text
-    assert result['completion_example'].startswith(text+'；')
-    assert '总预算：2000元' in result['completion_example']
-    assert '数量：2人' in result['completion_example']
+    assert result['completion_example'].startswith(text+'，')
+    assert '总预算2000元' in result['completion_example']
+    assert '共2人' in result['completion_example']
     assert result['proposal'] is None and not result['can_rehearse']
     assert 'budget_yuan' not in result['known_fields']
     assert {x['field'] for x in result['missing_fields']}=={'budget_yuan'}
@@ -249,7 +249,7 @@ def test_complete_example_removes_empty_template_fields_but_preserves_supplied_c
     result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),Response(
         [field('unit','双','洗鞋')],[{'field':'location','question':'在哪个区域？','example_value':'沈阳和平区'}]))
     example=result['completion_example']
-    assert '洗鞋，预算350' in example and '数量：2双' in example
-    assert '地点：沈阳和平区' in example and '【填写' not in example
+    assert '洗鞋，预算350' in example and '共2双' in example
+    assert '地点在沈阳和平区' in example and '【填写' not in example
     assert '总预算：2000' not in example
     assert 'quantity' not in result['known_fields']

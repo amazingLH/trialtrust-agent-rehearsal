@@ -148,6 +148,9 @@ def _base_fields(text,compiled):
             match=re.search(r'(?:^|[，,。；;\n])\s*([\u4e00-\u9fff]{2,16}(?:市|区|县|镇))\s*(?=[，,。；;\n]|$)',text)
         if match and not PLACEHOLDER.search(match.group(1)): known['location']=match.group(1)
     if 'fulfillment' not in known:
+        match=re.search(r'希望以(.{1,300}?)的方式完成',text)
+        if match: known['fulfillment']=match.group(1)
+    if 'fulfillment' not in known:
         match=re.search(r'到店送洗|上门取送|快递寄送|到店自提|到店办理|到店|线上办理|线上交付|远程服务',text)
         if match: known['fulfillment']=match.group()
     if 'time' in known and TIME_UNKNOWN.search(known['time']): known.pop('time')
@@ -287,7 +290,9 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                       'location':('地点','【填写城市或区域】'),'time':('完成时间','【填写时间要求，没有可写不限】'),'details':('具体要求','【填写类型、材质或服务内容】')}
         additions=[f'{placeholders[m["field"]][0]}：'+(f'【填写：{m["example_hint"]}】' if m.get('example_hint') and m['field'] not in {'quantity','unit','budget_yuan'} else placeholders[m['field']][1]) for m in missing]
         example=body.text.rstrip('。；; ')+('；'+'；'.join(additions) if additions else '')+'。'
-        completion_example=completion_for(body.text,missing,known)
+        participants=next((item.counted_items for item in (brief.fields if brief else [])
+                           if item.field=='quantity' and item.counted_items and _grounded_field(item,body.text)==known.get('quantity')),[])
+        completion_example=completion_for(body.text,missing,known,participants)
         summary=known.get('task_name','还需要明确想办的事情')+(f'；预算{known["budget_yuan"]}元' if 'budget_yuan' in known else '')
         return {'summary':summary,'known_fields':known,'missing_fields':missing,'questions':[m['question'] for m in missing],
                 'rewrite_example':example,'completion_example':completion_example,'proposal':proposal,'can_rehearse':proposal is not None,'mode':'live_llm' if body.use_model else 'explicit_rules',
@@ -298,7 +303,7 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
     result,event=invoke('request-analysis',{'text':body.text},handle,granted=required,required=required)
     return {**result,'skill_events':[event]}
 
-def completion_for(text,missing,known):
+def completion_for(text,missing,known,participants=()):
     if not missing: return ''
     defaults={'task_name':('具体需求','请说明想办的具体事情'),'quantity':('数量','2'+known.get('unit','项')),
               'unit':('计价单位','项'),'fulfillment':('服务方式','到店'),
@@ -326,23 +331,41 @@ def completion_for(text,missing,known):
         values['budget_yuan']=f'{amounts[0]["value"]}元'
         covered=sorted({(item['start'],item['end']) for item in amounts},reverse=True)
         for start,end in covered: facts=facts[:start]+facts[end:]
-    # Rebuild explicit clauses once, keeping the natural task and its details.
+    # Keep the user's wording once and weave in only missing facts. Explicit
+    # numbers prevent a later model from having to recount the participants.
     labels=r'具体需求|事项|想做的事|地点|城市|区域|具体要求|数量|计价单位|服务方式|完成时间|时间|总预算|预算'
     clauses=[]
     for clause in re.split(r'[；;\n]',facts):
         clean=clause.strip(' ：:。')
         if clean and not re.match(rf'^(?:{labels})\s*[:：]',clean): clauses.append(clean)
-    base='；'.join(clauses)
-    parts=[base] if base and base!=values['task_name'] else []
+    base='，'.join(clauses)
+    if known.get('unit')=='人' and len(participants)>1 and 'quantity' in known and not quantities(base):
+        enumerated=r'\s*(?:和|跟|与|、|及|还有)\s*'.join(re.escape(member) for member in participants)
+        base=re.sub(enumerated,lambda match:match.group()+f'共{known["quantity"]}人',base,count=1)
+    parts=[base] if base else [values['task_name']]
     required=('task_name','quantity','fulfillment','budget_yuan','time')
     keys=list(dict.fromkeys([*required,*[item['field'] for item in missing if item['field']!='unit'],
                             *[key for key in ('location','details') if key in known]]))
+    def sentence(): return '，'.join(parts).rstrip('。')+'。'
     for key in keys:
-        label,_=defaults[key]
-        parts.append(f'{label}：{values[key]}')
-    example='；'.join(parts).rstrip('。')+'。'
+        current=sentence()
+        verified,_=_base_fields(current,compile_stand_in(current))
+        if key in verified or key in {'fulfillment','location','details'} and key in known and values[key] in current: continue
+        value=values[key]
+        natural={'task_name':f'想办的事是{value}','quantity':f'共{value}',
+                 'fulfillment':f'希望以{value}的方式完成','budget_yuan':f'总预算{value}',
+                 'time':f'时间定在{value}','location':f'地点在{value}',
+                 'details':f'具体要求是{value}'}
+        if key=='fulfillment' and value=='到店':
+            natural[key]='希望到店'
+        parts.append(natural[key])
+    example=sentence()
     if len(example)>1200: return ''
     verified,_=_base_fields(example,compile_stand_in(example))
+    # A model-grounded service description already present in the sentence
+    # does not need a second copy just to fit the local fallback syntax.
+    if known.get('fulfillment') and known['fulfillment'] in example:
+        verified.setdefault('fulfillment',known['fulfillment'])
     # Never label an example "complete" until its explicit core conditions
     # survive the same local checks, without another model call.
     if not all(key in verified for key in (*required,'unit')): return ''

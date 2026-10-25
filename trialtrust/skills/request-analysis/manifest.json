@@ -1,7 +1,7 @@
 {
   "id": "request-analysis",
   "name": "自定义需求拆解",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "理解自定义需求，保留已知条件并提示缺少的信息。",
   "capabilities": [
     "analyze_text",

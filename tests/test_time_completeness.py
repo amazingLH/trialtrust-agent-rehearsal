@@ -44,9 +44,9 @@ def test_remove_time_after_a_valid_request_requires_time_again_every_time():
             assert 'time' not in result['known_fields']
             assert [m['field'] for m in result['missing_fields']]==['time']
             assert '时间不限' in result['questions'][0]
-            assert result['completion_example'].startswith(ORIGINAL+'；')
-            assert '完成时间：时间不限' in result['completion_example']
-            assert '数量：2人' in result['completion_example']
+            assert result['completion_example'].startswith(ORIGINAL+'，')
+            assert '时间不限' in result['completion_example']
+            assert '共2人' in result['completion_example']
 
 
 @pytest.mark.parametrize('time',['明晚','明天下午','周六晚上','下周一','2026-10-28','10月28日','下午三点','18:30','两天内','时间不限','随时','没有时间要求'])
