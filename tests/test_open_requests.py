@@ -39,7 +39,7 @@ def test_shoe_request_preserves_budget_without_reasking_known_fields():
 
 @pytest.mark.parametrize('name,unit',[('留声机唱针校准','台'),('旧照片数字化','张'),('水族箱换水','次'),('远程编曲混音','项')])
 def test_unlisted_goals_are_not_gated_by_catalog_names(name,unit):
-    text=f'{name}，数量：2{unit}，服务方式：按需求交付，总预算350'
+    text=f'{name}，数量：2{unit}，服务方式：按需求交付，总预算350；时间不限'
     model=Response([field('task_name',name,name),field('unit',unit,f'2{unit}'),field('fulfillment','按需求交付','按需求交付')])
     result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
     assert result['can_rehearse'] and result['proposal']['domain']=='custom'
@@ -111,7 +111,7 @@ def test_model_can_count_grounded_participants_in_ordinary_wording():
     assert result['known_fields']['unit']=='人'
     assert result['known_fields']['fulfillment']=='去北京朝阳区一个修脚店铺'
     assert result['known_fields']['location']=='北京朝阳区'
-    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan'}
+    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan','time'}
     assert not result['can_rehearse']
 
 
@@ -130,7 +130,7 @@ def test_template_example_numbers_are_not_user_supplied_conditions():
     assert result['known_fields']['quantity']==2
     assert 'budget_yuan' not in result['known_fields']
     assert '8人' not in str(result['known_fields'])
-    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan'}
+    assert {m['field'] for m in result['missing_fields']}=={'budget_yuan','time'}
 
 
 def custom_spec():
@@ -193,7 +193,7 @@ def test_missing_question_supplies_unit_and_example_uses_task_hint():
 
 @pytest.mark.parametrize('use_model',[False,True])
 def test_comma_separated_labeled_details_are_never_dropped(use_model):
-    text='刷鞋，预算350；数量：2双；具体要求：运动鞋基础清洗，不漂白；服务方式：到店送洗'
+    text='刷鞋，预算350；数量：2双；具体要求：运动鞋基础清洗，不漂白；服务方式：到店送洗；时间不限'
     model=Response([field('details','运动鞋基础清洗','运动鞋基础清洗')]) if use_model else None
     result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=use_model),model)
     assert result['can_rehearse']

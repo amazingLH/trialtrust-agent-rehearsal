@@ -78,7 +78,7 @@ def test_existing_application_ledger_does_not_stop_requirement_analysis(tmp_path
     with TestClient(create_app(tmp_path/'web',enable_live=True,require_accounts=False)) as client:
         headers={'X-TrialTrust-Client':'web'}
         client.post('/api/session',json={},headers=headers)
-        response=client.post('/api/analyze',json={'text':'刷鞋；数量：2双；服务方式：到店送洗；预算350元','reviewed':True,'use_model':True},headers=headers)
+        response=client.post('/api/analyze',json={'text':'刷鞋；数量：2双；服务方式：到店送洗；预算350元；时间不限','reviewed':True,'use_model':True},headers=headers)
         assert response.status_code==200,response.text
         assert response.json()['can_rehearse']
         assert response.json()['usage']['application_limits_enabled'] is False

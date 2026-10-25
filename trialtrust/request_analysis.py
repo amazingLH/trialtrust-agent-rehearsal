@@ -11,6 +11,23 @@ FieldName = Literal['task_name','quantity','unit','fulfillment','budget_yuan','l
 NUM = r'[0-9]+|[零〇一二两三四五六七八九十百千万]+'
 UNITS = r'双|只|件|份|人|台|间|次|天|小时|项|辆|本|张|套|位|名'
 PLACEHOLDER = re.compile(r'【[^】]*(?:填写|待填|补充|待补)[^】]*】')
+TIME_UNKNOWN = re.compile(r'待定|待补|未定|没定|还没|不确定|不知道|不清楚|没想好|未确认|未提供|未填写|尚未|以后再说')
+TIME_EXPRESSION = re.compile(
+    r'时间不限|不限时间|没有时间要求|无时间要求|不限制时间|任何时间|随时|不着急|不赶时间|尽快|越快越好|'
+    r'今天|明天|后天|今晚|明晚|今早|明早|昨晚|昨天|'
+    r'(?:下下|下|本|这)?(?:周|星期|礼拜)[一二三四五六日天末]|工作日|'
+    r'上午|下午|中午|晚上|早上|早晨|凌晨|傍晚|'
+    r'春节|元旦|国庆|中秋|端午|清明|五一|暑假|寒假|'
+    r'\d{4}[-/]\d{1,2}[-/]\d{1,2}|'
+    rf'(?:{NUM})年(?:{NUM})月(?:(?:{NUM})[日号])?|(?:{NUM})月(?:{NUM})[日号]?|'
+    rf'(?:{NUM})点(?:(?:{NUM})分|半)?|\d{{1,2}}[:：]\d{{2}}|'
+    rf'(?:{NUM})(?:个)?(?:小时|天|周|月)(?:以内|之内|内|以后|之后|后)|近期|这几天|过几天')
+
+def time_mentions(text):
+    for match in TIME_EXPRESSION.finditer(text):
+        before=text[max(0,match.start()-6):match.start()]
+        if re.search(r'(?:不是|不要|不能|不在|别|不想|取消)\s*$',before): continue
+        yield match
 
 class AnalysisRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -110,6 +127,13 @@ def _base_fields(text,compiled):
     if 'fulfillment' not in known:
         match=re.search(r'到店送洗|上门取送|快递寄送|到店自提|到店办理|到店|线上办理|线上交付|远程服务',text)
         if match: known['fulfillment']=match.group()
+    if 'time' in known and TIME_UNKNOWN.search(known['time']): known.pop('time')
+    if 'time' not in known:
+        mentions=list(time_mentions(text))
+        if mentions:
+            known['time']='；'.join(dict.fromkeys(m.group() for m in mentions))
+            evidence.extend({'field':'time','value':m.group(),'text':m.group(),
+                             'start':m.start(),'end':m.end()} for m in mentions)
     return known,evidence
 
 def _grounded_field(item,text):
@@ -141,6 +165,10 @@ def _grounded_field(item,text):
         # the user's quoted wording into the mandate instead of inventing text.
         return (value if value in item.quote else item.quote.strip())[:300]
     if item.field=='unit': return value if len(value)<=12 else None
+    if item.field=='time':
+        # The model may understand event-relative wording beyond the local
+        # fallback patterns, but it still needs a quote from this exact input.
+        return value if value in item.quote and len(value)<=300 and not TIME_UNKNOWN.search(value) else None
     return value if value in item.quote and len(value)<=300 else None
 
 def analyze(body,provider=None):
@@ -162,9 +190,11 @@ fields逐项输出field、value、quote、counted_items；quote必须逐字引�
 counted_items仅用于明确列举的参与者人数，并同时输出unit="人"字段。显式数量或其他字段的counted_items用空数组。不能从“我们一家”“和几个朋友”等模糊表达猜人数；只列举实际接受服务的人，不把服务人员、未参加的人算进去。
 用户已描述去店里接受服务时，不因缺少“到店”二字而反问服务方式；fulfillment的value保留原话中表达服务方式的片段即可，不能写原文没有的词。
 quantity、budget_yuan用整数；fulfillment用用户自己的服务描述，不要输出代码。location/time/details原样保留。
+自定义需求必须明确时间或明确没有时间限制，这是固定核对项。没有提供时间时必须询问time，不能自行假设“时间不限”，也不能沿用其他输入或示例的时间。“明晚”“明天下午”“周末”已提供时间；明确写“时间不限”“随时”也可以，不要重复问。
 missing最多5项，只问这项具体任务确实缺少的信息；“预算350”“出2000请客”“掏两千去洗浴”均已给出预算，即使没有“元”字也应提取金额。不要再问总预算、单次预算或重复问需求是什么。
 字段已有值时不要再询问该字段。数量和单位可以一起问。无地点要求的线上任务不问城市；没有明确必要性不额外问条件。
 应结合事项判断关键规格是否缺少，例如清洗对象的类型/材质/范围、维修对象型号、文稿主题字数等；需要时用details提问。
+不要把可选偏好当作缺失条件：已明确要洗浴、修脚、捏脚或足疗时，未指定时长、套餐、环境或技师偏好，不影响理解这项基础服务，不得仅因此要求补充details。只有无法确定要做哪项服务或操作对象时才追问关键规格。
 每个missing的example_hint给出该怎么填的简短提示，例如“城市或区域”“鞋子类型、材质和清洗要求”“到店送洗或上门取送”；不要编具体城市、数量或日期。所有面向用户的提问用中文。
 每个missing另给example_value：结合当前事项提供一个可直接复制的示例值，例如预算“2000元”、人数“2人”、地点“上海青浦区”、鞋类要求“运动鞋基础清洗”。这些是假设的补充示例，不是原文事实，不能放入fields，也不能据此声称条件齐全。已知条件不生成替代值。
 summary最多一小句。不要推荐或编造真实店铺、价格、库存，不要写免责声明或工具介绍。''',
@@ -201,7 +231,8 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
             for item in brief.missing:
                 if 'budget_yuan' in known and item.field!='budget_yuan' and re.search(r'预算|多少钱|金额',item.question): continue
                 if item.field not in known and item.field not in {m['field'] for m in missing}: missing.append(item.model_dump())
-        for key in ('task_name','quantity','unit','fulfillment','budget_yuan'):
+        required_fields=('task_name','quantity','unit','fulfillment','budget_yuan')+(('time',) if body.use_model else ())
+        for key in required_fields:
             if key not in known and key not in {m['field'] for m in missing}:
                 if key=='unit' and any(m['field']=='quantity' for m in missing): continue
                 missing.append({'field':key,'question':prompts[key]})
@@ -212,7 +243,7 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                 if key not in {m['field'] for m in missing}: missing.append({'field':key,'question':f'请明确一个{ "数量" if key=="quantity" else "预算" }值，原文有多种说法。'})
         proposal=None
         if not body.use_model and compiled['proposal']: proposal=compiled['proposal']; missing=[]
-        elif not missing and all(k in known for k in ('task_name','quantity','unit','fulfillment','budget_yuan')):
+        elif not missing and all(k in known for k in required_fields):
             context=tuple(f'{label}：{known[key][start:start+280]}' for key,label in [('location','地点'),('time','时间'),('details','具体要求')]
                           if key in known for start in range(0,len(known[key]),280))
             proposal=Mandate(domain='custom',quantity=known['quantity'],fulfillment=known['fulfillment'],budget_yuan=known['budget_yuan'],
