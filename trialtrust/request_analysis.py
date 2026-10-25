@@ -30,6 +30,7 @@ class MissingField(BaseModel):
     field: FieldName
     question: str = Field(min_length=2,max_length=100)
     example_hint: str = Field(default='',max_length=80)
+    example_value: str = Field(default='',max_length=100)
 
 class ModelBrief(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -54,11 +55,28 @@ def number(token):
 def quantities(text):
     return [(number(m.group(1)),m.group(2),m) for m in re.finditer(rf'(?<![\d.\-])({NUM})\s*(?:个\s*(?=人|位|名))?({UNITS})',text)]
 
+def spending_budgets(text):
+    """Explicit spending wording can omit 元, e.g. 出2000请客."""
+    pattern=rf'(?:拿出|掏出|花费|花销|支出|花|出|掏)\s*(?:人民币\s*)?[¥￥]?\s*({NUM})(?![\d.])'
+    for match in re.finditer(pattern,text):
+        before=text[max(0,match.start()-8):match.start()]
+        after=text[match.end():]
+        if re.search(r'不是|不想|不打算|不准备|不愿意|不能|不用|不$',before): continue
+        if re.match(rf'\s*(?:个|{UNITS}|公里|米|号|点|年|月|日|%|％)',after): continue
+        value=number(match.group(1))
+        if value is not None: yield value,match
+
 def _base_fields(text,compiled):
     known,evidence={},list(compiled['field_evidence'])
     for key in ('quantity','fulfillment','budget_yuan'):
         values={s['value'] for s in evidence if s['field']==key}
         if len(values)==1 and not any(i['field']==key for i in compiled['issues']): known[key]=values.pop()
+    if 'budget_yuan' not in known:
+        amounts=list(spending_budgets(text))
+        if len({value for value,_ in amounts})==1:
+            known['budget_yuan']=amounts[0][0]
+            evidence.extend({'field':'budget_yuan','value':value,'text':match.group(),
+                             'start':match.start(),'end':match.end()} for value,match in amounts)
     pairs={(n,u) for n,u,_ in quantities(text) if n is not None and n>0}
     if len(pairs)==1: known['quantity'],known['unit']=pairs.pop()
     elif len(pairs)>1: known.pop('quantity',None)
@@ -113,7 +131,8 @@ def _grounded_field(item,text):
         return value if any(n==value for n,_,_ in quantities(item.quote)) else None
     if item.field=='budget_yuan':
         numbers=[number(m.group()) for m in re.finditer(NUM,item.quote)]
-        return value if type(value) is int and 0<=value<=MAX_BUDGET_YUAN and value in numbers and re.search(r'预算|元|[¥￥]|花费|花|上限',item.quote) else None
+        money_context=re.search(r'预算|元|[¥￥]|花费|花|上限',item.quote) or any(amount==value for amount,_ in spending_budgets(item.quote))
+        return value if type(value) is int and 0<=value<=MAX_BUDGET_YUAN and value in numbers and money_context else None
     if not isinstance(value,str) or not value.strip(): return None
     value=value.strip()
     if item.field=='task_name': return (value if value in item.quote else item.quote.strip())[:100]
@@ -143,10 +162,11 @@ fields逐项输出field、value、quote、counted_items；quote必须逐字引�
 counted_items仅用于明确列举的参与者人数，并同时输出unit="人"字段。显式数量或其他字段的counted_items用空数组。不能从“我们一家”“和几个朋友”等模糊表达猜人数；只列举实际接受服务的人，不把服务人员、未参加的人算进去。
 用户已描述去店里接受服务时，不因缺少“到店”二字而反问服务方式；fulfillment的value保留原话中表达服务方式的片段即可，不能写原文没有的词。
 quantity、budget_yuan用整数；fulfillment用用户自己的服务描述，不要输出代码。location/time/details原样保留。
-missing最多5项，只问这项具体任务确实缺少的信息；已给“预算350”就是350元预算，不要再问总预算、单次预算或重复问需求是什么。
+missing最多5项，只问这项具体任务确实缺少的信息；“预算350”“出2000请客”“掏两千去洗浴”均已给出预算，即使没有“元”字也应提取金额。不要再问总预算、单次预算或重复问需求是什么。
 字段已有值时不要再询问该字段。数量和单位可以一起问。无地点要求的线上任务不问城市；没有明确必要性不额外问条件。
 应结合事项判断关键规格是否缺少，例如清洗对象的类型/材质/范围、维修对象型号、文稿主题字数等；需要时用details提问。
 每个missing的example_hint给出该怎么填的简短提示，例如“城市或区域”“鞋子类型、材质和清洗要求”“到店送洗或上门取送”；不要编具体城市、数量或日期。所有面向用户的提问用中文。
+每个missing另给example_value：结合当前事项提供一个可直接复制的示例值，例如预算“2000元”、人数“2人”、地点“上海青浦区”、鞋类要求“运动鞋基础清洗”。这些是假设的补充示例，不是原文事实，不能放入fields，也不能据此声称条件齐全。已知条件不生成替代值。
 summary最多一小句。不要推荐或编造真实店铺、价格、库存，不要写免责声明或工具介绍。''',
                             {'request':body.text,'known_fields':known},ModelBrief,max_tokens=1800)
             model_values={}
@@ -202,12 +222,33 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                       'location':('地点','【填写城市或区域】'),'time':('完成时间','【填写时间要求，没有可写不限】'),'details':('具体要求','【填写类型、材质或服务内容】')}
         additions=[f'{placeholders[m["field"]][0]}：'+(f'【填写：{m["example_hint"]}】' if m.get('example_hint') and m['field'] not in {'quantity','unit','budget_yuan'} else placeholders[m['field']][1]) for m in missing]
         example=body.text.rstrip('。；; ')+('；'+'；'.join(additions) if additions else '')+'。'
+        completion_example=completion_for(body.text,missing,known)
         summary=known.get('task_name','还需要明确想办的事情')+(f'；预算{known["budget_yuan"]}元' if 'budget_yuan' in known else '')
         return {'summary':summary,'known_fields':known,'missing_fields':missing,'questions':[m['question'] for m in missing],
-                'rewrite_example':example,'proposal':proposal,'can_rehearse':proposal is not None,'mode':'live_llm' if body.use_model else 'explicit_rules',
+                'rewrite_example':example,'completion_example':completion_example,'proposal':proposal,'can_rehearse':proposal is not None,'mode':'live_llm' if body.use_model else 'explicit_rules',
                 'field_evidence':evidence,'unmodeled_fragments':compiled['unmodeled_fragments'],
                 'next_actions':['在原文补充缺少的条件后，再点需求框右侧的确认按钮。'] if missing else ['核对已提取条件，进入第二步。'],
                 'evidence_needed':['现行价格及全部附加费','退改条款'],'data_notice':'自定义需求使用你确认的模拟条件，不代表已查询真实商家。'}
     required={'analyze_text'}|({'model_call'} if body.use_model else set())
     result,event=invoke('request-analysis',{'text':body.text},handle,granted=required,required=required)
     return {**result,'skill_events':[event]}
+
+def completion_for(text,missing,known):
+    if not missing: return ''
+    defaults={'task_name':('具体需求','洗浴放松'),'quantity':('数量','2'+known.get('unit','项')),
+              'unit':('计价单位','项'),'fulfillment':('服务方式','到店'),
+              'budget_yuan':('总预算','2000元'),'location':('地点','上海青浦区'),
+              'time':('完成时间','时间不限'),'details':('具体要求','无特殊要求')}
+    # Remove empty template fields in the example only; the input is never edited.
+    labels={'具体需求','地点','城市','区域','具体要求','数量','计价单位','服务方式','完成时间','时间','总预算','预算'}
+    clauses=[]
+    for clause in re.split(r'[；;\n]',text):
+        clean=PLACEHOLDER.sub('',clause).strip(' ：:。')
+        if clean and clean not in labels: clauses.append(clean)
+    parts=['；'.join(clauses)] if clauses else []
+    for item in missing:
+        label,value=defaults[item['field']]
+        suggestion=item.get('example_value','').strip()
+        if suggestion and not PLACEHOLDER.search(suggestion): value=suggestion
+        parts.append(f'{label}：{value}')
+    return '；'.join(parts).rstrip('。')+'。'

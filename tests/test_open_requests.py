@@ -198,3 +198,56 @@ def test_comma_separated_labeled_details_are_never_dropped(use_model):
     result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=use_model),model)
     assert result['can_rehearse']
     assert any('运动鞋基础清洗，不漂白' in value for value in result['proposal']['custom_task']['context'])
+
+
+@pytest.mark.parametrize('wording',['出2000','掏2000','拿出2000','掏出两千','花费2000','出2000元'])
+def test_spoken_spending_budget_survives_model_grounding_and_is_not_reasked(wording):
+    text=f'我明天下午{wording}请张总去沈阳泡泡森林洗浴'
+    model=Response([field('budget_yuan',2000,wording)],
+                   [{'field':'budget_yuan','question':'总预算是多少元？'}])
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+    assert result['known_fields']['budget_yuan']==2000
+    assert all(m['field']!='budget_yuan' for m in result['missing_fields'])
+    assert '2000' in result['summary']
+    assert any(e['field']=='budget_yuan' and e['value']==2000 for e in result['field_evidence'])
+
+
+@pytest.mark.parametrize('text',['出2000份文件','明天下午2点出发','我不出2000请客','出2000公里外工作'])
+def test_non_money_counts_or_negated_spending_do_not_become_budgets(text):
+    model=Response([field('budget_yuan',2000,text)])
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),model)
+    assert 'budget_yuan' not in result['known_fields']
+
+
+def bath_fields():
+    return [field('task_name','洗浴','洗浴'),field('quantity',2,'我明天下午请张总') | {'counted_items':['我','张总']},
+            field('unit','人','洗浴'),field('fulfillment','去沈阳泡泡森林洗浴','去沈阳泡泡森林洗浴'),
+            field('location','沈阳泡泡森林','沈阳泡泡森林'),field('time','明天下午','明天下午')]
+
+
+def test_missing_budget_example_keeps_original_request_and_does_not_invent_actual_conditions():
+    text='我明天下午请张总去沈阳泡泡森林洗浴'
+    model=Response(bath_fields(),[{'field':'budget_yuan','question':'总预算是多少元？','example_value':'2000元'}])
+    body=AnalysisRequest(text=text,reviewed=True,use_model=True)
+    result=analyze(body,model)
+    assert body.text==text
+    assert result['completion_example']==text+'；总预算：2000元。'
+    assert result['proposal'] is None and not result['can_rehearse']
+    assert 'budget_yuan' not in result['known_fields']
+    assert {x['field'] for x in result['missing_fields']}=={'budget_yuan'}
+    # The example becomes a condition only after the user submits it again.
+    completed=analyze(AnalysisRequest(text=result['completion_example'],reviewed=True,use_model=True),Response(bath_fields()))
+    assert completed['can_rehearse'] and completed['proposal']['budget_yuan']==2000
+    assert completed['proposal']['quantity']==2
+    assert completed['completion_example']==''
+
+
+def test_complete_example_removes_empty_template_fields_but_preserves_supplied_conditions():
+    text='洗鞋，预算350；数量：【填写数量】；地点：【填写城市或区域】'
+    result=analyze(AnalysisRequest(text=text,reviewed=True,use_model=True),Response(
+        [field('unit','双','洗鞋')],[{'field':'location','question':'在哪个区域？','example_value':'沈阳和平区'}]))
+    example=result['completion_example']
+    assert '洗鞋，预算350' in example and '数量：2双' in example
+    assert '地点：沈阳和平区' in example and '【填写' not in example
+    assert '总预算：2000' not in example
+    assert 'quantity' not in result['known_fields']

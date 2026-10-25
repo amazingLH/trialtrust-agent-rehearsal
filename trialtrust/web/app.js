@@ -501,7 +501,8 @@ async function prepareStandIn() {
     if(conversationId!==expectedConversation || nonce!==analysisNonce || $("private-task").value!==raw) return;
     renderRequestAnalysis(result);
     if(result.questions.length || !result.can_rehearse || !result.proposal) {
-      requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再次点击右侧按钮。",false,true);
+      const example=result.completion_example ? ` 完整示例（新增条件请按实际修改）：${result.completion_example}` : "";
+      requestStatus(privacy+"请补充："+(result.questions.length?result.questions.join("；"):"想办的事、数量、服务方式和总预算")+" 补充后再次点击右侧按钮。"+example,false,true);
       return;
     }
     requestStatus(privacy+"条件已齐全，已将你的需求带入第二步。",true);
