@@ -74,11 +74,15 @@ def number(token):
     return total+section+current
 
 def quantities(text):
-    return [(number(m.group(1)),m.group(2),m) for m in re.finditer(rf'(?<![\d.\-])({NUM})\s*(?:个\s*(?=人|位|名))?({UNITS})',text)]
+    matches=[]
+    for match in re.finditer(rf'(?<![\d.\-])({NUM})\s*(?:个\s*(?=人|位|名))?({UNITS})',text):
+        if match.group(2) in {'天','小时'} and re.match(r'\s*(?:内|后|前|之内|之后|以前|以内)',text[match.end():]): continue
+        matches.append((number(match.group(1)),match.group(2),match))
+    return matches
 
 def spending_budgets(text):
     """Explicit spending wording can omit 元, e.g. 出2000请客."""
-    pattern=rf'(?:拿出|掏出|花费|花销|支出|花|出|掏)\s*(?:人民币\s*)?[¥￥]?\s*({NUM})(?![\d.])'
+    pattern=rf'(?:拿出|掏出|花费|花销|支出|拿|花|出|掏)\s*(?:人民币\s*)?[¥￥]?\s*({NUM})(?![\d.])'
     for match in re.finditer(pattern,text):
         before=text[max(0,match.start()-8):match.start()]
         after=text[match.end():]
@@ -87,18 +91,32 @@ def spending_budgets(text):
         value=number(match.group(1))
         if value is not None: yield value,match
 
+def budget_evidence(text,compiled):
+    entries=[item for item in compiled['field_evidence'] if item['field']=='budget_yuan']
+    entries += [{'field':'budget_yuan','value':value,'text':match.group(),'start':match.start(),'end':match.end()}
+                for value,match in spending_budgets(text)]
+    return sorted(entries,key=lambda item:(item['start'],item['end']))
+
+def labeled_task(text):
+    match=re.search(r'(?:^|[；;\n])\s*(?:具体需求|事项|想做的事)\s*[:：]\s*([^；;\n]+)',text)
+    return match.group(1).strip() if match else None
+
 def _base_fields(text,compiled):
     known,evidence={},list(compiled['field_evidence'])
     for key in ('quantity','fulfillment','budget_yuan'):
         values={s['value'] for s in evidence if s['field']==key}
         if len(values)==1 and not any(i['field']==key for i in compiled['issues']): known[key]=values.pop()
-    if 'budget_yuan' not in known:
-        amounts=list(spending_budgets(text))
-        if len({value for value,_ in amounts})==1:
-            known['budget_yuan']=amounts[0][0]
-            evidence.extend({'field':'budget_yuan','value':value,'text':match.group(),
-                             'start':match.start(),'end':match.end()} for value,match in amounts)
+    amounts=budget_evidence(text,compiled)
+    if len({item['value'] for item in amounts})==1:
+        known['budget_yuan']=amounts[0]['value']
+    elif amounts: known.pop('budget_yuan',None)
+    evidence.extend(item for item in amounts if item not in evidence)
     pairs={(n,u) for n,u,_ in quantities(text) if n is not None and n>0}
+    labeled=[]
+    for clause in re.split(r'[，,。；;\n]',text):
+        match=re.match(r'\s*(?:数量|人数|份数)\s*[:：]\s*(.+)',clause)
+        if match: labeled.extend((n,u) for n,u,_ in quantities(match.group(1)) if n is not None and n>0)
+    if len(set(labeled))==1: pairs=set(labeled)
     if len(pairs)==1: known['quantity'],known['unit']=pairs.pop()
     elif len(pairs)>1: known.pop('quantity',None)
     domain=next((s['value'] for s in evidence if s['field']=='domain'),None)
@@ -109,6 +127,7 @@ def _base_fields(text,compiled):
             r'(?:总预算|预算|地点|时间|数量|服务方式|鞋类|材质|城市|区域)[：:为是]?.*',c.strip())
             and not re.fullmatch(rf'\s*({NUM})\s*({UNITS})\s*',c)),None)
         if goal: known['task_name']=goal[:100]
+    if labeled_task(text): known['task_name']=labeled_task(text)[:100]
     for key,labels in {'location':'地点|城市|区域|位置|地区',
                        'time':'完成时间|时间|日期',
                        'details':'具体要求|鞋类|材质|服务内容|特殊要求',
@@ -194,15 +213,15 @@ def analyze(body,provider=None):
 理解用户实际想做的事，不限任何目录、行业或关键词。只提取原文明确提供的条件；不得猜数量、预算、地点、日期或取送方式。
 fields逐项输出field、value、quote、counted_items；quote必须逐字引用原文。task_name可简短概括；unit可根据事项推断计价单位，但数量必须有原文依据。单位用独立的field="unit"记录，不要把unit作为quantity记录的附加键。
 理解自然表达，不要求用户按模板填写。忽略所有【填写…】示例文字，不把示例的数字、地点、方式等当作已提供条件。模板空项若已在别处说清楚，不重复问。
-明确列举的参与者可以计数，例如“我和我哥”就是2人，quantity字段value=2、quote="我和我哥"、counted_items=["我","我哥"]；列出的每一项都必须按顺序逐字出现在quote里，且不重叠、不重复计算。同一句“去修脚店铺找人修脚”也已经表达了到店服务。
+明确列举的参与者可以计数，例如“我和我哥”就是2人，quantity字段value=2、quote="我和我哥"、counted_items=["我","我哥"]。对于“我请我同桌去吃饭”，若提取为2人，quote必须包含前面的主体“我”和后面的“我同桌”，counted_items=["我","我同桌"]，不能只引用“我同桌”三个字。列出的每一项都必须按顺序逐字出现在quote里，且不重叠、不重复计算。同一句“去修脚店铺找人修脚”也已经表达了到店服务。
 counted_items仅用于明确列举的参与者人数，并同时输出unit="人"字段。显式数量或其他字段的counted_items用空数组。不能从“我们一家”“和几个朋友”等模糊表达猜人数；只列举实际接受服务的人，不把服务人员、未参加的人算进去。
 用户已描述去店里接受服务时，不因缺少“到店”二字而反问服务方式；fulfillment的value保留原话中表达服务方式的片段即可，不能写原文没有的词。
 quantity、budget_yuan用整数；fulfillment用用户自己的服务描述，不要输出代码。location/time/details原样保留。
 自定义需求必须明确时间或明确没有时间限制，这是固定核对项。没有提供时间时必须询问time，不能自行假设“时间不限”，也不能沿用其他输入或示例的时间。“明晚”“明天下午”“周末”已提供时间；明确写“时间不限”“随时”也可以，不要重复问。
-missing最多5项，只问这项具体任务确实缺少的信息；“预算350”“出2000请客”“掏两千去洗浴”均已给出预算，即使没有“元”字也应提取金额。不要再问总预算、单次预算或重复问需求是什么。
+missing最多5项，只问这项具体任务确实缺少的信息；“预算350”“出2000请客”“拿3400去吃饭”“掏两千去洗浴”均已给出预算，即使没有“元”字也应提取金额。不要再问总预算、单次预算或重复问需求是什么。若同段文字出现两种不同的预算金额，必须让用户明确选择，不能自行覆盖或追加第三个金额。
 字段已有值时不要再询问该字段。数量和单位可以一起问。无地点要求的线上任务不问城市；没有明确必要性不额外问条件。
 应结合事项判断关键规格是否缺少，例如清洗对象的类型/材质/范围、维修对象型号、文稿主题字数等；需要时用details提问。
-不要把可选偏好当作缺失条件：已明确要洗浴、修脚、捏脚或足疗时，未指定时长、套餐、环境或技师偏好，不影响理解这项基础服务，不得仅因此要求补充details。只有无法确定要做哪项服务或操作对象时才追问关键规格。
+不要把可选偏好当作缺失条件：已明确要吃饭、聚餐、洗浴、修脚、捏脚或足疗时，未指定菜系、时长、套餐、环境或技师偏好，不影响理解这项基础服务，不得仅因此要求补充details。只有无法确定要做哪项服务或操作对象时才追问关键规格。
 每个missing的example_hint给出该怎么填的简短提示，例如“城市或区域”“鞋子类型、材质和清洗要求”“到店送洗或上门取送”；不要编具体城市、数量或日期。所有面向用户的提问用中文。
 每个missing另给example_value：结合当前事项提供一个可直接复制的示例值，例如预算“2000元”、人数“2人”、地点“上海青浦区”、鞋类要求“运动鞋基础清洗”。这些是假设的补充示例，不是原文事实，不能放入fields，也不能据此声称条件齐全。已知条件不生成替代值。
 summary最多一小句。不要推荐或编造真实店铺、价格、库存，不要写免责声明或工具介绍。''',
@@ -221,7 +240,7 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
                     retained=[prior] if prior and not any(prior in value for value in values) else []
                     known[key]='；'.join(dict.fromkeys(retained+[value for value in values if not prior or value not in prior or value==prior]))
                 elif len(set(values))==1 and (key not in {'budget_yuan','quantity'} or key not in known): known[key]=values[0]
-            if any(m.field=='task_name' for m in brief.missing) and 'task_name' not in model_values and not compiled['proposal']:
+            if any(m.field=='task_name' for m in brief.missing) and 'task_name' not in model_values and not compiled['proposal'] and not labeled_task(facts_text):
                 known.pop('task_name',None)
             if 'unit' not in known:
                 for item in brief.missing:
@@ -249,8 +268,15 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
             if key in ('quantity','budget_yuan') and issue['reason']!='missing':
                 known.pop(key,None)
                 if key not in {m['field'] for m in missing}: missing.append({'field':key,'question':f'请明确一个{ "数量" if key=="quantity" else "预算" }值，原文有多种说法。'})
+        amounts=budget_evidence(facts_text,compiled)
+        if len({item['value'] for item in amounts})>1:
+            known.pop('budget_yuan',None)
+            missing=[item for item in missing if item['field']!='budget_yuan']
+            values='、'.join(str(value)+'元' for value in dict.fromkeys(item['value'] for item in amounts))
+            missing.append({'field':'budget_yuan','question':f'你写了不同金额（{values}），请确认本次总预算，只保留一个金额。'})
         proposal=None
-        if not body.use_model and compiled['proposal']: proposal=compiled['proposal']; missing=[]
+        if not body.use_model and compiled['proposal'] and len({item['value'] for item in amounts})<=1:
+            proposal=compiled['proposal']; missing=[]
         elif not missing and all(k in known for k in required_fields):
             context=tuple(f'{label}：{known[key][start:start+280]}' for key,label in [('location','地点'),('time','时间'),('details','具体要求')]
                           if key in known for start in range(0,len(known[key]),280))
@@ -274,20 +300,51 @@ summary最多一小句。不要推荐或编造真实店铺、价格、库存，�
 
 def completion_for(text,missing,known):
     if not missing: return ''
-    defaults={'task_name':('具体需求','洗浴放松'),'quantity':('数量','2'+known.get('unit','项')),
+    defaults={'task_name':('具体需求','请说明想办的具体事情'),'quantity':('数量','2'+known.get('unit','项')),
               'unit':('计价单位','项'),'fulfillment':('服务方式','到店'),
               'budget_yuan':('总预算','2000元'),'location':('地点','上海青浦区'),
               'time':('完成时间','时间不限'),'details':('具体要求','无特殊要求')}
-    # Remove empty template fields in the example only; the input is never edited.
-    labels={'具体需求','地点','城市','区域','具体要求','数量','计价单位','服务方式','完成时间','时间','总预算','预算'}
-    clauses=[]
-    for clause in re.split(r'[；;\n]',text):
-        clean=PLACEHOLDER.sub('',clause).strip(' ：:。')
-        if clean and clean not in labels: clauses.append(clean)
-    parts=['；'.join(clauses)] if clauses else []
+    values={key:value for key,(_,value) in defaults.items()}
     for item in missing:
-        label,value=defaults[item['field']]
         suggestion=item.get('example_value','').strip()
-        if suggestion and not PLACEHOLDER.search(suggestion): value=suggestion
-        parts.append(f'{label}：{value}')
-    return '；'.join(parts).rstrip('。')+'。'
+        if suggestion and not PLACEHOLDER.search(suggestion): values[item['field']]=suggestion
+    for key in ('task_name','fulfillment','time','location','details'):
+        if key in known: values[key]=known[key]
+    if 'quantity' in known: values['quantity']=f'{known["quantity"]}{known.get("unit","项")}'
+    elif not quantities(values['quantity']):
+        token=values['quantity'].strip()
+        amount=number(token) if re.fullmatch(NUM,token) else None
+        values['quantity']=str(amount or 2)+known.get('unit','项')
+    if 'unit' in known: values['unit']=known['unit']
+    if 'budget_yuan' in known: values['budget_yuan']=f'{known["budget_yuan"]}元'
+    facts=PLACEHOLDER.sub('',text)
+    amounts=budget_evidence(facts,compile_stand_in(facts))
+    conflict=len({item['value'] for item in amounts})>1
+    if conflict:
+        # A contradictory draft cannot keep two amounts. The original input is
+        # untouched; this clearly labeled example uses the first quoted amount.
+        values['budget_yuan']=f'{amounts[0]["value"]}元'
+        covered=sorted({(item['start'],item['end']) for item in amounts},reverse=True)
+        for start,end in covered: facts=facts[:start]+facts[end:]
+    # Rebuild explicit clauses once, keeping the natural task and its details.
+    labels=r'具体需求|事项|想做的事|地点|城市|区域|具体要求|数量|计价单位|服务方式|完成时间|时间|总预算|预算'
+    clauses=[]
+    for clause in re.split(r'[；;\n]',facts):
+        clean=clause.strip(' ：:。')
+        if clean and not re.match(rf'^(?:{labels})\s*[:：]',clean): clauses.append(clean)
+    base='；'.join(clauses)
+    parts=[base] if base and base!=values['task_name'] else []
+    required=('task_name','quantity','fulfillment','budget_yuan','time')
+    keys=list(dict.fromkeys([*required,*[item['field'] for item in missing if item['field']!='unit'],
+                            *[key for key in ('location','details') if key in known]]))
+    for key in keys:
+        label,_=defaults[key]
+        parts.append(f'{label}：{values[key]}')
+    example='；'.join(parts).rstrip('。')+'。'
+    if len(example)>1200: return ''
+    verified,_=_base_fields(example,compile_stand_in(example))
+    # Never label an example "complete" until its explicit core conditions
+    # survive the same local checks, without another model call.
+    if not all(key in verified for key in (*required,'unit')): return ''
+    if len({item['value'] for item in budget_evidence(example,compile_stand_in(example))})!=1: return ''
+    return example

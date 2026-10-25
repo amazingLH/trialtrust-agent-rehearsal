@@ -200,7 +200,7 @@ def test_comma_separated_labeled_details_are_never_dropped(use_model):
     assert any('运动鞋基础清洗，不漂白' in value for value in result['proposal']['custom_task']['context'])
 
 
-@pytest.mark.parametrize('wording',['出2000','掏2000','拿出2000','掏出两千','花费2000','出2000元'])
+@pytest.mark.parametrize('wording',['出2000','掏2000','拿2000','拿出2000','掏出两千','花费2000','出2000元'])
 def test_spoken_spending_budget_survives_model_grounding_and_is_not_reasked(wording):
     text=f'我明天下午{wording}请张总去沈阳泡泡森林洗浴'
     model=Response([field('budget_yuan',2000,wording)],
@@ -231,7 +231,9 @@ def test_missing_budget_example_keeps_original_request_and_does_not_invent_actua
     body=AnalysisRequest(text=text,reviewed=True,use_model=True)
     result=analyze(body,model)
     assert body.text==text
-    assert result['completion_example']==text+'；总预算：2000元。'
+    assert result['completion_example'].startswith(text+'；')
+    assert '总预算：2000元' in result['completion_example']
+    assert '数量：2人' in result['completion_example']
     assert result['proposal'] is None and not result['can_rehearse']
     assert 'budget_yuan' not in result['known_fields']
     assert {x['field'] for x in result['missing_fields']}=={'budget_yuan'}
