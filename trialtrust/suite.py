@@ -66,14 +66,15 @@ def verify_audit(audit, baseline, changed):
             "scope": "Only these structured facts were verified; no overall safety certification."}
 
 
-def role_json(provider, system, payload, schema, *, max_tokens=900):
+def role_json(provider, system, payload, schema, *, max_tokens=900, decoder=None):
     message = provider.chat([{"role": "system", "content": system + "\n只输出符合下列schema的JSON对象，不输出Markdown。\n"
                               + json.dumps(schema.model_json_schema(), ensure_ascii=False)},
                              {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}],
                             max_tokens=max_tokens)
     if message.get("_finish_reason") not in {None, "stop"} or message.get("tool_calls"):
         raise RuntimeError("Role output incomplete or unexpected tools; no automatic retry")
-    return schema.model_validate_json(message.get("content") or "")
+    content=message.get("content") or ""
+    return decoder(content) if decoder else schema.model_validate_json(content)
 
 
 class SuiteState(TypedDict, total=False):

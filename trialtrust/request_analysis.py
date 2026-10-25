@@ -6,6 +6,7 @@ from .compiler import compile_stand_in
 from .catalog import CATALOG, MAX_BUDGET_YUAN
 from .mandate import CustomTask, Mandate
 from .skill_runtime import invoke
+from .brief_parser import parse_model_brief
 
 FieldName = Literal['task_name','quantity','unit','fulfillment','budget_yuan','location','time','details']
 NUM = r'[0-9]+|[零〇一二两三四五六七八九十百千万]+'
@@ -56,6 +57,9 @@ class ModelBrief(BaseModel):
     missing: list[MissingField] = Field(default_factory=list,max_length=5)
     questions: list[str] = Field(default_factory=list,max_length=6)
     next_actions: list[str] = Field(default_factory=list,max_length=6)
+
+def decode_brief(content):
+    return parse_model_brief(content,ModelBrief,ExtractedField,MissingField,number)
 
 def number(token):
     if token.isascii() and token.isdigit(): return int(token)
@@ -131,9 +135,13 @@ def _base_fields(text,compiled):
     if 'time' not in known:
         mentions=list(time_mentions(text))
         if mentions:
-            known['time']='；'.join(dict.fromkeys(m.group() for m in mentions))
-            evidence.extend({'field':'time','value':m.group(),'text':m.group(),
-                             'start':m.start(),'end':m.end()} for m in mentions)
+            spans=[]
+            for match in mentions:
+                if spans and not text[spans[-1][1]:match.start()].strip(): spans[-1][1]=match.end()
+                else: spans.append([match.start(),match.end()])
+            known['time']='；'.join(dict.fromkeys(text[start:end] for start,end in spans))
+            evidence.extend({'field':'time','value':text[start:end],'text':text[start:end],
+                             'start':start,'end':end} for start,end in spans)
     return known,evidence
 
 def _grounded_field(item,text):
@@ -184,7 +192,7 @@ def analyze(body,provider=None):
             from .suite import role_json
             brief=role_json(provider,instructions+'''
 理解用户实际想做的事，不限任何目录、行业或关键词。只提取原文明确提供的条件；不得猜数量、预算、地点、日期或取送方式。
-fields逐项输出field、value、quote、counted_items；quote必须逐字引用原文。task_name可简短概括；unit可根据事项推断计价单位，但数量必须有原文依据。
+fields逐项输出field、value、quote、counted_items；quote必须逐字引用原文。task_name可简短概括；unit可根据事项推断计价单位，但数量必须有原文依据。单位用独立的field="unit"记录，不要把unit作为quantity记录的附加键。
 理解自然表达，不要求用户按模板填写。忽略所有【填写…】示例文字，不把示例的数字、地点、方式等当作已提供条件。模板空项若已在别处说清楚，不重复问。
 明确列举的参与者可以计数，例如“我和我哥”就是2人，quantity字段value=2、quote="我和我哥"、counted_items=["我","我哥"]；列出的每一项都必须按顺序逐字出现在quote里，且不重叠、不重复计算。同一句“去修脚店铺找人修脚”也已经表达了到店服务。
 counted_items仅用于明确列举的参与者人数，并同时输出unit="人"字段。显式数量或其他字段的counted_items用空数组。不能从“我们一家”“和几个朋友”等模糊表达猜人数；只列举实际接受服务的人，不把服务人员、未参加的人算进去。
@@ -198,7 +206,7 @@ missing最多5项，只问这项具体任务确实缺少的信息；“预算350
 每个missing的example_hint给出该怎么填的简短提示，例如“城市或区域”“鞋子类型、材质和清洗要求”“到店送洗或上门取送”；不要编具体城市、数量或日期。所有面向用户的提问用中文。
 每个missing另给example_value：结合当前事项提供一个可直接复制的示例值，例如预算“2000元”、人数“2人”、地点“上海青浦区”、鞋类要求“运动鞋基础清洗”。这些是假设的补充示例，不是原文事实，不能放入fields，也不能据此声称条件齐全。已知条件不生成替代值。
 summary最多一小句。不要推荐或编造真实店铺、价格、库存，不要写免责声明或工具介绍。''',
-                            {'request':body.text,'known_fields':known},ModelBrief,max_tokens=1800)
+                            {'request':body.text,'known_fields':known},ModelBrief,max_tokens=1800,decoder=decode_brief)
             model_values={}
             for item in brief.fields:
                 value=_grounded_field(item,body.text)

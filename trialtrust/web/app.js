@@ -509,7 +509,7 @@ async function prepareStandIn() {
     adoptAnalyzedRequest(result);
   } catch(error) {
     if(conversationId===expectedConversation && nonce===analysisNonce)
-      requestStatus("大模型检查未完成："+error.message+" 原文已保留，请稍后再次点击右侧按钮。",false,true);
+      requestStatus("这次检查没有完成，原文已保留。请再次点击右侧按钮。",false,true);
   } finally {
     analyzing=false;setBusy(false);
     $("prepare-stand-in").textContent=demandConfirmText;

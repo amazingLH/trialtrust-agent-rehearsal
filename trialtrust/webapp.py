@@ -389,9 +389,14 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
                 result['usage'] = provider.ledger.summary(run_only=True)
             return result
         except ValueError as exc:
-            raise HTTPException(422,str(exc)) from None
+            message=str(exc)
+            if message in {'请先检查并确认这段文字已去除个人资料',
+                           '替身仍含可识别的手机号、邮箱或身份证格式，请先在本地替换',
+                           '真实模型尚未启用'}:
+                raise HTTPException(422,message) from None
+            raise HTTPException(502,'需求检查暂未完成，请稍后重试。') from None
         except Exception:
-            raise HTTPException(502,'分析未完成，请保留输入后重试；未生成试运行结论。') from None
+            raise HTTPException(502,'需求检查暂未完成，请稍后重试。') from None
 
     @app.post("/api/session")
     def session(request: Request, response: Response):
