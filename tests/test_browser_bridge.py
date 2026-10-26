@@ -65,3 +65,27 @@ def test_bridge_rejects_unknown_origins_routes_and_headers(tmp_path):
         assert client.options("/api/browser-bridge", headers={"Origin": ORIGIN}).status_code == 204
         # The original same-origin CSRF guard remains active.
         assert client.post("/api/auth/bootstrap", json={}, headers={"Origin": ORIGIN}).status_code == 403
+
+
+def test_actual_managed_entrypoint_enables_bridge_and_keeps_auth(tmp_path, monkeypatch):
+    monkeypatch.setenv("TRIALTRUST_RUNTIME", str(tmp_path / "web"))
+    monkeypatch.setenv("TRIALTRUST_ENABLE_LIVE", "0")
+    monkeypatch.delenv("TRIALTRUST_BROWSER_ORIGINS", raising=False)
+    from trialtrust.managed import create_managed_app
+    with TestClient(create_managed_app()) as client:
+        response = call(client, "/api/auth/bootstrap", {})
+        assert response.status_code == 200, response.text
+        assert response.headers["content-type"].startswith("application/json")
+        assert response.json()["authenticated"] is False
+        assert response.json()["browser_token"]
+        assert call(client, "/api/conversations").status_code == 401
+        assert call(client, "/api/auth/bootstrap", {}, origin="https://other.invalid").status_code == 403
+        assert client.post("/api/auth/bootstrap", json={}).status_code == 403
+
+
+def test_managed_bridge_can_be_disabled_explicitly(tmp_path, monkeypatch):
+    monkeypatch.setenv("TRIALTRUST_RUNTIME", str(tmp_path / "web"))
+    monkeypatch.setenv("TRIALTRUST_BROWSER_ORIGINS", "")
+    from trialtrust.managed import create_managed_app
+    with TestClient(create_managed_app()) as client:
+        assert call(client, "/api/auth/bootstrap", {}).status_code == 403

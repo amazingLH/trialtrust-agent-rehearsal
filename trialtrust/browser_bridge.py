@@ -7,6 +7,7 @@ validation and background-task execution still run in those routes.
 from __future__ import annotations
 
 import json
+import os
 import re
 from urllib.parse import parse_qs, urlsplit
 
@@ -14,6 +15,16 @@ from starlette.responses import JSONResponse, Response
 
 BRIDGE_PATH = "/api/browser-bridge"
 MAX_BODY = 1_048_576
+
+
+def configured_browser_origins():
+    """Shared by both managed entrypoints; standalone remains opt-in."""
+    return tuple(origin.strip() for origin in os.environ.get(
+        "TRIALTRUST_BROWSER_ORIGINS",
+        "https://render.qmuse.pub,https://qmuse.cn,https://www.qmuse.cn",
+    ).split(",") if origin.strip())
+
+
 HEADER_NAMES = {
     "x-trialtrust-account", "x-trialtrust-browser", "x-trialtrust-session",
     "x-trialtrust-conversation",

@@ -4,11 +4,12 @@ import os
 
 def create_managed_app(*, require_accounts=True):
     from trialtrust.webapp import create_app
+    from trialtrust.browser_bridge import configured_browser_origins
 
     # The platform supplies the public origin; FC Host is routing metadata.
     hosts = os.environ.get("TRIALTRUST_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver")
     os.environ["TRIALTRUST_ALLOWED_HOSTS"] = hosts + ",*.cn-beijing-vpc.fcapp.run"
-    app = create_app(require_accounts=require_accounts)
+    app = create_app(require_accounts=require_accounts, browser_origins=configured_browser_origins())
     app.state.studio_ui = True
 
     @app.middleware("http")
