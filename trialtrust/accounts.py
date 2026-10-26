@@ -137,7 +137,7 @@ class Accounts:
 
     @staticmethod
     def managed(request):
-        return getattr(request.app.state, "studio_ui", False)
+        return bool(request.scope.get("trialtrust_browser_bridge")) or getattr(request.app.state, "studio_ui", False)
 
     def token(self, request):
         header = request.headers.get("x-trialtrust-account") if self.managed(request) else None

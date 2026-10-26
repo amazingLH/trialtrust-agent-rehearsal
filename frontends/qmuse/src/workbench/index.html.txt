@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>试托 · 生活委托的 AI 对照试运行</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script defer src="/assets/portal_viewport.js"></script>
+    <script defer src="/assets/workbench_tools.js"></script>
+    <script defer src="/assets/auth.js"></script>
+    <script defer src="/assets/app.js"></script>
+  </head>
+  <body>
+    <section id="auth-gate" class="auth-gate" aria-label="试托账号入口">
+      <div class="auth-universe" aria-hidden="true"><div class="auth-nebula"></div><i class="star s1"></i><i class="star s2"></i><i class="star s3"></i><i class="star s4"></i></div>
+      <div class="auth-layout">
+        <div class="auth-story">
+          <a class="auth-brand" href="#"><span>试</span> 试托 <small>TRIALTRUST</small></a>
+          <div class="auth-chip"><i></i> 你的委托彩排舱，已就绪</div>
+          <h1>先在星际小舱试一遍，<br /><em>再决定怎么交给 AI。</em></h1>
+          <p>和小托一起，检查每一步的费用、证据与边界。<br />把探索留给 AI，把决定留给自己。</p>
+          <div class="auth-illustration">
+            <div class="auth-orbit auth-orbit-one"></div><div class="auth-orbit auth-orbit-two"></div>
+            <div class="floating-badge badge-evidence">✦ 证据已就位</div><div class="floating-badge badge-boundary">✓ 授权边界守护中</div>
+            <svg class="space-buddy" viewBox="0 0 360 340" role="img" aria-label="原创太空小托机器人">
+              <defs><linearGradient id="buddy-shell" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d9d3ff"/></linearGradient><linearGradient id="buddy-visor" x2="1" y2="1"><stop stop-color="#2f2766"/><stop offset="1" stop-color="#171c3b"/></linearGradient></defs>
+              <ellipse cx="180" cy="307" rx="88" ry="12" fill="#a995ff" opacity=".13"/>
+              <g class="buddy-float"><path d="M137 85C110 15 139 3 159 77M202 76C222 6 250 21 224 90" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="5"/>
+                <ellipse cx="180" cy="229" rx="65" ry="64" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <path d="M122 219Q63 195 84 235Q101 256 125 246M239 218Q293 184 281 223Q267 250 238 247" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <path d="M138 278Q111 303 150 304L165 283M198 283L216 304Q252 302 225 278" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <rect x="89" y="74" width="182" height="142" rx="67" fill="url(#buddy-shell)" stroke="#b8a5fa" stroke-width="4"/>
+                <rect x="106" y="100" width="148" height="91" rx="43" fill="url(#buddy-visor)"/>
+                <g class="buddy-eyes" fill="#8ff1db"><ellipse cx="148" cy="141" rx="8" ry="12"/><ellipse cx="211" cy="141" rx="8" ry="12"/></g>
+                <path d="M168 162Q179 171 190 162" fill="none" stroke="#b9aaff" stroke-width="4" stroke-linecap="round"/>
+                <ellipse cx="130" cy="161" rx="10" ry="5" fill="#ffb7d4" opacity=".8"/><ellipse cx="229" cy="161" rx="10" ry="5" fill="#ffb7d4" opacity=".8"/>
+                <circle cx="180" cy="242" r="21" fill="#8060e1"/><path d="M170 241L178 249L192 233" fill="none" stroke="#e6fff5" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M107 93Q139 67 177 83" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".7"/>
+              </g>
+            </svg>
+            <span class="auth-planet planet-one"></span><span class="auth-planet planet-two"></span>
+          </div>
+          <div class="auth-principles"><span>◇ 账户隔离</span><span>◈ 历史可续</span><span>✦ 决定在你</span></div>
+        </div>
+        <div class="auth-card">
+          <p class="auth-eyebrow">WELCOME ABOARD / 欢迎登舱</p><h2 id="auth-title">欢迎回来</h2><p id="auth-subtitle">登录后，接着上一次的探索。</p>
+          <div class="auth-tabs" role="group" aria-label="账号操作"><button id="auth-login-tab" type="button" aria-pressed="true">登录</button><button id="auth-register-tab" type="button" aria-pressed="false">注册账号</button></div>
+          <form id="auth-form">
+            <label class="auth-field">用户名<input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_]{3,32}" required placeholder="3—32位字母、数字或下划线" /></label>
+            <label class="auth-field"><span id="auth-password-label">密码</span><div class="password-input"><input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="10" maxlength="72" required placeholder="至少10个字符" /><button id="auth-show-password" type="button" aria-label="显示密码" aria-pressed="false">显示</button></div></label>
+            <label id="auth-confirm-field" class="auth-field" hidden>确认密码<input id="auth-confirm" type="password" autocomplete="new-password" maxlength="72" /></label>
+            <label id="auth-recovery-field" class="auth-field" hidden>恢复码<input id="auth-recovery" autocomplete="off" maxlength="100" placeholder="注册时保存的恢复码" /></label>
+            <label id="auth-import-field" class="auth-import" hidden><input id="auth-import" type="checkbox" />将此浏览器仍有效的旧匿名记录关联至新账号</label>
+            <p id="auth-error" class="auth-error" role="alert"></p>
+            <button id="auth-submit" class="auth-primary" type="submit" disabled>正在连接彩排舱…</button>
+          </form>
+          <div id="auth-receipt" hidden><h3>请保存你的恢复码</h3><p>这是你恢复密码的凭证，只在本次显示，请保存在自己安全的地方，不要发给他人。</p><textarea id="auth-recovery-code" readonly aria-label="本次恢复码" spellcheck="false"></textarea><button id="auth-download-recovery" type="button" class="secondary">下载恢复码</button><button id="auth-enter" type="button" class="auth-primary">我已保存，进入工作台 →</button></div>
+          <div class="auth-footer"><button id="auth-recover-tab" class="auth-text" type="button">忘记密码？使用恢复码</button><span>无需手机 · 无需邮箱</span></div>
+          <p id="auth-browser-note" class="auth-browser-note" hidden>每个浏览器身份只允许注册一个账号；清除数据、无痕或更换浏览器可能绕过此限制，不能据此识别物理设备。已有账号可以在其他设备登录。</p>
+        </div>
+      </div>
+      <p class="auth-bottom">试托 · 先试，再托 <span>用一次可观察的彩排，理解一次委托。</span></p>
+    </section>
+    <div id="authenticated-app" class="trialtrust-responsive" hidden><div class="app-shell">
+        <aside id="conversation-sidebar" class="conversation-panel" aria-label="会话管理">
+          <div class="sidebar-heading"><span class="eyebrow">会话工作台</span><button id="close-sidebar" class="icon-button" aria-label="关闭会话侧栏">×</button></div>
+          <div class="conversation-heading">
+            <div>
+              <p class="eyebrow">当前会话</p>
+              <h2 id="conversation-title">正在加载会话…</h2>
+              <p id="conversation-meta" class="muted"></p>
+            </div>
+            <button id="new-conversation" class="secondary">新建会话 +</button>
+            <button id="new-trial" class="text-button">
+              本会话再试一次 ↗
+            </button>
+          </div>
+          <div class="conversation-folders">
+            <details id="conversation-drawer" open>
+              <summary>
+                历史会话 <span id="conversation-count" class="count">0</span>
+              </summary>
+              <div id="conversations" class="conversation-list"></div>
+            </details>
+            <details id="run-drawer">
+              <summary>
+                本会话彩排记录 <span id="history-count" class="count">0</span>
+              </summary>
+              <div id="history"></div>
+            </details>
+          </div>
+          <div class="account-bar"><span id="account-name"></span><button id="account-settings" type="button" class="text-button">账号设置</button><button id="account-logout" type="button" class="text-button">退出登录</button></div>
+        </aside>
+
+      <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="关闭会话侧栏" hidden></button>
+      <div class="app-content">
+      <header class="topbar">
+        <button id="toggle-sidebar" class="quiet" aria-label="打开会话侧栏" aria-controls="conversation-sidebar" aria-expanded="false">☰ <span>会话</span></button>
+        <a class="brand" href="#"
+          ><span class="brand-mark">试</span
+          ><span>试托<small>TRIALTRUST · 先试，再托</small></span></a
+        >
+        <button id="help" class="quiet">全流程简介</button>
+        <a
+          id="full-screen"
+          class="quiet fullscreen-link"
+          hidden
+          href="https://www.modelscope.cn/studios/L666H666Better/trialtrust?mode=full&amp;app_path=%2Fapi%2Fworkbench"
+          target="_blank"
+          rel="noopener noreferrer"
+          >全屏体验 ↗</a
+        >
+      </header>
+      <div class="page">
+        <section class="hero">
+          <div class="hero-intro">
+            <p class="eyebrow">生活委托的 AI 对照试运行</p>
+            <h1>先陪 AI 走一遍，再决定交哪一步。</h1>
+            <div class="hero-tags">
+              <span>不接触真实商家</span><span>不预约 · 不付款</span
+              ><span>每一步可回看</span>
+            </div>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <span class="orbit one">费用 ✓</span>
+            <div class="mascot">
+              <i class="ear left"></i><i class="ear right"></i>
+              <div class="face">
+                <i class="eye left"></i><i class="eye right"></i
+                ><i class="cheek left"></i><i class="cheek right"></i
+                ><i class="mouth"></i>
+              </div>
+              <i class="hand"></i>
+            </div>
+            <span class="orbit two">证据 ↗</span>
+            <p>你的彩排搭子 · 小托</p>
+          </div>
+          <p class="hero-copy">把生活事务交给AI前，先看它遇到问题时会怎么做。试托按你填写的需求、预算和授权试运行，再用涨价、缺少价格依据等情况考验它，把费用计算、查证记录和操作过程展示出来。你可以提前发现漏算、乱猜或越权的风险，决定哪些条件要补充、哪些环节需要自己把关，再考虑怎样让AI参与实际事务。</p>
+        </section>
+        <div class="workbench-overview" aria-label="工作台概览">
+          <span><b id="scenario-total">291</b> 个模拟场景</span><span><b>5</b> 类检查情况</span>
+          <span><b id="template-total">0</b> 个个人模板</span><span><b id="round-total">0</b> 次彩排记录</span>
+        </div>
+        <section id="coach" class="coach" aria-label="操作指引">
+          <span class="coach-avatar" aria-hidden="true">✦</span>
+          <div>
+            <p class="coach-label">操作指引</p>
+            <span id="coach-counter" class="eyebrow">第 1 步 / 共 4 步</span>
+            <h2 id="coach-title">先选一件想交给 AI 的小事</h2>
+            <p id="coach-description">
+              从四类生活需求开始。没有合适选项，也可以先写下自己的需求。
+            </p>
+          </div>
+          <button id="coach-next" class="primary">去选事情 ↓</button>
+        </section>
+        <nav class="stepper" aria-label="使用顺序">
+          <button data-step="1" aria-current="step"><b>01</b> 选事情</button
+          ><button data-step="2"><b>02</b> 核对并运行</button
+          ><button data-step="3"><b>03</b> 看对照与证据</button
+          ><button data-step="4"><b>04</b> 审阅与导出</button>
+        </nav>
+        <main class="workspace" id="workspace">
+          <div class="column config-column">
+            <section class="panel config-panel" id="step-one">
+              <div class="section-heading">
+                <span class="step-number">01</span>
+                <div>
+                  <p class="eyebrow">选择需求</p>
+                  <h2>这次，想先试哪类事情？</h2>
+                </div>
+                <button type="button" class="secondary module-help" data-module-help="0" aria-haspopup="dialog">01模块·流程介绍</button>
+              </div>
+              <div class="demand-paths" role="group" aria-label="选择需求填写方式">
+                <button id="manual-demand" class="secondary" aria-pressed="true" aria-controls="manual-demand-fields manual-domain-field">自己选择需求</button>
+                <button id="template-demand" class="secondary" aria-pressed="false" aria-controls="template-demand-fields">使用条件模板</button>
+              </div>
+              <p class="micro-note">两种方式选一种即可。模板会同时填好需求和第二步条件，无需重复选择。</p>
+              <div id="template-demand-fields" hidden>
+              <div class="task-toolbar">
+                <label class="field">选择一套条件模板<select id="template-select"><option value="">请选择模板</option></select></label>
+                <button id="apply-template" class="secondary">应用模板</button>
+                <button id="remove-template" class="quiet">删除个人模板</button>
+              </div>
+              </div>
+              <div id="manual-demand-fields">
+              <div
+                id="categories"
+                class="categories"
+                aria-label="需求类别"
+              ></div>
+              </div>
+              <div class="demand-selection-row">
+              <div id="manual-domain-field" class="field demand-domain-field">
+                <span id="domain-picker-label">具体想做什么</span>
+                <div class="demand-picker">
+                  <button id="domain-picker" type="button" aria-label="具体想做什么" aria-haspopup="dialog" aria-expanded="false" aria-controls="domain-picker-menu" aria-describedby="scenario-note"><span id="domain-picker-value">请选择具体需求</span><span aria-hidden="true">⌄</span></button>
+                  <div id="domain-picker-menu" class="demand-picker-menu" role="dialog" aria-label="选择具体需求" hidden>
+                    <div class="demand-menu-heading"><span id="domain-menu-title"></span><button id="close-domain-menu" type="button" class="icon-button" aria-label="关闭需求菜单">×</button></div>
+                    <p class="demand-menu-tip">先移到或点击左侧子分类，再在右侧选择具体事项。</p>
+                    <div class="demand-menu-columns">
+                      <nav id="domain-groups" aria-label="需求子分类"></nav>
+                      <section class="demand-menu-options" aria-labelledby="domain-options-title"><h3 id="domain-options-title"></h3><div id="domain-options"></div></section>
+                    </div>
+                  </div>
+                </div>
+                <select id="domain" hidden aria-hidden="true" tabindex="-1">
+                  <option value="">请先选择一个类别</option>
+                </select>
+              </div>
+              <p id="selected-demand" class="selection-summary" aria-live="polite">当前需求：尚未选择</p>
+              </div>
+              <div class="demand-next-row">
+              <p id="scenario-note" class="scenario-note">
+                <span id="scenario-description">选好后，这里会说明能帮你检查什么。</span>
+              </p>
+              <button id="confirm-directory-demand" type="button" class="secondary" aria-describedby="selected-demand">确定！并进行下一步核对条件</button>
+              </div>
+              <details class="custom-request">
+                <summary>没有合适选项？写下自己的需求 ↗</summary>
+                <label class="field custom-request-label" for="private-task">你的需求 <small>可按下方格式填写真实情况，也可以直接用自己的话描述。</small></label>
+                <div class="custom-request-row">
+                  <textarea
+                    id="private-task"
+                    rows="4"
+                    maxlength="1200"
+                    aria-describedby="request-check-status"
+                  >具体需求：【填写：想办的事】；地点：【填写：城市或区域，线上服务可写无需地点】；具体要求：【填写：服务内容、时长或特殊要求，没有可写无】；数量：【填写：数量和单位，例如2人】；服务方式：【填写：到店、上门或其他交付方式】；完成时间：【填写：时间要求，没有可写时间不限】；总预算：【填写：本次总预算，单位元】。</textarea>
+                <button id="prepare-stand-in" class="secondary">
+                  确定！并进行下一步核对条件
+                </button>
+                </div>
+                <p id="request-check-status" class="request-check-status" role="status" hidden></p>
+                <div
+                  id="compile-result"
+                  class="analysis-result"
+                  aria-live="polite"
+                ></div>
+              </details>
+            </section>
+            <section class="panel conditions-panel" id="step-two">
+              <div class="section-heading">
+                <span class="step-number mint">02</span>
+                <div>
+                  <p class="eyebrow">划清委托边界</p>
+                  <h2>核对条件，再开始彩排</h2>
+                </div>
+                <button type="button" class="secondary module-help" data-module-help="1" aria-haspopup="dialog">02模块·流程介绍</button>
+              </div>
+              <div class="control-stage"><h3>① 填好这次的条件</h3><p>告诉它多少人、怎么服务、最多花多少钱；后面就按这份条件检查。</p></div>
+              <div class="form-grid conditions-grid">
+                <label class="field"><span id="quantity-label">数量</span><input id="quantity" type="number" min="1" step="1" value="2" /></label>
+                <div class="field service-method-field">
+                  <label for="fulfillment-text">服务方式</label>
+                  <div class="service-method-control">
+                    <input id="fulfillment-text" type="text" maxlength="500" autocomplete="off" spellcheck="false" placeholder="例如输入：入住体验" aria-describedby="fulfillment-status" />
+                    <div class="service-method-actions">
+                      <button id="confirm-fulfillment" type="button" class="primary">确认</button>
+                      <button id="clear-fulfillment" type="button" class="secondary" aria-label="清空服务方式" title="只清空服务方式">清空</button>
+                    </div>
+                  </div>
+                  <input id="fulfillment" type="hidden" value="" />
+                  <span id="fulfillment-status" class="service-method-status" role="status">填写服务方式后，点击右侧“确认”。</span>
+                </div>
+                <label class="field">本次总预算（元）<input id="budget" type="number" min="0" max="1000000" step="1" value="200" aria-describedby="budget-help" /></label>
+              </div>
+              <p id="budget-help" class="micro-note">预算填本次最多愿意花的总金额。</p>
+              <div id="budget-preview" class="budget-preview" aria-live="polite"></div>
+              <details class="compact-help fee-help"><summary>查看费用明细 / 调整这次的模拟价格</summary>
+                <p id="fee-note" class="micro-note">先选择具体需求，再查看本次费用。</p>
+                <p class="micro-note">填写本次模拟单价和额外费用，用于计算总价；自定义需求需自行填写。</p>
+                <div class="form-grid conditions-grid pricing-grid">
+                  <label class="field"><span id="unit-price-label">原单价（元）</span><input id="unit-price" type="number" min="0" step="1" /></label>
+                  <label class="field"><span id="changed-price-label">变化后单价（元）</span><input id="changed-price" type="number" min="0" step="1" /></label>
+                  <label class="field">每单额外费用（元，只收一次）<input id="order-fee" type="number" min="0" step="1" /></label>
+                </div>
+                <p id="fee-formula" class="micro-note"></p>
+                <button id="reset-prices" type="button" class="text-button">恢复当前需求的默认模拟价格</button>
+              </details>
+              <div class="control-stage"><h3>② 选择怎么执行</h3><p>第一次选免费演示熟悉流程；想观察 AI 自己怎么做，再选真实模型。</p></div>
+              <div class="inline-control">
+                <label for="agent">请选择执行彩排的方式：</label>
+                <select id="agent" aria-describedby="mode-note">
+                  <option value="demo_careful">免费演示 · 按条件核对</option>
+                  <option value="demo_rushed">免费反例 · 故意遗漏费用</option>
+                  <option value="live" disabled>真实模型 · 正在检查可用性</option>
+                </select><span id="mode-note" class="control-hint" role="status"></span>
+              </div>
+              <details class="compact-help"><summary>检索设置与执行说明（可选）</summary>
+                <label class="check-control"><input id="dense" type="checkbox" disabled /><span class="checkmark" aria-hidden="true">✓</span><span>开启向量 + 关键词混合检索：既找字面关键词，也找意思相近的资料，帮助AI查找费用和退改规则（仅真实模型可选，额外消耗模型额度）。</span></label>
+                <p class="micro-note">免费演示方便新用户熟悉操作，不消耗模型额度。真实模型会根据你确认的需求、数量、服务方式和预算，自主查阅本次模拟资料并检查方案；第一步输入的整段文字不会直接交给试运行的AI，避免夹带你没确认的要求。</p>
+              </details>
+              <div class="control-stage"><h3>③ 选择试运行的情况</h3><p>推荐连续运行两次：第一次按原价目查资料、算费用；第二次只改变一项情况，再查一遍。两次使用相同的需求、数量、服务方式和预算。</p></div>
+              <div class="inline-control">
+                <label for="run-method">请选择测试方式：</label><select id="run-method" aria-describedby="test-description">
+                  <option value="paired">对比“原情况”和“发生变化后”两次结果（推荐）</option>
+                  <option value="single">自己选一个情况，只试一次</option>
+                </select><span id="test-description" class="control-hint"></span>
+              </div>
+              <div id="paired-options" class="inline-control test-settings">
+                <label for="comparison-case">第二次要测试哪种变化：</label><select id="comparison-case" aria-describedby="comparison-case-note">
+                  <option value="price_change">单价变化：按上面填写的变化后单价，检查是否超预算</option>
+                  <option value="missing_evidence">缺少当前价目：检查AI是否会猜价格</option>
+                  <option value="injection">资料诱导预约：检查AI是否会越权</option>
+                  <option value="tool_timeout">首次查询超时：检查AI是否会恢复</option>
+                  <option value="auto">自动选择一种变化（可能不是涨价）</option>
+                </select><span id="comparison-case-note" class="control-hint"></span>
+              </div>
+              <div id="single-options" class="inline-control test-settings" hidden>
+                <label for="cases">这次要检查的情况：</label><select id="cases">
+                  <option value="baseline">没有额外变化：查资料并生成草稿</option>
+                  <option value="price_change">服务单价变了：会重新算总费用吗</option>
+                  <option value="missing_evidence">查不到现行价格：会不会编造方案</option>
+                  <option value="injection">资料诱导它预约：会不会越权</option>
+                  <option value="tool_timeout">第一次查询超时：能不能恢复</option>
+                </select>
+              </div>
+              <details class="compact-help"><summary>这次允许AI做什么？</summary><div class="boundary"><b>查模拟资料、核对费用和退改规则、生成供你检查的方案草稿</b><p>不会真的预约、下单或付款。自定义需求中确认的地点、时间和具体要求会保留；真实店铺和可服务时间需另行核实。试运行通过只说明这次表现符合条件，不能保证AI在真实网站上也安全。</p></div></details>
+              <div class="control-stage"><h3>④ 确认后开始</h3><p>核对上面的选择，勾选确认，再点开始。也可把这套设置存为模板：包括第一步的具体需求，以及第二步的数量、服务方式、预算、模拟价格、执行方式和试运行情况。</p></div>
+              <div class="template-save inline-control">
+                <label for="template-name">存为条件模板（可选）：</label><input id="template-name" maxlength="60" placeholder="起个名字，例如：两人周末聚餐" /><button id="save-template" class="secondary">保存模板</button>
+              </div>
+              <p class="micro-note">模板只保存在当前浏览器的当前账号下；下次在“01 选择需求 → 使用条件模板”里选用。保存模板不会开始运行。</p>
+
+              <label class="check-control confirmation" id="confirmation-label"
+                ><input id="confirmed" type="checkbox" /><span
+                  class="checkmark"
+                  aria-hidden="true"
+                  >✓</span
+                ><span
+                  >我已核对需求、数量、服务方式、预算和模拟价格，同意按以上设置试运行。</span
+                ></label
+              >
+              <p
+                id="confirmation-status"
+                class="confirmation-status"
+                aria-live="polite"
+              >
+                尚未确认 · 修改条件后需重新勾选
+              </p>
+              <button id="run-suite" class="primary run-button">开始一组对照彩排 ↗</button>
+              <button id="run" class="primary run-button" hidden>运行这次试托 ↗</button>
+            </section>
+          </div>
+          <div class="column result-column" id="result-column">
+            <section class="panel result-panel" id="step-three">
+              <div class="section-heading">
+                <span class="step-number lilac">03</span>
+                <div>
+                  <p class="eyebrow">观察与对照</p>
+                  <h2>它做了什么，依据在哪？</h2>
+                </div>
+                <span id="run-status" class="status-pill">尚未开始</span>
+                <button type="button" class="secondary module-help" data-module-help="2" aria-haspopup="dialog">03模块·流程介绍</button>
+              </div>
+              <div id="empty-state" class="empty-state">
+                <p>尚未运行。完成第二步后，这里显示结果、费用检查和工具证据。</p>
+              </div>
+              <p class="module-intro">“方案草稿”是供你检查的费用与服务方案，还没有实际执行。有两次结果时，点卡片切换；想知道原因，再展开检查依据。</p>
+              <div id="result-content" hidden>
+                <div class="result-toolbar"><details class="run-info"><summary id="run-info-title">本次运行信息</summary><p id="run-meta" class="muted"></p></details><button id="continue-trial" class="text-button">用这份条件再试一次 →</button></div>
+                <div id="progress" aria-live="polite"></div>
+                <div id="paired-comparison" hidden></div>
+                <div id="finding" aria-live="polite"></div>
+                <div id="metrics" class="metrics"></div>
+                <div id="result-details" hidden>
+                <div class="result-subheading"><h3>检查依据</h3><p>核对费用、资料和动作；想看具体过程，展开下面的记录。</p></div>
+                <div id="result-checklist" class="result-checklist"></div>
+                <details id="executor-explanation" class="compact-help">
+                  <summary>AI的说明与本次实际使用的条件</summary>
+                  <p id="answer" class="answer"></p>
+                  <pre id="contract-report" class="contract-report" hidden></pre>
+                </details>
+                <details class="evidence-details">
+                  <summary>查看它一步步查了什么、做了什么 <span id="trace-count"></span></summary>
+                  <div id="trace"></div>
+                </details>
+                <details class="skill-events">
+                  <summary>查看本次使用的技能（Skills）</summary>
+                  <div id="run-skills"></div>
+                </details>
+                <details class="round-comparison compact-help">
+                  <summary>对比当前会话中的彩排记录</summary>
+                  <p class="micro-note">每点一次“开始”记为当前会话中的一次彩排。一组对照彩排含“按原条件试”和“遇到变化再试”两份结果，属于同一次彩排。选两份结果可比较费用、查证情况和越权尝试；条件不同时，不能只凭结果判断哪个AI更好。</p>
+                  <div class="task-toolbar">
+                    <label class="field">① 选择记录 A<select id="compare-a"></select></label>
+                    <label class="field">② 选择记录 B<select id="compare-b"></select></label>
+                    <button id="compare-rounds" class="secondary">③ 生成对照表</button>
+                  </div>
+                  <div id="round-comparison-output" aria-live="polite"></div>
+                </details>
+                </div>
+              </div>
+            </section>
+                <section id="step-four" class="panel review-block">
+                  <div class="section-heading">
+                    <span class="step-number peach">04</span>
+                    <div>
+                      <p class="eyebrow">由你来决定</p>
+                      <h2>这份结果，你愿意保留吗？</h2>
+                    </div>
+                <button type="button" class="secondary module-help" data-module-help="3" aria-haspopup="dialog">04模块·流程介绍</button>
+                  </div>
+                  <p id="review-placeholder" class="stage-placeholder" role="status">等待第三步生成可审阅的结果；完成后可在这里决定是否保留并导出。</p>
+                  <div id="review-content" hidden>
+                  <p class="module-intro">先决定是否保留结果；保存的是试运行记录，不会预约或付款。</p>
+                  <div id="review" class="review-actions" hidden>
+                    <button id="accept" class="primary">保留结果</button
+                    ><button id="reject" class="secondary">暂不接受</button>
+                  </div>
+                  <p id="reviewed" class="data-note" hidden></p>
+                  <div class="record-export-actions">
+                  <a id="export" class="secondary download" href="#" hidden
+                    >下载完整记录 JSON ↓</a
+                  >
+                  <button id="preview-export" class="secondary" hidden>
+                    查看并复制完整 JSON
+                  </button>
+                  </div>
+                  <p class="export-note">完整记录（JSON）包含本次条件、费用与核验结果、AI执行过程，以及你的审阅决定，方便保存、排查问题或与后续结果对照。</p>
+                  <div id="export-preview" hidden>
+                    <label for="export-json">完整记录（只读）</label>
+                    <p class="export-note">选中下方文字后复制，可保存为 .json 文件。</p>
+                    <textarea
+                      id="export-json"
+                      rows="12"
+                      readonly
+                      spellcheck="false"
+                    ></textarea>
+                  </div>
+                  <div class="retry-actions">
+                    <p>调整后再试</p>
+                    <button id="try-budget" class="chip">预算改为250元</button
+                    ><button id="try-price" class="chip">试试价格上涨</button
+                    ><button id="try-missing" class="chip">试试证据缺失</button>
+                  </div>
+                  </div>
+                </section>
+          </div>
+        </main>
+        <details class="panel skills-panel" id="skills-panel">
+          <summary>
+            <span class="step-number peach" aria-hidden="true">✦</span>
+            <h2>小托会用哪些技能（Skills）？</h2>
+          </summary>
+          <p class="muted">
+            按需查看能力介绍。结果中的“本次实际技能调用”会记录这次真正使用的技能。
+          </p>
+          <div id="skills-catalog"></div>
+        </details>
+        <footer class="site-footer">
+          <span>试托 v0.7 · 把事情交给AI之前，先在模拟环境里试一遍</span
+          >
+          <p>
+            <span id="catalog-summary">4大类、30个子分类、291个具体事项</span>；也可填写目录外的需求，补齐条件后试运行。现实价格、日期、地点与库存需另行核实。
+          </p>
+        </footer>
+      </div>
+      </div>
+      </div>
+    </div>
+    <div
+      id="notice"
+      class="viewport-notice"
+      role="alert"
+      aria-live="assertive"
+      hidden
+    >
+      <span id="notice-text"></span
+      ><button id="dismiss-notice" class="icon-button" aria-label="关闭提示">
+        ×
+      </button>
+    </div>
+    <dialog id="conversation-action-dialog" aria-labelledby="conversation-action-title" aria-describedby="conversation-action-name">
+      <form id="conversation-action-form">
+        <h2 id="conversation-action-title">重命名会话</h2>
+        <p id="conversation-action-name" class="muted"></p>
+        <label id="rename-field" class="field">会话名称
+          <input id="conversation-name" aria-label="会话名称" maxlength="60" autocomplete="off" />
+          <small>最多60个字符，请勿填写个人隐私资料。</small>
+        </label>
+        <div id="delete-explanation" hidden>
+          <p>该会话和其中的彩排记录将从历史中移除，无法在页面中恢复。已导出的文件不受影响。</p>
+        </div>
+        <p id="conversation-action-error" class="danger-text" role="alert"></p>
+        <div class="review-actions">
+          <button id="cancel-conversation-action" type="button" class="secondary">取消</button>
+          <button id="confirm-conversation-action" type="submit" class="primary">保存名称</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="account-dialog" aria-labelledby="account-dialog-title"><form id="account-password-form"><div class="dialog-heading"><h2 id="account-dialog-title">修改密码</h2><button id="account-close" type="button" class="icon-button" aria-label="关闭账号设置">×</button></div><label class="auth-field">当前密码<input id="account-old-password" type="password" autocomplete="current-password" maxlength="72" required /></label><label class="auth-field">新密码<input id="account-new-password" type="password" autocomplete="new-password" minlength="10" maxlength="72" required /></label><p>修改成功后，所有登录会话会失效，请使用新密码重新登录。</p><p id="account-error" class="danger-text" role="alert"></p><button id="account-password-submit" type="submit" class="primary">保存新密码</button></form></dialog>
+    <dialog id="help-dialog" aria-labelledby="help-title">
+      <div class="dialog-heading">
+        <h2 id="help-title">先试着让AI办事，看清问题，再决定怎么用。</h2>
+        <button id="close-help" class="icon-button" aria-label="关闭帮助">×</button>
+      </div>
+      <div class="help-purpose">
+        <h3>这个工具解决什么问题？</h3>
+        <p>提前观察AI会不会漏算费用、超过预算、缺少依据，或尝试你没允许的操作，帮助你找到需要人工把关的地方。</p>
+        <p>整个流程：先明确需求，再确认限制并试运行，接着检查结果和依据，最后由你审阅并留下记录。</p>
+        <p class="help-mode-note">免费演示：熟悉操作流程。真实模型：观察已接入AI在模拟任务中的实际表现。</p>
+      </div>
+      <div class="help-map-intro"><h3>步骤说明</h3><p>按01到04了解完整用法。点击一个步骤，旁边就会显示它解决什么问题、每个小步骤的目的，以及具体怎么操作。</p></div>
+      <div id="help-layout" class="help-layout">
+        <nav id="help-module-cards" class="help-module-cards" aria-label="选择要了解的步骤"></nav>
+        <section id="help-step-map" class="help-substeps" aria-labelledby="help-substeps-title">
+          <p id="help-map-location" class="help-map-location"></p>
+          <h3 id="help-substeps-title"></h3>
+          <p id="help-module-problem" class="help-module-problem"></p>
+          <div id="help-substeps-list"></div>
+          <p id="help-substeps-output" class="help-map-caption"></p>
+        </section>
+      </div>
+      <p class="help-scope-note">这里查的是本次模拟资料，不会实际预约、下单或付款。试运行只反映本次条件下的表现，不能保证AI在真实网站上一定安全，也不会自动接管其他AI软件。</p>
+      <button id="start-tutorial" class="primary">返回工作台 →</button>
+    </dialog>
+  </body>
+</html>

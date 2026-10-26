@@ -225,7 +225,7 @@ class Store:
         return run_id
 
 
-def create_app(root: Path | None = None, enable_live: bool | None = None, runner=run_trial, *, require_accounts: bool = True):
+def create_app(root: Path | None = None, enable_live: bool | None = None, runner=run_trial, *, require_accounts: bool = True, browser_origins=()):
     root = root or Path(os.environ.get("TRIALTRUST_RUNTIME", "runtime/web"))
     store = Store(root)
     live_enabled = enable_live if enable_live is not None else os.environ.get("TRIALTRUST_ENABLE_LIVE") == "1"
@@ -573,6 +573,9 @@ def create_app(root: Path | None = None, enable_live: bool | None = None, runner
 
     if accounts:
         register_account_routes(app, accounts)
+    if browser_origins:
+        from .browser_bridge import BrowserBridge
+        app.add_middleware(BrowserBridge, origins=browser_origins)
     return app
 
 
