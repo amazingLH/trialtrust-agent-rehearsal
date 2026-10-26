@@ -16,6 +16,10 @@ from starlette.responses import JSONResponse, Response
 
 BRIDGE_PATH = "/api/browser-bridge"
 MAX_BODY = 1_048_576
+# The editor assigns each preview a separate UUID host. Unlike the outer
+# /preview page, this is the Origin sent by the live iframe after a refresh.
+QMUSE_PREVIEW_ORIGIN = re.compile(
+    r"https://[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.ergw\.qmuse\.cn\Z")
 
 
 def configured_browser_origins():
@@ -42,16 +46,19 @@ ROUTES = {
 
 
 class BrowserBridge:
-    def __init__(self, app, *, origins=()):
+    def __init__(self, app, *, origins=(), allow_qmuse_previews=False):
         self.app = app
         self.origins = frozenset(origins)
+        self.allow_qmuse_previews = allow_qmuse_previews
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or scope.get("path") != BRIDGE_PATH:
             return await self.app(scope, receive, send)
         headers = {k.lower(): v for k, v in scope.get("headers", [])}
         origin = headers.get(b"origin", b"").decode("latin-1")
-        if not origin or origin not in self.origins or scope.get("query_string"):
+        allowed = origin in self.origins or (
+            self.allow_qmuse_previews and QMUSE_PREVIEW_ORIGIN.fullmatch(origin))
+        if not origin or not allowed or scope.get("query_string"):
             # Diagnose a platform preview-host change without logging the body,
             # passwords, account tokens, or any application response payload.
             logging.getLogger("trialtrust.browser_bridge").warning(

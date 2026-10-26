@@ -101,12 +101,8 @@ const PortalViewport = (() => {
 if (typeof module !== "undefined" && module.exports)
   module.exports = PortalViewport;
 
-/* Browser-only helpers: no network or model calls; request text stays in the page. */
-(function (root, factory) {
-  const api = factory();
-  if (typeof module === "object" && module.exports) module.exports = api;
-  else root.WorkbenchTools = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+const WorkbenchTools = (() => {
+
   const agents = ["demo_careful", "demo_rushed", "live"];
   const cases = ["baseline", "price_change", "missing_evidence", "injection", "tool_timeout"];
   const comparisonCases = ["auto", ...cases.filter(x => x !== "baseline")];
@@ -272,9 +268,8 @@ if (typeof module !== "undefined" && module.exports)
     return {explanation,conclusion};
   }
   return {verificationSegments, redactRequest, cleanTemplate, readTemplates, preview, facts, pricing, maxBudget, normalizeServiceText, resolveFulfillment, serviceMode, budgetBalance, budgetAssessment, recordLabel, comparisonSummary, missingPriceExplanation, customTask, scenarioSpec};
-});
 
-const WorkbenchTools = globalThis.WorkbenchTools;
+})();
 /* Account gate. Passwords never enter localStorage, URLs, logs or model inputs. */
 const TrialTrustAuth = (() => {
   const el = id => document.getElementById(id);

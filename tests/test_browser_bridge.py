@@ -73,7 +73,8 @@ def test_actual_managed_entrypoint_enables_bridge_and_keeps_auth(tmp_path, monke
     monkeypatch.delenv("TRIALTRUST_BROWSER_ORIGINS", raising=False)
     from trialtrust.managed import create_managed_app
     with TestClient(create_managed_app()) as client:
-        for origin in [ORIGIN, "https://www.qmuse.cn", "https://api.qmuse.cn", "https://appio.qmuse.cn"]:
+        for origin in [ORIGIN, "https://www.qmuse.cn", "https://api.qmuse.cn", "https://appio.qmuse.cn",
+                       "https://5eaaf410-dcb8-4a01-bab8-ffbcc56c7c80.ergw.qmuse.cn"]:
             response = call(client, "/api/auth/bootstrap", {}, origin=origin)
             assert response.status_code == 200, response.text
             assert response.headers["content-type"].startswith("application/json")
@@ -83,6 +84,9 @@ def test_actual_managed_entrypoint_enables_bridge_and_keeps_auth(tmp_path, monke
         assert call(client, "/api/conversations").status_code == 401
         assert call(client, "/api/auth/bootstrap", {}, origin="https://other.invalid").status_code == 403
         assert call(client, "/api/auth/bootstrap", {}, origin="https://api.qmuse.cn.evil.invalid").status_code == 403
+        for origin in ["https://evil.ergw.qmuse.cn", "https://5eaaf410-dcb8-4a01-bab8-ffbcc56c7c80.ergw.qmuse.cn.evil.invalid",
+                       "http://5eaaf410-dcb8-4a01-bab8-ffbcc56c7c80.ergw.qmuse.cn"]:
+            assert call(client, "/api/auth/bootstrap", {}, origin=origin).status_code == 403
         assert call(client, "/api/auth/bootstrap", {}, origin="null").status_code == 403
         assert client.post("/api/auth/bootstrap", json={}).status_code == 403
 

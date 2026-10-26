@@ -23,7 +23,9 @@ def create_studio_app(*, require_accounts=True):
     # The external workbench uses the same account routes and persistent store.
     # Exact platform origins only; the standalone factory stays disabled by default.
     from trialtrust.browser_bridge import configured_browser_origins
-    app = create_app(require_accounts=require_accounts, browser_origins=configured_browser_origins())
+    browser_origins = configured_browser_origins()
+    app = create_app(require_accounts=require_accounts, browser_origins=browser_origins,
+                     allow_qmuse_previews=bool(browser_origins))
     assets = Path(__file__).parent / "trialtrust" / "web"
     html = (assets / "index.html").read_text(encoding="utf-8").split("<body>", 1)[1].split("</body>", 1)[0]
     css = (assets / "style.css").read_text(encoding="utf-8").replace(":root", ".trialtrust-root")
