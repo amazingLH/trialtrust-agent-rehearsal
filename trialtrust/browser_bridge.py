@@ -7,6 +7,7 @@ validation and background-task execution still run in those routes.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from urllib.parse import parse_qs, urlsplit
@@ -21,7 +22,10 @@ def configured_browser_origins():
     """Shared by both managed entrypoints; standalone remains opt-in."""
     return tuple(origin.strip() for origin in os.environ.get(
         "TRIALTRUST_BROWSER_ORIGINS",
-        "https://render.qmuse.pub,https://qmuse.cn,https://www.qmuse.cn",
+        # QMuse's /preview wrapper embeds api.qmuse.cn/preview/<appId>.
+        # Live editor runtime connections use the separate appio origin.
+        "https://render.qmuse.pub,https://qmuse.cn,https://www.qmuse.cn,"
+        "https://api.qmuse.cn,https://appio.qmuse.cn",
     ).split(",") if origin.strip())
 
 
@@ -48,6 +52,10 @@ class BrowserBridge:
         headers = {k.lower(): v for k, v in scope.get("headers", [])}
         origin = headers.get(b"origin", b"").decode("latin-1")
         if not origin or origin not in self.origins or scope.get("query_string"):
+            # Diagnose a platform preview-host change without logging the body,
+            # passwords, account tokens, or any application response payload.
+            logging.getLogger("trialtrust.browser_bridge").warning(
+                "Rejected browser bridge origin: %r", origin[:256])
             return await JSONResponse({"detail": "此页面未获准连接工作台"}, 403)(scope, receive, send)
 
         async def cors_send(message):

@@ -73,13 +73,17 @@ def test_actual_managed_entrypoint_enables_bridge_and_keeps_auth(tmp_path, monke
     monkeypatch.delenv("TRIALTRUST_BROWSER_ORIGINS", raising=False)
     from trialtrust.managed import create_managed_app
     with TestClient(create_managed_app()) as client:
-        response = call(client, "/api/auth/bootstrap", {})
-        assert response.status_code == 200, response.text
-        assert response.headers["content-type"].startswith("application/json")
-        assert response.json()["authenticated"] is False
-        assert response.json()["browser_token"]
+        for origin in [ORIGIN, "https://www.qmuse.cn", "https://api.qmuse.cn", "https://appio.qmuse.cn"]:
+            response = call(client, "/api/auth/bootstrap", {}, origin=origin)
+            assert response.status_code == 200, response.text
+            assert response.headers["content-type"].startswith("application/json")
+            assert response.headers["access-control-allow-origin"] == origin
+            assert response.json()["authenticated"] is False
+            assert response.json()["browser_token"]
         assert call(client, "/api/conversations").status_code == 401
         assert call(client, "/api/auth/bootstrap", {}, origin="https://other.invalid").status_code == 403
+        assert call(client, "/api/auth/bootstrap", {}, origin="https://api.qmuse.cn.evil.invalid").status_code == 403
+        assert call(client, "/api/auth/bootstrap", {}, origin="null").status_code == 403
         assert client.post("/api/auth/bootstrap", json={}).status_code == 403
 
 
